@@ -4,6 +4,7 @@ async function boot() {
     await import('./scene');
     await import('./environment');
     await import('./city');
+    await import('./night');
     await import('./focus');
     await import('./labels');
     await import('./camera');

@@ -3,8 +3,8 @@ import { camera, controls, renderer, world } from './scene';
 import { GROUND_Y } from './config';
 import { backgroundBuildings, specialBuildings, pickTargets, type SpecialBuilding } from './specialBuildings';
 
-const gray = new THREE.MeshToonMaterial({color:0xb5bdc5});
-const grayLine = new THREE.LineBasicMaterial({color:0x9da7b1,transparent:true,opacity:.4});
+const gray = new THREE.MeshToonMaterial({color:0xb5bdc5,transparent:true,opacity:.80,depthWrite:false});
+const grayLine = new THREE.LineBasicMaterial({color:0x9da7b1,transparent:true,opacity:.32});
 const originalMaterials=new Map<THREE.Object3D,THREE.Material|THREE.Material[]>();
 const originalHeights=new Map<THREE.Group,number>();
 const groups=[backgroundBuildings,...specialBuildings.map(s=>s.group)];
@@ -14,8 +14,21 @@ for(const group of groups) {
     if(obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) originalMaterials.set(obj,obj.material);
   });
 }
-const ring=new THREE.Mesh(new THREE.RingGeometry(.86,1,64),new THREE.MeshBasicMaterial({color:0xffce65,transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false}));
-ring.name='selection-ring';ring.rotation.x=-Math.PI/2;ring.visible=false;world.add(ring);
+// Edge geometry follows each individual building part, including moving rides.
+const edgeMaterial=new THREE.LineBasicMaterial({color:0xffcc69,transparent:true,opacity:.95,depthWrite:false});
+const outlines=new Map<string,THREE.LineSegments[]>();
+for(const entry of specialBuildings) {
+  const lines:THREE.LineSegments[]=[];
+  const meshes:THREE.Mesh[]=[];
+  entry.group.traverse(obj=>{if(obj instanceof THREE.Mesh)meshes.push(obj)});
+  for(const mesh of meshes) {
+    if(new THREE.Box3().setFromObject(mesh).max.y<GROUND_Y+1)continue;
+    const line=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,35),edgeMaterial);
+    line.name='focus-building-outline';line.visible=false;line.renderOrder=5;
+    mesh.add(line);lines.push(line);
+  }
+  outlines.set(entry.id,lines);
+}
 
 const card=document.createElement('div');card.className='focus-card';card.hidden=true;
 const title=document.createElement('strong'),description=document.createElement('span');
@@ -70,11 +83,11 @@ function select(id: string|null) {
     });
   }
   canvas.style.cursor=next?'pointer':'';
-  card.hidden=!next;ring.visible=!!next;
+  card.hidden=!next;
+  for(const [id,lines] of outlines)for(const line of lines)line.visible=id===next?.id;
   if(next) {
     title.textContent=next.name;description.textContent=next.description;
-    ring.position.set(next.pick.position.x,GROUND_Y+.17,next.pick.position.z);
-    ring.scale.setScalar(next.radius);
+
   }
   document.querySelectorAll<HTMLElement>('[data-special]').forEach(el=>{
     el.classList.toggle('is-focused',el.dataset.special===next?.id);
@@ -87,7 +100,7 @@ export function updateFocus(dt: number) {
   select(id);
   const alpha=1-Math.exp(-10*dt);
   for(const group of groups) {
-    const target=originalHeights.get(group)!*(selectedSpecial && group!==selectedSpecial.group ? .10:1);
+    const target=originalHeights.get(group)!*(selectedSpecial && group!==selectedSpecial.group ? .88:1);
     // All selectable roots are independent siblings; shrink around their ground-level pivot.
     group.scale.y=THREE.MathUtils.lerp(group.scale.y,target,alpha);
     if(Math.abs(group.scale.y-target)<.0001)group.scale.y=target;

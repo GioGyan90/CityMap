@@ -7,7 +7,7 @@ import { flatQuad } from './roads';
 
 export function buildUrbanDetails() {
   // Open squares break up the building density and keep a readable civic axis.
-  for (const [x,z] of [[88,32],[88,60],[116,116],[62,88]]) {
+  for (const [x,z] of [[8,-24],[62,4],[88,32],[88,60],[116,116],[62,88]]) {
     flatQuad(x,z,19,19,GROUND_Y+.08,toon(0xddd5b9));
     flatQuad(x,z,13,13,GROUND_Y+.12,toon(0x7dbd7c));
     flatQuad(x,z,2,19,GROUND_Y+.19,toon(0xf1e4ca));

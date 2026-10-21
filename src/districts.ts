@@ -11,7 +11,7 @@ export function fillBlock(bx: number, bz: number) {
   if (financial) {
     const signature = bx === 36 && bz === -108;
     const style: BuildingStyle = signature ? 'artdeco' : pick(['glass','stepped','round','artdeco'] as const);
-    makeBuilding({ x:bx-2,z:bz-2,w:rr(10,14),d:rr(10,13),h:signature?91:rr(37,69),
+    makeBuilding({ x:bx-2,z:bz-2,w:rr(10,14),d:rr(10,13),h:signature?82:rr(bx>70?24:35,bx>70?45:68),
       style,base:pick(['#d9e6e9','#f1e2c3','#c1d7de']),win:'#3d7e9e',roof:0x315e84 });
     makeBuilding({ x:bx+7,z:bz+7,w:5,d:5,h:rr(9,17),style:'arcade',base:'#ede1cc',roof:0x355c7b });
     return;
@@ -19,14 +19,21 @@ export function fillBlock(bx: number, bz: number) {
   const coastal = bx < 24 && bz > 74;
   const oldTown = (bx < 62 && bz >= -52 && bz <= 60);
   const suburb = bx >= 130 || bz > 116 || bz < -122;
-  for (const [sx,sz] of [[-6,-6],[6,-6],[-6,6],[6,6]]) {
-    if (rnd() > (suburb ? .82 : .95)) continue;
+  // Fewer, larger courtyard blocks in the middle; sparse garden villas at the hills.
+  if (!coastal && !oldTown && !suburb && bz>=-52 && bz<=88) {
+    makeBuilding({x:bx-2,z:bz-3,w:16,d:9,h:rr(13,25),style:'apartment',base:pick(RES_BASES),roof:0x486a83});
+    if(rnd()>.4)makeBuilding({x:bx+5,z:bz+7,w:7,d:5,h:rr(6,10),style:'arcade',base:'#eedcbb',roof:0x396a85});
+    return;
+  }
+  const slots = coastal ? [[-5,-5],[6,5]] : suburb ? [[-5,-4],[6,6]] : [[-6,-6],[6,-6],[-6,6],[6,6]];
+  for (const [sx,sz] of slots) {
+    if (rnd() > (suburb ? .62 : oldTown ? .84 : .9)) continue;
     const style: BuildingStyle = coastal ? pick(['villa','arcade','pitched'] as const)
       : oldTown ? pick(['arcade','apartment','pitched','flat'] as const)
       : suburb ? pick(['villa','pitched','apartment','warehouse'] as const)
       : pick(['apartment','glass','stepped','flat'] as const);
     const h = coastal ? rr(7,15) : oldTown ? rr(8,18) : suburb ? rr(5,13) : rr(15,34);
-    makeBuilding({x:bx+sx,z:bz+sz,w:rr(6.5,8.8),d:rr(6.5,8.8),h,style,
+    makeBuilding({x:bx+sx+rr(-.65,.65),z:bz+sz+rr(-.6,.6),w:rr(6,8.2),d:rr(6,8.2),h,style,ry:suburb?rr(-.12,.12):0,
       base:pick(RES_BASES),win:pick(RES_WINS),roof:pick(ROOF_COLS),lit:.25});
   }
 }

@@ -1,7 +1,7 @@
 import { updateFocus } from './focus';
 import * as THREE from 'three';
 import { renderer, scene, camera, controls, world } from "./scene";
-import { waveTex } from "./environment";
+import { updateWater } from './water';
 import { spinWheels, movingCarts } from "./amusement";
 import { boats } from "./port";
 import { cars } from "./traffic";
@@ -43,8 +43,7 @@ export function animate() {
   }
 
   /* 海浪 */
-  waveTex.offset.x = t * 0.006;
-  waveTex.offset.y = -t * 0.004;
+  updateWater(t);
 
   /* 帆船 */
   for (const b of boats) {

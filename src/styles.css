@@ -45,3 +45,8 @@
 .focus-card{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;pointer-events:none;background:#fff8e9f2;border:2px solid #bc9051;box-shadow:3px 3px 0 #1b203833;border-radius:12px;padding:12px 20px;color:#20324a;text-align:center;max-width:70vw}
 .focus-card[hidden]{display:none}.focus-card strong,.focus-card span{display:block}.focus-card strong{font-size:15px}.focus-card span{font-size:11px;margin-top:4px}
 @media(max-width:640px){.focus-card{bottom:75px;width:85vw;max-width:85vw;padding:9px 12px}.focus-card strong{font-size:13px}}
+
+body[data-time="night"] .hud{color:#edf3ff}body[data-time="night"] .hud h1{text-shadow:2px 2px 0 #102544}
+body[data-time="night"] .toolbar button,body[data-time="night"] .legend span,body[data-time="night"] .lbl{background:#172c48ed;color:#e8eff8;border-color:#65788d}
+body[data-time="night"] .lbl.is-focused{background:#66512c;border-color:#ffcc69;color:#fff3c9}
+body[data-time="night"] .focus-card{background:#12253eef;color:#f5e4bc}
