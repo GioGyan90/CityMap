@@ -7,6 +7,7 @@ export const VIEWS = {
  park:{pos:[-109,76,20],target:[-20,12,-65]},market:{pos:[-89,67,109],target:[-18,9,35]},
  hotel:{pos:[-99,70,219],target:[-12,11,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
  hospital:{pos:[53,82,44],target:[138,15,-40]},cafe:{pos:[22,59,193],target:[93,9,125]},
+ promenade:{pos:[-96,29,127],target:[-67,4,98]},
  restaurant:{pos:[62,62,210],target:[141,10,137]},port:{pos:[48,78,279],target:[155,8,182]},
  skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[104,111,157],target:[193,18,35]}
 

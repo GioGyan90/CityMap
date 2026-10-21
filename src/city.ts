@@ -1,3 +1,4 @@
+import {buildPromenadeRestaurant} from './promenadeRestaurant';
 import {buildSiteDetails} from './siteDetails';
 import { ZONES, terrainHeight } from './layout';
 import { specialBuildings } from './specialBuildings';
@@ -39,7 +40,7 @@ registerSpecial('cafe','海风咖啡馆','蓝白条纹遮棚与露天咖啡座',
 registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
   buildRestaurant(-20,60);restaurantDetails(-20,60);
 });
-registerSpecial('port','港口餐饮区 · 5 号球馆','灯塔、码头、候船楼与港口球馆',[-61,96],[42,25,32],()=>{
+registerSpecial('port','码头市场 · 5 号球馆','灯塔、码头市集、候船楼与港口球馆',[-61,96],[42,25,32],()=>{
   buildPort();billiardsHall(-44,100,5);
 });
 const ship=world.getObjectByName('cruise-ship') as THREE.Group;
@@ -47,6 +48,7 @@ world.attach(ship);
 registerGroup('cruise','Lucky Break 豪华邮轮','多层观景甲板、泳池、救生艇与蓝色烟囱',ship,[-101,72],[70,28,18]);
 registerSpecial('commercial','市中心商业区 · 3 号球馆','蓝金穹顶高楼、玻璃裙楼与精品球馆',[36,-108],[27,100,27],()=>commercialDistrict(36,-108));
 registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
+registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);
 buildMountains();
 
 // Move complete facilities with all their details, animation roots and pick bounds.

@@ -53,5 +53,5 @@ export function buildStreetFurniture(){
  for(const [x,z] of [[32,-45],[29,77],[185,-81],[179,118]]){
   const y=terrainHeight(x,z);box(6,.3,3,0x4589a3,x,y+3,z);for(const dx of [-2.6,2.6])box(.15,3,.15,0x5f7884,x+dx,y+1.5,z);box(4,.35,.9,0xcdb58d,x,y+.6,z+.6);
  }
- const quaySign=ZONES.port;sign('HARBOR TERMINAL',quaySign.x,6,quaySign.z+7,17,3,'#245875');
+ const quaySign=ZONES.port;sign('码头市场 · DOCK MARKET',quaySign.x,6,quaySign.z+7,17,3,'#245875');
 }

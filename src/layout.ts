@@ -12,6 +12,7 @@ export const ZONES:Record<string,Zone>={
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
  cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:137,w:35,d:36,sx:1.3,sz:1.3},
+ promenade:{x:westCoast(98)-1,z:98,w:22,d:20,sx:1,sz:1,level:1.06},
  port:{x:156,z:167,w:50,d:38,sx:1.15,sz:1.15,level:1.06},
  commercial:{x:70,z:-126,w:33,d:33,sx:1.2,sz:1.15},cruise:{x:157,z:205,w:75,d:25,sx:1,sz:1,level:0}
 };

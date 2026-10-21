@@ -49,7 +49,7 @@ const pools=new THREE.InstancedMesh(new THREE.CircleGeometry(2.5,16),new THREE.M
 const matrix=new THREE.Matrix4();const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2);
 sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,terrainHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,terrainHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,terrainHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
 world.add(poles);nightGroup.add(lamps,pools);
-for(const id of ['park','hotel','market','hospital','port','restaurant']){
+for(const id of ['park','hotel','market','hospital','port','restaurant','promenade']){
  const zone=ZONES[id],x=zone.x,z=zone.z;
  const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,terrainHeight(x,z)+8,z);nightGroup.add(light);
 }
