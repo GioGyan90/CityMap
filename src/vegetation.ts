@@ -1,3 +1,4 @@
+import { isLand,terrainHeight,roadDistance,reserved,railCorridor } from './layout';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rnd, rr, TAU } from "./random";
@@ -76,11 +77,7 @@ export const treeMat = toon(0xffffff, { vertexColors: true });
 
 export function blocked(x, z) {
   for (const b of buildingFootprints) if (Math.abs(x-b.x) < b.w/2+1.5 && Math.abs(z-b.z) < b.d/2+1.5) return true;
-  /* 避开道路 */
-  for (const rx of ROAD_X) if (Math.abs(x - rx) < 5.4 && z > ROAD_Z[0] - 2 && z < ROAD_Z[ROAD_Z.length - 1] + 2) return true;
-  for (const rz of ROAD_Z) if (Math.abs(z - rz) < 5.4 && x > ROAD_X[0] - 2 && x < ROAD_X[ROAD_X.length - 1] + 2) return true;
-  /* 避开地标 */
-  for (const s of ZONE_CENTERS) if (Math.hypot(x - s[0], z - s[1]) < 15) return true;
+  if(roadDistance(x,z)<3||reserved(x,z,2,2)||railCorridor(x,z))return true;
   return false;
 }
 
@@ -103,9 +100,9 @@ export function plantTrees() {
   let tries = 0;
   while (trees.length < 420 && tries < 4000) {
     tries++;
-    const x = rr(-26, 218);
+    const x = rr(-50, 274);
     const z = rr(Z0 + 6, Z1 - 6);
-    if (x < COAST(z) + BEACH_W + 1) continue;
+    if (!isLand(x,z) || x < COAST(z) + BEACH_W + 1) continue;
     if (blocked(x, z)) continue;
     trees.push([x, z, rr(0.75, 1.35)]);
   }
@@ -117,7 +114,7 @@ export function plantTrees() {
     const v = new THREE.Vector3();
     const s = new THREE.Vector3();
     list.forEach((p, i) => {
-      v.set(p[0], GROUND_Y, p[1]);
+      v.set(p[0], terrainHeight(p[0],p[1]), p[1]);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * TAU);
       s.setScalar(p[2]);
       m.compose(v, q, s);

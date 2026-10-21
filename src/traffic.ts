@@ -1,61 +1,15 @@
+import { motorwayCurve } from './transport';
 import * as THREE from 'three';
-import { rnd, rr, pick } from "./random";
-import { toon } from "./materials";
-import { GROUND_Y } from "./config";
-import { world } from "./scene";
-
-export const cars = [];
-export function buildCars() {
-  const bodyCols = [0xef476f, 0xffd166, 0x06d6a0, 0x118ab2, 0xf78c6b, 0xffffff, 0x9b5de5];
-
-  const routes = [
-    { type: 'x', line: -38, from: -30, to: 70 },
-    { type: 'x', line: -10, from: -30, to: 70 },
-    { type: 'x', line: 18, from: -30, to: 70 },
-    { type: 'x', line: 46, from: -30, to: 70 },
-    { type: 'x', line: 74, from: -30, to: 70 },
-    { type: 'z', line: -34, from: -62, to: 70 },
-    { type: 'z', line: -6, from: -62, to: 70 },
-    { type: 'z', line: 22, from: -62, to: 70 },
-    { type: 'z', line: 50, from: -62, to: 70 },
-    { type: 'z', line: 74, from: -62, to: 70 }
-  ];
-
-  for (let i = 0; i < 18; i++) {
-    const r = routes[i % routes.length];
-    const dir = rnd() > 0.5 ? 1 : -1;
-
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.3, 1.7), toon(pick(bodyCols)));
-    body.position.y = 0.85;
-    body.castShadow = true;
-    g.add(body);
-
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 1.55), toon(0x2d3f57));
-    cabin.position.set(-0.2, 1.85, 0);
-    cabin.castShadow = true;
-    g.add(cabin);
-
-    for (const dx of [-1.0, 1.0]) {
-      for (const dz of [-0.85, 0.85]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.28, 8), toon(0x2a2a33));
-        wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(dx, 0.45, dz);
-        g.add(wheel);
-      }
-    }
-
-    const offset = rnd();
-    if (r.type === 'x') {
-      g.position.set(r.from + (r.to - r.from) * offset, GROUND_Y, r.line + dir * 1.6);
-      g.rotation.y = dir > 0 ? 0 : Math.PI;
-    } else {
-      g.position.set(r.line - dir * 1.6, GROUND_Y, r.from + (r.to - r.from) * offset);
-      g.rotation.y = dir > 0 ? -Math.PI / 2 : Math.PI / 2;
-    }
-
-    world.add(g);
-    cars.push({ mesh: g, route: r, dir, t: offset, speed: rr(0.055, 0.11) });
-  }
+import { world } from './scene';
+import { terrainHeight } from './layout';
+import { roadCurves } from './roads';
+import { toon } from './materials';
+export const cars:{mesh:THREE.Group;curve:THREE.CatmullRomCurve3;offset:number;speed:number;direction:number;elevated:boolean}[]=[];
+export function buildCars(){
+ for(let i=0;i<24;i++){const mesh=new THREE.Group();mesh.name=i%6===0?'city-bus':'road-car';world.add(mesh);const bus=i%6===0;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(bus?2:1.6,bus?2.5:1.25,bus?5.7:3.2),toon([0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4]));body.position.y=bus?1.5:1;mesh.add(body);
+  const window=new THREE.Mesh(new THREE.BoxGeometry(bus?2.03:1.5,bus?1:.7,bus?4.8:1.8),toon(0x355b73));window.position.y=bus?2.1:1.65;mesh.add(window);
+  cars.push({mesh,curve:i>=20&&motorwayCurve?motorwayCurve:roadCurves[i%roadCurves.length],elevated:i>=20&&!!motorwayCurve,offset:(i*.173)%1,speed:.015+(i%4)*.003,direction:i%2?1:-1});
+ }
 }
-
+export function updateTraffic(dt:number){for(const car of cars){car.offset=(car.offset+dt*car.speed)%1;const t=car.offset<.5?car.offset*2:2-car.offset*2;const p=car.curve.getPointAt(Math.max(.001,Math.min(.999,t))),tan=car.curve.getTangentAt(t);p.x+=-tan.z*car.direction*1.25;p.z+=tan.x*car.direction*1.25;p.y=car.elevated?p.y+.22:terrainHeight(p.x,p.z)+.22;car.mesh.position.copy(p);car.mesh.rotation.y=Math.atan2(tan.x,tan.z)+(car.offset>.5?Math.PI:0);car.mesh.rotation.x=-Math.atan2(tan.y,Math.hypot(tan.x,tan.z));}}

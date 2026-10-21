@@ -1,3 +1,5 @@
+import { specialBuildings } from './specialBuildings';
+import { ZONES,terrainHeight } from './layout';
 import { setLabelFocus, togglePinnedFocus } from './focus';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { scene } from "./scene";
@@ -26,6 +28,11 @@ export function addLabel(text, x, y, z, cls = '') {
     div.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePinnedFocus(ids[text]);}});
   }
   const obj = new CSS2DObject(div);
+  const specialId=div.dataset.special;
+  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='commercial'?105:specialId==='hotel'?29:specialId==='cruise'?30:31);}}
+  else if(text==='山 脉'){x=205;z=-170;y=terrainHeight(x,z)+15;}
+  else if(text==='山麓住宅'){x=211;z=10;y=terrainHeight(x,z)+17;}
+  else if(text==='城市花园'){x=72;z=75;y=terrainHeight(x,z)+8;}
   obj.position.set(x, y, z);
   scene.add(obj);
   labelObjs.push(obj);

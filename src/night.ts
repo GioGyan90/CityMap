@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { scene, world, sky, hemi, sun, fill, camera } from './scene';
 import { COAST, GROUND_Y } from './config';
-import { ROAD_X, ROAD_Z } from './roads';
+import { ROAD_PATHS,terrainHeight,ZONES } from './layout';
 import { setWaterNight } from './water';
 
 export let nightMode=false;
@@ -38,16 +38,20 @@ world.getObjectByName('ferris-rotor')?.traverse(object=>{
 });
 // One instanced draw per lamp component, rather than hundreds of point lights.
 const sites:[number,number][]=[];
-for(let z=-168;z<170;z+=12)sites.push([COAST(z)+16,z]);
-for(const x of ROAD_X)for(let z=-140;z<150;z+=28)if(x<140||z<80)sites.push([x+4.6,z]);
+for(let z=-177;z<170;z+=14)sites.push([COAST(z)+9,z]);
+for(const road of ROAD_PATHS)for(let i=1;i<road.points.length;i++){
+ const a=road.points[i-1],b=road.points[i],count=Math.max(1,Math.floor(Math.hypot(b[0]-a[0],b[1]-a[1])/15));
+ for(let j=0;j<count;j++){const t=j/count;sites.push([a[0]+(b[0]-a[0])*t+road.width*.6,a[1]+(b[1]-a[1])*t]);}
+}
 const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.07,.11,3.5,5),new THREE.MeshToonMaterial({color:0x38495a}),sites.length);
 const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.38,6,5),new THREE.MeshBasicMaterial({color:0xffda87}),sites.length);
 const pools=new THREE.InstancedMesh(new THREE.CircleGeometry(2.5,16),new THREE.MeshBasicMaterial({color:0xf5b95b,transparent:true,opacity:.14,depthWrite:false}),sites.length);
 const matrix=new THREE.Matrix4();const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2);
-sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,GROUND_Y+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,GROUND_Y+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,GROUND_Y+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
+sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,terrainHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,terrainHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,terrainHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
 world.add(poles);nightGroup.add(lamps,pools);
-for(const [x,z] of [[-20,-24],[-20,32],[8,32],[36,-24],[-65,96],[-101,72]]) {
-  const light=new THREE.PointLight(0xffc477,24,36,1.8);light.position.set(x,GROUND_Y+7,z);nightGroup.add(light);
+for(const id of ['park','hotel','market','hospital','port','restaurant']){
+ const zone=ZONES[id],x=zone.x,z=zone.z;
+ const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,terrainHeight(x,z)+8,z);nightGroup.add(light);
 }
 // A distant camera-relative backdrop stays visible above an isometric city view.
 const space=new THREE.Group();space.name='night-sky-backdrop';space.visible=false;camera.add(space);scene.add(camera);

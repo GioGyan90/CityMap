@@ -1,36 +1,31 @@
 import * as THREE from 'three';
-import { rnd } from "./random";
-import { toon } from "./materials";
-import { Z0, X_END, COAST, BEACH_W, Z1 } from "./config";
-import { world } from "./scene";
-
+import { toon } from './materials';
+import { world } from './scene';
+import { westCoast,eastCoast,terrainHeight } from './layout';
 import './water';
 
-/* ============================================================
-   3. 陆地 / 沙滩 / 草地 / 海岸泡沫
-   ============================================================ */
-export function makeBandMesh(xA, xB, depth, y, material, step = 2) {
-  const pts = [];
-  for (let z = Z0; z <= Z1; z += step) pts.push([xA(z), z]);
-  for (let z = Z1; z >= Z0; z -= step) pts.push([xB(z), z]);
-
-  const shape = new THREE.Shape();
-  shape.moveTo(pts[0][0], -pts[0][1]);
-  for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], -pts[i][1]);
-  shape.closePath();
-
-  const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 1 });
-  const mesh = new THREE.Mesh(geo, material);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.y = y;
-  mesh.receiveShadow = true;
-  world.add(mesh);
-  return mesh;
+const positions:number[]=[],colors:number[]=[],indices:number[]=[];
+const rows=135,cols=110;
+for(let row=0;row<=rows;row++){
+ const z=-200+402*row/rows,left=westCoast(z),right=eastCoast(z);
+ for(let col=0;col<=cols;col++){
+  const x=left+(right-left)*col/cols,y=terrainHeight(x,z);positions.push(x,y,z);
+  const coastDistance=Math.min(x-left,right-x);const color=new THREE.Color(coastDistance<10?0xdecba0:y>49?0x7d9273:y>23?0x5f9765:0x83b776);
+  color.multiplyScalar(1+.035*Math.sin(x*.23+z*.17));colors.push(color.r,color.g,color.b);
+ }
 }
-
-/* 岛体（沙色） */
-makeBandMesh(COAST, () => X_END, 1.0, 0, toon(0xf2dfae));
-/* 城市草地 */
-makeBandMesh(z => COAST(z) + BEACH_W, () => X_END, 0.06, 1.0, toon(0x86c96b));
-/* 湿沙 */
-makeBandMesh(z => COAST(z) + 0.4, z => COAST(z) + 3.4, 0.035, 1.0, toon(0xe3cb94));
+for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+ const a=row*(cols+1)+col,b=a+cols+1;indices.push(a,b,a+1,a+1,b,b+1);
+}
+const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(indices);geometry.computeVertexNormals();
+const terrain=new THREE.Mesh(geometry,toon(0xffffff,{vertexColors:true}));terrain.name='irregular-elevated-terrain';terrain.receiveShadow=true;world.add(terrain);
+// Rock-faced coastal side walls expose the elevation difference at the shore.
+for(const edge of [westCoast,eastCoast]){
+ const verts:number[]=[];
+ for(let z=-200;z<202;z+=2){const zz=Math.min(z+2,202),x=edge(z),xx=edge(zz),y=terrainHeight(x,z),yy=terrainHeight(xx,zz);verts.push(x,-.7,z,x,y,z,xx,yy,zz,x,-.7,z,xx,yy,zz,xx,-.7,zz);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.computeVertexNormals();
+ const m=new THREE.Mesh(g,toon(0xa39b83,{side:THREE.DoubleSide}));m.name='coastal-rock-wall';world.add(m);
+}
+// Reclaimed harbor quay joins the natural peninsula and supports the terminal.
+const quay=new THREE.Mesh(new THREE.BoxGeometry(70,1.8,38),toon(0xb5b6a8));quay.position.set(155,.16,163);quay.receiveShadow=true;world.add(quay);
+world.userData.terrain={minimum:1.06,maximum:Math.max(...positions.filter((_,i)=>i%3===1)),rows,cols};

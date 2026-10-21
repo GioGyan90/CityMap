@@ -96,7 +96,7 @@ export function facadeMaterial(tex) {
 export type BuildingStyle = 'flat' | 'pitched' | 'glass' | 'stepped' | 'artdeco' | 'round' | 'arcade' | 'apartment' | 'villa' | 'warehouse';
 export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
-  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean;
+  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number;
 }
 export const buildingStats = { count: 0, styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
 const buildingGroups: THREE.Group[] = [];
@@ -108,13 +108,13 @@ function accent(color: number) {
 
 export function makeBuilding(o: BuildingOptions) {
   const { x, z, w = 8, d = 8, h = 10, ry = 0, base = '#f3ebdd', win = '#48759c',
-    roof = 0x3d6281, lit = 0.25, style = 'flat', detail = true } = o;
+    roof = 0x3d6281, lit = 0.25, style = 'flat', detail = true, elevation = GROUND_Y } = o;
   buildingStats.count++;
   buildingStats.styles[style] = (buildingStats.styles[style] || 0) + 1;
   buildingFootprints.push({ x, z, w: Math.abs(w*Math.cos(ry))+Math.abs(d*Math.sin(ry)), d: Math.abs(d*Math.cos(ry))+Math.abs(w*Math.sin(ry)) });
   const g = new THREE.Group();
   g.name = `building-${style}`;
-  g.position.set(x, GROUND_Y, z);
+  g.position.set(x, elevation, z);
   g.rotation.y = ry;
   world.add(g);
   buildingGroups.push(g);
@@ -151,7 +151,7 @@ export function makeBuilding(o: BuildingOptions) {
   } else {
     const glass = style === 'glass';
     block(w,h,d,h/2, glass ? blue : sideMat);
-    addOutline(new THREE.BoxGeometry(w,h,d),x,GROUND_Y+h/2,z,ry);
+    addOutline(new THREE.BoxGeometry(w,h,d),x,elevation+h/2,z,ry);
     if (glass) {
       for (let y=3; y<h; y+=4) block(w+.25,.45,d+.25,y,trim);
       for (const xx of [-w*.45,0,w*.45]) block(.36,h,.38,h/2,trim,xx,d/2+.12);

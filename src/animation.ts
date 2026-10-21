@@ -4,7 +4,8 @@ import { renderer, scene, camera, controls, world } from "./scene";
 import { updateWater } from './water';
 import { spinWheels, movingCarts } from "./amusement";
 import { boats } from "./port";
-import { cars } from "./traffic";
+import { updateTraffic } from './traffic';
+import { updateTransport } from './transport';
 import { labelRenderer } from "./labels";
 import { updateCamera } from "./camera";
 
@@ -38,6 +39,8 @@ export function animate() {
     c.offset = (c.offset + dt * c.speed) % 1;
     const p = c.curve.getPointAt(c.offset);
     c.mesh.position.copy(p);
+    const source=c.mesh.parent.userData.sourceCenter;
+    if(source)c.mesh.position.sub(new THREE.Vector3().fromArray(source));
     const tan = c.curve.getTangentAt(c.offset);
     c.mesh.rotation.y = Math.atan2(tan.x, tan.z);
   }
@@ -55,23 +58,8 @@ export function animate() {
     b.mesh.rotation.y = b.dir > 0 ? 0 : Math.PI;
   }
 
-  /* 汽车 */
-  for (const c of cars) {
-    c.t += c.dir * c.speed * dt;
-    if (c.t > 1) c.t = 0;
-    if (c.t < 0) c.t = 1;
-
-    const r = c.route;
-    if (r.type === 'x') {
-      c.mesh.position.x = r.from + (r.to - r.from) * c.t;
-      c.mesh.position.z = r.line + c.dir * 1.6;
-      c.mesh.rotation.y = c.dir > 0 ? 0 : Math.PI;
-    } else {
-      c.mesh.position.z = r.from + (r.to - r.from) * c.t;
-      c.mesh.position.x = r.line - c.dir * 1.6;
-      c.mesh.rotation.y = c.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
-    }
-  }
+  updateTraffic(dt);
+  updateTransport(dt);
 
   /* 灯塔光束旋转 */
   const beaconLight = world.getObjectByName('lighthouse-beacon');

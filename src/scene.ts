@@ -13,10 +13,10 @@ export const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xd2e9ff, 720, 1500);
 
 export const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.5, 4000);
-camera.position.set(-270, 225, 285);
+camera.position.set(-225, 225, 320);
 
 export const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(65, 10, 0);
+controls.target.set(80, 13, 8);
 controls.enableDamping = true;
 controls.dampingFactor = 0.075;
 controls.maxPolarAngle = 1.45;

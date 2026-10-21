@@ -1,65 +1,25 @@
 import * as THREE from 'three';
-import { toon } from "./materials";
-import { GROUND_Y, COAST, Z0, Z1 } from "./config";
-import { world } from "./scene";
-
-export const ROAD_X = [-34, -6, 22, 50, 74, 102, 130, 158, 186];
-export const ROAD_Z = [-150, -122, -94, -66, -38, -10, 18, 46, 74, 102, 130, 158];
-export const RW = 7;
-export const ROAD_Y = GROUND_Y + 0.02;
-
-export const roadMat = toon(0x8d94a8);
-export const walkMat = toon(0xd9d2c0);
-export const dashMat = toon(0xfdfbf2);
-
-export function flatQuad(cx, cz, w, d, y, mat) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06, d), mat);
-  m.position.set(cx, y, cz);
-  m.receiveShadow = true;
-  world.add(m);
-  return m;
+import { toon } from './materials';
+import { world } from './scene';
+import { terrainHeight,westCoast,ROAD_PATHS } from './layout';
+export const ROAD_X=[-34,-6,22,50,74,102,130,158,186];
+export const ROAD_Z=[-150,-122,-94,-66,-38,-10,18,46,74,102,130,158];
+export const RW=7,ROAD_Y=1.08;
+export const roadMat=toon(0x7d8797),walkMat=toon(0xd8d0bb),dashMat=toon(0xf6eed6);
+export const roadCurves:THREE.CatmullRomCurve3[]=[];
+export function flatQuad(cx,cz,w,d,y,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.06,d),mat);m.position.set(cx,y,cz);m.receiveShadow=true;world.add(m);return m;}
+export function roadCurve(points:[number,number][]){return new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,terrainHeight(x,z)+.2,z)),false,'catmullrom',.16);}
+export function roadRibbon(curve:THREE.Curve<THREE.Vector3>,width:number,offset:number,material:THREE.Material,elevated=false){
+ const vertices:number[]=[],indices:number[]=[];const n=Math.max(24,Math.ceil(curve.getLength()/2));
+ for(let i=0;i<=n;i++){const p=curve.getPointAt(i/n),t=curve.getTangentAt(i/n);const length=Math.hypot(t.x,t.z);const nx=-t.z/length*width/2,nz=t.x/length*width/2;
+  for(const side of [-1,1]){const x=p.x+nx*side,z=p.z+nz*side;vertices.push(x,(elevated?p.y:terrainHeight(x,z))+offset,z);}}
+ for(let i=0;i<n;i++){const a=i*2,b=a+2;indices.push(a,a+1,b,a+1,b+1,b);}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();
+ const mesh=new THREE.Mesh(geo,material);mesh.receiveShadow=true;world.add(mesh);return mesh;
 }
-
-export function buildRoads() {
-  const xA = ROAD_X[0], xB = ROAD_X[ROAD_X.length - 1];
-  const zA = ROAD_Z[0], zB = ROAD_Z[ROAD_Z.length - 1];
-
-  // Main avenues span the city; outer roads terminate at gardens and larger blocks.
-  for(const x of ROAD_X) {
-    const start=x===130?-94:zA,end=x===158?102:zB;
-    const width=x===22?9:RW;
-    flatQuad(x,(start+end)/2,width+3.4,end-start+3.4,ROAD_Y-.04,walkMat);
-    flatQuad(x,(start+end)/2,width,end-start,ROAD_Y,roadMat);
-    for(let z=start+2;z<end-1;z+=6)flatQuad(x,z,.32,2.6,ROAD_Y+.04,dashMat);
-  }
-  for(const z of ROAD_Z) {
-    const end=[-122,-38,18,130].includes(z)?102:xB;
-    const width=z===-66||z===74?9:RW;
-    flatQuad((xA+end)/2,z,end-xA+3.4,width+3.4,ROAD_Y-.04,walkMat);
-    flatQuad((xA+end)/2,z,end-xA,width,ROAD_Y,roadMat);
-    for(let x=xA+2;x<end-1;x+=6)flatQuad(x,z,2.6,.32,ROAD_Y+.04,dashMat);
-  }
-  // Narrow, curved promenade follows the shoreline instead of another rectangular road.
-  const positions:number[]=[];
-  for(let z=Z0+4;z<Z1-4;z+=3) {
-    const a=COAST(z)+15.5,b=COAST(z+3)+15.5;
-    positions.push(a-1.2,GROUND_Y+.13,z,a+1.2,GROUND_Y+.13,z,b+1.2,GROUND_Y+.13,z+3,
-      a-1.2,GROUND_Y+.13,z,b+1.2,GROUND_Y+.13,z+3,b-1.2,GROUND_Y+.13,z+3);
-  }
-  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();
-  const promenade=new THREE.Mesh(geometry,walkMat);promenade.name='curved-coastal-promenade';promenade.receiveShadow=true;world.add(promenade);
-
+export function buildRoads(){
+ for(const road of ROAD_PATHS){const curve=roadCurve(road.points);roadCurves.push(curve);roadRibbon(curve,road.width+3,.08,walkMat).name='sidewalk-'+road.id;roadRibbon(curve,road.width,.18,roadMat).name='road-'+road.id;
+  const count=Math.floor(curve.getLength()/7);for(let i=0;i<count;i++){const t=(i+.5)/count,p=curve.getPointAt(t),v=curve.getTangentAt(t);const dash=flatQuad(p.x,p.z,.28,2.5,terrainHeight(p.x,p.z)+.24,dashMat);dash.rotation.y=Math.atan2(v.x,v.z);}}
+ const coast=roadCurve(Array.from({length:28},(_,i)=>{const z=-172+i*13;return [westCoast(z)+8,z] as [number,number]}));roadRibbon(coast,2.5,.15,walkMat).name='curved-coastal-promenade';
 }
 buildRoads();
-
-/* 斑马线（几处路口） */
-export function crosswalk(cx, cz, dir) {
-  for (let i = -2; i <= 2; i++) {
-    if (dir === 'x') flatQuad(cx + i * 1.5, cz, 0.7, RW - 1.4, ROAD_Y + 0.06, dashMat);
-    else flatQuad(cx, cz + i * 1.5, RW - 1.4, 0.7, ROAD_Y + 0.06, dashMat);
-  }
-}
-crosswalk(-6, 18, 'x');
-crosswalk(22, -10, 'z');
-crosswalk(8, 46, 'x');
-

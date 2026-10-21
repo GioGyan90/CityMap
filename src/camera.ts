@@ -3,18 +3,13 @@ import { camera, controls } from "./scene";
 import { labelObjs } from "./labels";
 
 export const VIEWS = {
-  hero:   { pos: [-270, 225, 285], target: [65, 10, 0] },
-  top:    { pos: [80, 560, 0.01],    target: [80, 0, 0] },
-  park:   { pos: [-72, 34, 26],    target: [-20, 8, -24] },
-  port:   { pos: [-150, 52, 145],  target: [-78, 6, 82] },
-  hospital: { pos: [0, 48, 24], target: [36, 8, -24] },
-  hotel: { pos: [-65, 45, 85], target: [-20, 10, 32] },
-  market: { pos: [-24, 38, 76], target: [8, 5, 32] },
-  cafe: { pos: [0, 32, 73], target: [36, 5, 32] },
-  restaurant: { pos: [-60, 34, 102], target: [-20, 5, 60] },
-  skyline: { pos: [-120, 110, 30], target: [58, 36, -106] },
-  residential: { pos: [10, 100, 230], target: [132, 8, 92] },
-  civic:  { pos: [-6, 40, 66],     target: [8, 10, 6] }
+ hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},
+ park:{pos:[-109,76,20],target:[-20,12,-65]},market:{pos:[-89,67,109],target:[-18,9,35]},
+ hotel:{pos:[-99,70,219],target:[-12,11,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
+ hospital:{pos:[53,82,44],target:[138,15,-40]},cafe:{pos:[22,59,193],target:[93,9,125]},
+ restaurant:{pos:[62,62,210],target:[141,10,137]},port:{pos:[48,78,279],target:[155,8,182]},
+ skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[104,111,157],target:[193,18,35]}
+
 };
 
 export let camTween = null;

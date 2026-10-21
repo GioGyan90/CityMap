@@ -1,8 +1,9 @@
+import {SHORE_Z,WEST_X,EAST_X} from './layout';
 import * as THREE from 'three';
 import { world } from './scene';
 
 export const waterUniforms={
-  time:{value:0},night:{value:0},
+  time:{value:0},night:{value:0},westShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(WEST_X[i],z))},eastShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(EAST_X[i],z))},
   shallow:{value:new THREE.Color('#349eac')},deep:{value:new THREE.Color('#196487')}
 };
 const material=new THREE.ShaderMaterial({
@@ -13,15 +14,16 @@ const material=new THREE.ShaderMaterial({
     void main(){vec3 p=position;p.y+=swell(p.xz);vec4 wp=modelMatrix*vec4(p,1.);vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}
   `,
   fragmentShader:`
-    uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
+    uniform vec2 westShore[12];uniform vec2 eastShore[12];uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
     float surface(vec2 p){p.x+=sin(p.y*.041+time*.22)*2.5;p.y+=sin(p.x*.032-time*.15)*1.7;return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65)+.045*sin(dot(p,vec2(.52,.28))+time*1.5)+.025*sin(dot(p,vec2(-.32,.71))-time*1.8);}
     void main(){
       vec2 p=vWorld.xz;float e=.12;
       vec3 n=normalize(vec3(surface(p-vec2(e,0.))-surface(p+vec2(e,0.)),2.*e,surface(p-vec2(0.,e))-surface(p+vec2(0.,e))));
       vec3 view=normalize(cameraPosition-vWorld);
       float fresnel=pow(1.-max(dot(n,view),0.),3.);
-      float coast=-58.+5.*sin(p.y*.04)+3.*cos(p.y*.1);
-      float distanceToCoast=coast-p.x;
+      float west=westShore[0].x,east=eastShore[0].x;
+      for(int i=0;i<11;i++){if(p.y>=westShore[i].y){float k=clamp((p.y-westShore[i].y)/(westShore[i+1].y-westShore[i].y),0.,1.);k=k*k*(3.-2.*k);west=mix(westShore[i].x,westShore[i+1].x,k);east=mix(eastShore[i].x,eastShore[i+1].x,k);}}
+      float distanceToCoast=max(west-p.x,p.x-east);
       float nearShore=1.-smoothstep(0.,36.,distanceToCoast);
       vec3 color=mix(deep,shallow,nearShore*.65);
       color=mix(color,mix(vec3(.37,.65,.77),vec3(.025,.06,.14),night),fresnel*.7);
@@ -31,7 +33,7 @@ const material=new THREE.ShaderMaterial({
       color+=mix(vec3(.85,.83,.64),vec3(.28,.4,.65),night)*sun*.7;
       float crest=sin(distanceToCoast*2.4-time*1.6+sin(p.y*.23)*.8);
       float foam=smoothstep(.64,.97,crest)*(1.-smoothstep(.3,3.3,abs(distanceToCoast)));
-      foam*=1.-smoothstep(183.,188.,abs(p.y));
+      foam*=1.-smoothstep(197.,205.,abs(p.y));
       color=mix(color,mix(vec3(.8,.94,.91),vec3(.16,.31,.42),night),foam*.65);
       float distanceToCamera=length(cameraPosition-vWorld);
       color=mix(color,mix(vec3(.64,.8,.91),vec3(.015,.035,.085),night),smoothstep(700.,1500.,distanceToCamera));

@@ -1,3 +1,8 @@
+import {buildSiteDetails} from './siteDetails';
+import { ZONES, terrainHeight } from './layout';
+import { specialBuildings } from './specialBuildings';
+import { buildParcels } from './parcels';
+import { buildTransport,buildStreetFurniture } from './transport';
 import * as THREE from 'three';
 import { registerSpecial, registerGroup, collectBackgroundBuildings } from './specialBuildings';
 import { billiardsHall, marketDetails, commercialDistrict, hospitalDetails, hotelDetails, restaurantDetails, cafeDetails } from './conceptDetails';
@@ -44,31 +49,21 @@ registerSpecial('commercial','市中心商业区 · 3 号球馆','蓝金穹顶�
 registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
 buildMountains();
 
-/* 7 × 11 connected city blocks, with landmarks kept as open reservations. */
-export const BLOCK_X = [-20, 8, 36, 62, 88, 116, 144, 172];
-export const BLOCK_Z = [-136, -108, -80, -52, -24, 4, 32, 60, 88, 116, 144];
-export const RESERVED = new Set([
-  '-20,-24','8,4','36,-24','-20,32','8,32','36,32','-20,60',
-  '-20,4','8,60','36,4','36,-108',
-  '8,-24','62,4','88,32','88,60','144,32','144,60','116,116','62,88'
-]);
-for (const bx of BLOCK_X) {
-  for (const bz of BLOCK_Z) {
-    if (!RESERVED.has(`${bx},${bz}`)) fillBlock(bx,bz);
-  }
+// Move complete facilities with all their details, animation roots and pick bounds.
+for(const entry of specialBuildings){
+ const zone=ZONES[entry.id];if(!zone)continue;
+ const source=entry.group.position.clone();entry.group.userData.sourceCenter=source.toArray();
+ const base=zone.level??terrainHeight(zone.x,zone.z);
+ entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
+ entry.group.scale.set(zone.sx,sy,zone.sz);
+ entry.pick.geometry.dispose();entry.group.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(entry.group);
+ entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(25,bounds.max.y-base+3),zone.d);
+ const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
+buildSiteDetails();
+buildParcels();
+plantTrees();buildTransport();buildCars();buildStreetFurniture();buildClouds();
+batchBuildings();finalizeOutlines();collectBackgroundBuildings();
+world.userData.layoutVersion='peninsula-terrain-v2';
 
-/* Transition to small houses and warehouses along the foot of the hills. */
-for (let z=-130;z<155;z+=20) {
-  makeBuilding({x:205,z,w:rr(7,11),d:rr(7,11),h:rr(5,10),style:z%40===10?'warehouse':'villa',
-    base:pick(RES_BASES),roof:pick(ROOF_COLS)});
-}
-buildUrbanDetails();
-
-plantTrees();
-buildCars();
-buildClouds();
-batchBuildings();
-finalizeOutlines();
-collectBackgroundBuildings();
-
+world.userData.zoneLayout=Object.fromEntries(specialBuildings.map(entry=>[entry.id,{position:entry.group.position.toArray(),scale:entry.group.scale.toArray()}]));
