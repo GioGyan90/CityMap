@@ -1,6 +1,6 @@
 import {hotelPlazaOutline} from '../src/hotelPlaza';
 import {nearestRoad} from '../src/roadNetwork';
-import {ZONES} from '../src/layout';
+import {ZONES,isLand,railCorridor} from '../src/layout';
 import {surfaceHeight,terrainPositions,terrainRows,terrainCols} from '../src/terrainSurface';
 import {roadProfiles} from '../src/roadNetwork';
 import {entranceWall} from '../src/buildingAccess';
@@ -87,4 +87,21 @@ test('clipped hotel plaza clears the road and sidewalk along every boundary edge
    assert.ok(clearance>1.2,`hotel plaza intrudes into road/sidewalk at ${x},${z}: ${clearance}`);
   }
  }console.log({hotelRoadClearance:minimum});
+});
+
+
+test('villa and coastal lighthouse sites stay on land and clear transit and roads',()=>{
+ for(const id of ['villa','lighthouse']){
+  const zone=ZONES[id];let minimum=Infinity;
+  for(let ix=0;ix<=10;ix++)for(let iz=0;iz<=10;iz++){
+   const x=zone.x-zone.w/2+zone.w*ix/10,z=zone.z-zone.d/2+zone.d*iz/10;
+   assert.ok(isLand(x,z),`${id} site outside coastline at ${x},${z}`);
+   assert.equal(railCorridor(x,z),false,`${id} site intrudes into transit corridor`);
+   const road=nearestRoad(x,z);minimum=Math.min(minimum,road.distance-road.width/2);
+  }
+  assert.ok(minimum>1.8,`${id} site intrudes into sidewalk: ${minimum}`);
+  console.log({site:id,roadClearance:minimum,summit:surfaceHeight(zone.x,zone.z)});
+ }
+ const a=ZONES.lighthouse,b=ZONES.port;
+ assert.ok(Math.abs(a.x-b.x)>(a.w+b.w)/2+5||Math.abs(a.z-b.z)>(a.d+b.d)/2+5);
 });

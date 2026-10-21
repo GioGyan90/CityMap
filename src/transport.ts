@@ -39,9 +39,25 @@ export function buildTransport(){
  for(const side of [-1,1]){const pts:THREE.Vector3[]=[];for(let i=0;i<=80;i++){const p=highway.getPointAt(i/80),t=highway.getTangentAt(i/80);p.x+=-t.z*side*4.8;p.z+=t.x*side*4.8;p.y+=.8;pts.push(p);}world.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),100,.13,5,false),toon(0xc8d1cf)));}
  for(const t of [.36,.73]){
   const p=commuter.getPointAt(t),tan=commuter.getTangentAt(t);const station=new THREE.Group();station.name='elevated-rail-station';station.position.copy(p);station.rotation.y=Math.atan2(tan.x,tan.z);world.add(station);
-  box(8,.5,19,0xdedacc,0,.2,0,station);box(8.5,.4,20,0x3b7b9c,0,4.5,0,station);
-  for(const x of [-3.5,3.5])for(const z of [-7,0,7])box(.2,4.2,.2,0x687d86,x,2.4,z,station);
-  for(let i=0;i<15;i++)box(2.1,.72,1.1,0xc9c7b6,6,-i*.7,-7+i*.75,station);
+  // Side platforms leave the central running envelope open, including its roof clearance.
+  for(const side of [-1,1]){
+   const x=side*4.35;
+   box(2.8,.55,23,0xdedacc,x,.45,0,station);
+   box(.18,.035,22,0xf0c75a,side*3.08,.745,0,station);
+   box(3.2,.28,24,0x3b7b9c,x,4.7,0,station);
+   for(const z of [-10,-3,4,10]){
+    box(.16,4,.16,0x687d86,side*5.5,2.65,z,station);
+    box(.12,.9,.12,0x647c88,side*5.72,1.15,z,station);
+   }
+   box(.12,.12,22,0x647c88,side*5.72,1.6,0,station);
+   for(const z of [-5,5])box(1.1,.35,2,0xc5a273,side*4.8,1.05,z,station);
+   // Enclosed lift at the outside edge: no staircase crossing the track or motorway.
+   const local=new THREE.Vector3(side*7,0,7).applyAxisAngle(new THREE.Vector3(0,1,0),station.rotation.y).add(p);
+   const drop=p.y-surfaceHeight(local.x,local.z);
+   box(2.5,drop+4.7,3,0xc8d9d9,side*7,(4.7-drop)/2,7,station);
+   box(2.8,.25,3.3,0x3b7b9c,side*7,4.8,7,station);
+   box(2,.2,3,0xdedacc,side*5.9,.45,7,station);
+  }
  }
  world.userData.transport={tram:true,elevatedRail:true,elevatedHighway:true,stations:3};
 }

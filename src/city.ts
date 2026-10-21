@@ -13,7 +13,8 @@ import { finalizeOutlines, makeBuilding, batchBuildings } from "./buildings";
 import { RES_BASES, RES_WINS, ROOF_COLS, fillBlock } from "./districts";
 import { buildAmusement } from "./amusement";
 import { buildGovernment, buildHospital, buildHotel, buildMarket, buildCafe, buildRestaurant } from "./landmarks";
-import { buildPort } from "./port";
+import {buildHillVilla} from './hillVilla';
+import { buildPort,buildLighthouse } from "./port";
 import { buildMountains } from "./mountains";
 import { plantTrees } from "./vegetation";
 import { world } from "./scene";
@@ -41,9 +42,11 @@ registerSpecial('cafe','海风咖啡馆','蓝白条纹遮棚与露天咖啡座',
 registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
   buildRestaurant(-20,60);restaurantDetails(-20,60);
 });
-registerSpecial('port','码头市场 · 5 号球馆','灯塔、码头市集、候船楼与港口球馆',[-61,96],[42,25,32],()=>{
+registerSpecial('port','码头市场 · 5 号球馆','码头市集、候船楼与港口球馆',[-61,96],[42,25,32],()=>{
   buildPort();billiardsHall(-44,100,5);
 });
+registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入户台阶',[0,0],[20,18,24],buildHillVilla);
+registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
 const ship=world.getObjectByName('cruise-ship') as THREE.Group;
 world.attach(ship);
 registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);

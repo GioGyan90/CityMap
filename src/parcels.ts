@@ -27,7 +27,7 @@ export function buildParcels(){
   const plan:BuildingPlan=industrial||tries%5===4?'rect':(['E','T','H','L','U','rect','rect','rect'] as const)[made%8];
   const compound=plan!=='rect';
   const w=compound?rr(13,20):rr(tower?10:6,tower?16:12),d=compound?rr(12,18):rr(6,tower?14:11);
-  if(reserved(x,z,w,d)||railCorridor(x,z)||roadDistance(x,z)<Math.max(w,d)*.5+2)continue;
+  if(reserved(x,z,w,d)||[-.5,0,.5].some(dx=>[-.5,0,.5].some(dz=>railCorridor(x+dx*w,z+dz*d)))||roadDistance(x,z)<Math.max(w,d)*.5+2)continue;
   if(!isLand(x-w/2,z-d/2)||!isLand(x+w/2,z+d/2)||surfaceHeight(x,z)>24)continue;
   if(occupied.some(p=>Math.abs(x-p.x)<(w+p.w)/2+1.8&&Math.abs(z-p.z)<(d+p.d)/2+1.8))continue;
   occupied.push({x,z,w,d});made++;

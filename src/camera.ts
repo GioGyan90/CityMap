@@ -1,3 +1,4 @@
+import {terrainHeight} from './layout';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
 import { camera, controls, world } from "./scene";
@@ -6,7 +7,9 @@ import { labelObjs } from "./labels";
 const parkingLots=world.userData.streetLife?.parkingLots??[];
 const lot=parkingLots.find(p=>p.z>40)??parkingLots[0];
 const parkingView=(()=>{if(!lot)return {pos:[-64,140,-3],target:[70,42,-126]};const dx=lot.x-lot.serves[0],dz=lot.z-lot.serves[1],length=Math.hypot(dx,dz),y=surfaceHeight(lot.x,lot.z);return {pos:[lot.x+dx/length*33,y+28,lot.z+dz/length*33],target:[lot.x,y+2,lot.z]};})();
+const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sort((a,b)=>b.position.z-a.position.z)[0]?.position;
 export const VIEWS = {
+ station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
  parking:parkingView,
  hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},
  park:{pos:[-109,76,20],target:[-20,12,-65]},market:{pos:[-89,67,109],target:[-18,9,35]},
@@ -15,7 +18,8 @@ export const VIEWS = {
  promenade:{pos:[-96,29,127],target:[-67,4,98]},
  restaurant:{pos:[62,62,210],target:[141,10,137]},port:{pos:[48,78,279],target:[155,8,182]},
  cruise:{pos:[210,54,272],target:[157,12,205]},
- skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[104,111,157],target:[193,18,35]}
+ skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[207,94,86],target:[256,terrainHeight(256,25)+5,25]},
+ lighthouse:{pos:[301,93,104],target:[254,terrainHeight(254,50)+10,50]}
 
 };
 

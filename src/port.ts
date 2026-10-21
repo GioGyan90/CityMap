@@ -52,8 +52,22 @@ export function buildPort() {
 
   buildCruiseShip();
 
+  /* ---------- 帆船 ---------- */
+  for (let i = 0; i < 6; i++) {
+    const b = makeSailboat(
+      -120 - rnd() * 60,
+      -60 + rnd() * 240
+    );
+    boats.push({ mesh: b, phase: rnd() * TAU, speed: rr(0.08, 0.22), dir: rnd() > 0.5 ? 1 : -1 });
+  }
+}
+
+export function buildLighthouse() {
+  // The dedicated coastal hill has a flat summit; rocks blend its plinth into the slope.
+  const plinth=new THREE.Mesh(new THREE.CylinderGeometry(4,5,.6,20),toon(0xe4d8bd));
+  plinth.position.y=GROUND_Y+.25;plinth.receiveShadow=true;world.add(plinth);
   /* ---------- 灯塔 ---------- */
-  const lx = -56, lz = 100;
+  const lx = 0, lz = 0;
   /* 礁石基座 */
   for (let i = 0; i < 7; i++) {
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rr(1.2, 2.6), 0), toon(0x9aa4b4));
@@ -90,13 +104,15 @@ export function buildPort() {
   beacon.position.set(lx, GROUND_Y + 15.4, lz);
   world.add(beacon);
 
-  /* ---------- 帆船 ---------- */
-  for (let i = 0; i < 6; i++) {
-    const b = makeSailboat(
-      -120 - rnd() * 60,
-      -60 + rnd() * 240
-    );
-    boats.push({ mesh: b, phase: rnd() * TAU, speed: rr(0.08, 0.22), dir: rnd() > 0.5 ? 1 : -1 });
+
+  const door=new THREE.Mesh(new THREE.BoxGeometry(1.1,2,.18),toon(0x326d89));
+  door.position.set(0,GROUND_Y+1.05,2.35);world.add(door);
+  const balcony=new THREE.Mesh(new THREE.TorusGeometry(1.85,.12,5,20),toon(0xf7ead1));
+  balcony.rotation.x=Math.PI/2;balcony.position.y=GROUND_Y+14.1;world.add(balcony);
+  for(let i=0;i<12;i++){
+    const angle=i*TAU/12;
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.8,5),toon(0xf7ead1));
+    post.position.set(Math.sin(angle)*1.85,GROUND_Y+14.5,Math.cos(angle)*1.85);world.add(post);
   }
 }
 

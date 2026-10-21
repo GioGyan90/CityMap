@@ -8,6 +8,7 @@ export const eastCoast=(z:number)=>shore(z,EAST_X);
 export function isLand(x:number,z:number){return z>=-200&&z<=202&&x>=westCoast(z)&&x<=eastCoast(z)||x>=120&&x<=190&&z>=145&&z<=181;}
 export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;level?:number}
 export const ZONES:Record<string,Zone>={
+ villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
  park:{x:-20,z:-65,w:42,d:87,sx:1.65,sz:1.6},market:{x:-18,z:35,w:45,d:76,sx:1.65,sz:1.4},
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
