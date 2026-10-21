@@ -37,7 +37,7 @@ export function palmGeometry() {
     f.rotateX(Math.PI / 2 + 0.34);
     f.rotateY(a);
     f.translate(0, 6.9, 0);
-    parts.push(colorize(f, i % 2 ? 0x3f9e4f : 0x58b862));
+    parts.push(colorize(f, i % 2 ? 0x669e35 : 0xa1c745));
   }
 
   /* 椰子 */
@@ -127,8 +127,8 @@ export function plantTrees() {
   };
 
   mkInstanced(palmGeometry(), palms);
-  mkInstanced(roundTreeGeometry(0x4fa860), trees.slice(0, 70));
-  mkInstanced(roundTreeGeometry(0x63bb70), trees.slice(70, 135));
-  mkInstanced(roundTreeGeometry(0x3d9250), trees.slice(135));
+  mkInstanced(roundTreeGeometry(0x77ad42), trees.slice(0, 70));
+  mkInstanced(roundTreeGeometry(0x9cc752), trees.slice(70, 135));
+  mkInstanced(roundTreeGeometry(0x508d43), trees.slice(135));
 }
 

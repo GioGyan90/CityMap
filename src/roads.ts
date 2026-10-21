@@ -5,7 +5,7 @@ import { terrainHeight,westCoast,ROAD_PATHS } from './layout';
 export const ROAD_X=[-34,-6,22,50,74,102,130,158,186];
 export const ROAD_Z=[-150,-122,-94,-66,-38,-10,18,46,74,102,130,158];
 export const RW=7,ROAD_Y=1.08;
-export const roadMat=toon(0x7d8797),walkMat=toon(0xd8d0bb),dashMat=toon(0xf6eed6);
+export const roadMat=toon(0x758c9d),walkMat=toon(0xf0dbac),dashMat=toon(0xf6eed6);
 export const roadCurves:THREE.CatmullRomCurve3[]=[];
 export function flatQuad(cx,cz,w,d,y,mat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,.06,d),mat);m.position.set(cx,y,cz);m.receiveShadow=true;world.add(m);return m;}
 export function roadCurve(points:[number,number][]){return new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,terrainHeight(x,z)+.2,z)),false,'catmullrom',.16);}

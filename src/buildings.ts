@@ -22,7 +22,7 @@ export function finalizeOutlines() {
   const merged = mergeGeometries(outlineParts, false);
   const lines = new THREE.LineSegments(
     merged,
-    new THREE.LineBasicMaterial({ color: 0x252a42, transparent: true, opacity: 0.8 })
+    new THREE.LineBasicMaterial({ color: 0x365c77, transparent: true, opacity: 0.36 })
   );
   lines.name = "city-building-outlines";
   world.add(lines);
@@ -52,11 +52,11 @@ export function getFacadeTex(base, win, floors, cols, lit) {
   const lg = g.createLinearGradient(0, 0, 0, S);
   lg.addColorStop(0, 'rgba(255,255,255,0.22)');
   lg.addColorStop(0.55, 'rgba(255,255,255,0)');
-  lg.addColorStop(1, 'rgba(20,20,45,0.16)');
+  lg.addColorStop(1, 'rgba(31,79,112,0.08)');
   g.fillStyle = lg;
   g.fillRect(0, 0, S, S);
 
-  const margin = 16;
+  const margin = 10;
   const cw = (S - margin * 2) / cols;
   const ch = (S - margin * 2) / floors;
 
@@ -64,19 +64,19 @@ export function getFacadeTex(base, win, floors, cols, lit) {
     for (let c = 0; c < cols; c++) {
       const px = margin + c * cw;
       const py = margin + r * ch;
-      const padX = cw * 0.22, padY = ch * 0.26;
+      const padX = cw * (floors >= 9 ? .13 : .19), padY = ch * (floors >= 9 ? .16 : .21);
       g.fillStyle = rnd() < lit ? '#ffe9a6' : win;
       g.fillRect(px + padX, py + padY, cw - padX * 2, ch - padY * 2);
-      g.strokeStyle = 'rgba(25,28,48,0.72)';
-      g.lineWidth = 2;
+      g.strokeStyle = 'rgba(39,91,120,0.55)';
+      g.lineWidth = .8;
       g.strokeRect(px + padX, py + padY, cw - padX * 2, ch - padY * 2);
     }
   }
 
-  /* 深色外轮廓 = 漫画感 */
-  g.strokeStyle = '#20243a';
-  g.lineWidth = 10;
-  g.strokeRect(5, 5, S - 10, S - 10);
+  /* Thin warm stone trim preserves light facades at city-map scale. */
+  g.strokeStyle = '#cbbb92';
+  g.lineWidth = 2.6;
+  g.strokeRect(1.5, 1.5, S - 3, S - 3);
 
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -108,8 +108,8 @@ function accent(color: number) {
 }
 
 export function makeBuilding(o: BuildingOptions) {
-  const { x, z, w = 8, d = 8, h = 10, ry = 0, base = '#f3ebdd', win = '#48759c',
-    roof = 0x3d6281, lit = 0.25, style = 'flat', plan = 'rect', detail = true, elevation = GROUND_Y } = o;
+  const { x, z, w = 8, d = 8, h = 10, ry = 0, base = '#f3ebdd', win = '#2183b3',
+    roof = 0x267ca4, lit = 0.25, style = 'flat', plan = 'rect', detail = true, elevation = GROUND_Y } = o;
   buildingStats.count++;
   buildingStats.plans[plan]=(buildingStats.plans[plan]||0)+1;
 

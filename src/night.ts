@@ -1,3 +1,4 @@
+import {DAY_LIGHTING} from './visualStyle';
 import * as THREE from 'three';
 import { scene, world, sky, hemi, sun, fill, camera } from './scene';
 import { COAST, GROUND_Y } from './config';
@@ -71,10 +72,10 @@ layoutBackdrop();window.addEventListener('resize',layoutBackdrop);
 export function setNightMode(value:boolean) {
   nightMode=value;nightGroup.visible=value;space.visible=value;
   (sky.material as THREE.MeshBasicMaterial).map=value?nightSky:daySky;
-  hemi.color.set(value?0x9ebde9:0xdff0ff);hemi.groundColor.set(value?0x15213e:0xffd9a8);hemi.intensity=value?.38:.85;
-  sun.color.set(value?0xa5c4ff:0xfff4dd);sun.intensity=value?.25:1.05;
-  fill.color.set(value?0x5789cf:0xa8d8ff);fill.intensity=value?.22:.35;
-  (scene.fog as THREE.Fog).color.set(value?0x0a1732:0xd2e9ff);
+  hemi.color.set(value?0x9ebde9:DAY_LIGHTING.hemi.sky);hemi.groundColor.set(value?0x15213e:DAY_LIGHTING.hemi.ground);hemi.intensity=value?.38:DAY_LIGHTING.hemi.intensity;
+  sun.color.set(value?0xa5c4ff:DAY_LIGHTING.sun.color);sun.intensity=value?.25:DAY_LIGHTING.sun.intensity;
+  fill.color.set(value?0x5789cf:DAY_LIGHTING.fill.color);fill.intensity=value?.22:DAY_LIGHTING.fill.intensity;
+  (scene.fog as THREE.Fog).color.set(value?0x0a1732:DAY_LIGHTING.fog);
   for(const material of litMaterials) {material.emissive.set(value?0xffca75:0x000000);material.emissiveIntensity=value?.85:0;}
   for(const material of glazingMaterials){material.emissive.set(value?0x174a75:0x000000);material.emissiveIntensity=value?.4:0;}
   for(const material of rideMaterials){material.emissive.copy(value?material.color:new THREE.Color(0));material.emissiveIntensity=value?.45:0;}

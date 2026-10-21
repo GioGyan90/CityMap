@@ -4,7 +4,7 @@ import { toon } from "./materials";
 import { world } from "./scene";
 
 export function buildClouds() {
-  const cloudMat = toon(0xffffff);
+  const cloudMat = toon(0xfffdf2,{emissive:0xdceeff,emissiveIntensity:.09});
   for (let i = 0; i < 14; i++) {
     const g = new THREE.Group();
     const n = ri(3, 6);
@@ -16,7 +16,8 @@ export function buildClouds() {
       g.add(s);
     }
     g.scale.setScalar(.6);
-    g.position.set(rr(-260, 260), rr(150, 190), rr(-260, 260));
+    // Keep clouds over the distant mountains, clear of city landmarks.
+    g.position.set(rr(-240, 350), rr(150, 190), rr(-380, -260));
     world.add(g);
   }
 }
