@@ -52,6 +52,6 @@ export const ROAD_PATHS:Road[]=[
  {id:'seafront-road',width:5,points:Array.from({length:18},(_,i)=>{const z=-160+i*19;return [westCoast(z)+14,z] as [number,number]})}
 ];
 export function roadDistance(x:number,z:number){let best=Infinity;for(const road of ROAD_PATHS)for(let i=1;i<road.points.length;i++){const a=road.points[i-1],b=road.points[i];const vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));best=Math.min(best,Math.hypot(x-a[0]-t*vx,z-a[1]-t*vz)-road.width/2);}return best;}
-export function reserved(x:number,z:number,w:number,d:number){return Object.entries(ZONES).some(([id,s])=>id!=='cruise'&&Math.abs(x-s.x)<(s.w+w)/2+3&&Math.abs(z-s.z)<(s.d+d)/2+3);}
+export function reserved(x:number,z:number,w:number,d:number){return (x>230&&x<260&&z>19&&z<62)||Object.entries(ZONES).some(([id,s])=>id!=='cruise'&&Math.abs(x-s.x)<(s.w+w)/2+3&&Math.abs(z-s.z)<(s.d+d)/2+3);}
 function pathDistance(x:number,z:number,points:number[][]){let best=Infinity;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));best=Math.min(best,Math.hypot(x-a[0]-vx*t,z-a[1]-vz*t));}return best;}
 export function railCorridor(x:number,z:number){return pathDistance(x,z,[[4,-158],[83,-162],[172,-146],[208,-85],[208,-5],[199,68],[191,126]])<12||pathDistance(x,z,[[192,-125],[225,-82],[235,-14],[226,57],[206,114]])<14;}

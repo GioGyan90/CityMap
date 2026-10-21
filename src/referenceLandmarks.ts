@@ -42,7 +42,23 @@ export function referenceHospital(cx:number,cz:number){
  }
  const cross=(x:number,y:number,z:number,s:number)=>{k.box(s*.34,s,.22,0xf14523,x,y,z);k.box(s,s*.34,.24,0xf14523,x,y,z+.02);};
  k.box(5,4.8,.2,C.white,-3,13.9,4.15);cross(-3,14,4.32,3.2);
- k.rounded(10.5,9,.2,-3,18,-2,C.blue,1.6);k.box(5,.05,1.5,C.white,-3,18.13,-2);k.box(1.5,.06,5,C.white,-3,18.14,-2);
+ // Main roof is a clear landing deck; the lower wing is an accessible terrace.
+ k.rounded(11.6,10.6,.28,-3,17.85,-2,0x647e88,1).name='hospital-helipad';
+ const ring=k.mesh(new THREE.RingGeometry(3.65,3.82,48),0xffe4a0,-3,18.145,-2);ring.rotation.x=-Math.PI/2;
+ for(const x of [-4.15,-1.85])k.box(.42,.035,3.3,C.white,x,18.16,-2);
+ k.box(2.3,.035,.42,C.white,-3,18.16,-2);
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;k.ball(.12,0xffbc55,-3+Math.cos(a)*4.65,18.24,-2+Math.sin(a)*4.15);}
+ k.rounded(7.4,10.4,.18,6,14.12,-3,0xd5dfd9,.65).name='hospital-roof-terrace';
+ // Parapets stay below the landing surface, with a separate stair head on the terrace.
+ for(const z of [-8.1,2.1])k.box(7.5,.8,.18,C.white,6,14.65,z);
+ for(const x of [2.3,9.7])k.box(.18,.8,10.2,C.white,x,14.65,-3);
+ k.rounded(2.5,2.6,2.3,6.8,14.3,-6.1,C.white,.2);
+ k.box(1,1.85,.1,C.glass,6.8,15.23,-4.74);
+ k.box(2.8,.18,2.9,C.blue,6.8,16.68,-6.1);
+ for(const z of [-.5,1]){k.box(2,.4,.55,0xb88d59,6,14.65,z);for(const x of [5.3,6.7])k.box(.12,.4,.4,0x61717a,x,14.4,z);}
+ k.box(1.2,.65,2.2,C.stone,8.5,14.6,-2);k.box(1,.4,2,C.green,8.5,15.1,-2);
+ for(const z of [-7.75,3.75])k.box(12.6,.45,.18,C.white,-3,17.75,z);
+ for(const x of [-9.25,3.25])k.box(.18,.45,11.4,C.white,x,17.75,-2);
  k.box(4.7,3,.2,C.glass,-3,2.2,4.18);for(const x of [-5.4,-3,-.6])k.box(.14,3.1,.3,C.cream,x,2.2,4.35);
  for(const x of [-3.9,-2.1])k.box(.1,.6,.2,C.gold,x,2.2,4.4);
  k.box(6.7,.32,3.5,C.blue,-3,4.2,5.5);for(let i=0;i<4;i++){k.box(1.6,.42,.25,C.blue,-5.5+i*1.65,3.9,7.15);k.box(.07,.06,3.5,C.white,-6.25+i*1.65,4.39,5.5);}

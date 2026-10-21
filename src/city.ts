@@ -1,3 +1,4 @@
+import {buildHillAccess} from './hillAccess';
 import {referenceHotel,referenceHospital} from './referenceLandmarks';
 import {buildPromenadeRestaurant} from './promenadeRestaurant';
 import {buildSiteDetails} from './siteDetails';
@@ -66,6 +67,7 @@ for(const entry of specialBuildings){
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
+buildHillAccess();
 buildSiteDetails();
 buildParcels();
 plantTrees();buildTransport();buildCars();buildStreetFurniture();buildClouds();
