@@ -3,12 +3,32 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {ROAD_PATHS,terrainHeight} from '../src/layout';
 import {makeTrafficRoute,poseAt,findJunctions,stepTraffic,vehiclesOverlap,type Vehicle} from '../src/trafficSimulation';
-import {planGeometry,PLANS} from '../src/buildingPlans';
+import {planGeometry,PLANS,createMassing,massingGeometry} from '../src/buildingPlans';
 const source=(points:[number,number][])=>new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,terrainHeight(x,z)+.2,z)),false,'catmullrom',.16);
 test('concave E/T/H/L/U roofs have the polygon area and upward normals',()=>{
  for(const plan of ['E','T','H','L','U'] as const){const g=planGeometry(plan,20,16,12),cap=g.groups[1],index=g.index!,pos=g.attributes.position;let area=0;
  for(let i=cap.start;i<cap.start+cap.count;i+=3){const a=new THREE.Vector3().fromBufferAttribute(pos,index.getX(i)),b=new THREE.Vector3().fromBufferAttribute(pos,index.getX(i+1)),c=new THREE.Vector3().fromBufferAttribute(pos,index.getX(i+2));const cross=b.sub(a).cross(c.sub(a));assert.ok(cross.y>0);area+=cross.y/2;}
  const polygonArea=Math.abs(THREE.ShapeUtils.area(PLANS[plan].map(([x,z])=>new THREE.Vector2(x*20,z*16))));assert.ok(Math.abs(area-polygonArea)<.001);assert.ok(area<20*16*.85);g.dispose();
+ }
+});
+test('varied wings remain connected in the lot and expose only exterior walls and roof terraces',()=>{
+ for(const plan of ['E','T','H','L','U'] as const)for(const seed of [11,33,101]){
+  const wings=createMassing(plan,seed),w=20,d=16,h=30,{geometry:g}=massingGeometry(wings,w,d,h),pos=g.attributes.position;
+  assert.ok(new Set(wings.map(v=>v.height)).size>=2);assert.ok(Math.min(...wings.map(v=>v.height))<.85);assert.equal(Math.max(...wings.map(v=>v.height)),1);
+  const reached=new Set([0]);for(let pass=0;pass<wings.length;pass++)for(let a=0;a<wings.length;a++)if(reached.has(a))for(let b=0;b<wings.length;b++){
+   const p=wings[a],q=wings[b],overlapX=Math.min(p.x1,q.x1)-Math.max(p.x0,q.x0),overlapZ=Math.min(p.z1,q.z1)-Math.max(p.z0,q.z0);
+   if((overlapX>0&&overlapZ>=-.000001)||(overlapZ>0&&overlapX>=-.000001))reached.add(b);
+  }assert.equal(reached.size,wings.length,'all wings must join the building');
+  const inside=(p:THREE.Vector3)=>wings.some(v=>p.x>v.x0*w&&p.x<v.x1*w&&p.z>v.z0*d&&p.z<v.z1*d&&p.y>0&&p.y<v.height*h);
+  let roofArea=0;
+  for(let i=0;i<pos.count;i+=3){
+   const a=new THREE.Vector3().fromBufferAttribute(pos,i),b=new THREE.Vector3().fromBufferAttribute(pos,i+1),c=new THREE.Vector3().fromBufferAttribute(pos,i+2),cross=b.clone().sub(a).cross(c.clone().sub(a)),normal=cross.clone().normalize(),center=a.clone().add(b).add(c).divideScalar(3);
+   assert.ok([a,b,c].every(p=>Math.abs(p.x)<=w/2+.0001&&Math.abs(p.z)<=d/2+.0001&&p.y<=h+.0001));
+   assert.equal(inside(center.clone().addScaledVector(normal,.001)),false,'no wall hidden inside a neighbouring wing');
+   assert.equal(inside(center.clone().addScaledVector(normal,-.001)),true,'surface must enclose a real volume');
+   if(i>=g.groups[1].start){assert.ok(normal.y>.99);roofArea+=cross.length()/2;}
+  }
+  const area=wings.reduce((sum,v)=>sum+(v.x1-v.x0)*w*(v.z1-v.z0)*d,0);assert.ok(Math.abs(roofArea-area)<.001);g.dispose();
  }
 });
 test('full street network: safe spawning, five minutes without overlaps, and live traffic',()=>{

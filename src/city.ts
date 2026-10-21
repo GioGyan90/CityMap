@@ -31,7 +31,7 @@ registerSpecial('hospital','医院学院区 · 4 号球馆','蓝白医院、屋�
 registerSpecial('hotel','海滨酒店','蓝色坡屋顶、阳台与露天泳池',[-20,32],[28,32,26],()=>{
   buildHotel(-20,32);hotelDetails(-20,32);
 });
-registerSpecial('market','台球用品市场 · 2 号球馆','遮棚商铺、球杆摊位与台球用品街',[8,46],[27,18,54],()=>{
+registerSpecial('market','台球用品市场 · 2 号球馆','球与交叉球杆屋顶雕塑、高低商铺、拱形屋顶与台球用品街',[8,46],[27,18,54],()=>{
   buildMarket(8,32);marketDetails(8,32);
 });
 registerSpecial('cafe','海风咖啡馆','蓝白条纹遮棚与露天咖啡座',[36,32],[25,17,24],()=>{

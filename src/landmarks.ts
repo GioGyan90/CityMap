@@ -147,33 +147,18 @@ export function buildMarket(cx, cz) {
 
   const stallCols = [0xef476f, 0x118ab2, 0xffd166, 0x06d6a0, 0x9b5de5];
 
-  for (let ix = -1; ix <= 1; ix++) {
-    for (let iz = -1; iz <= 1; iz++) {
-      if (ix === 0 && iz === 0) continue;
-      const sx = cx + ix * 7.2;
-      const sz = cz + iz * 6.6;
-      /* 摊位桌 */
-      box(4.6, 1.1, 3.2, 0xc9a06a, sx, GROUND_Y + 0.55, sz, { outline: true });
-      /* 条纹顶棚 */
-      const canopy = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.22, 3.8), toon(stallCols[((ix + 1) * 3 + iz + 1) % stallCols.length]));
-      canopy.position.set(sx, GROUND_Y + 3.0, sz);
-      canopy.castShadow = true;
-      world.add(canopy);
-      /* 支柱 */
-      for (const dx of [-2.2, 2.2]) {
-        for (const dz of [-1.5, 1.5]) {
-          const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.0, 5), toon(0xf0e6d2));
-          p.position.set(sx + dx, GROUND_Y + 1.5, sz + dz);
-          world.add(p);
-        }
-      }
-      /* 货箱 */
-      for (let k = 0; k < 3; k++) {
-        const crate = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.9), toon(pick([0xd9a441, 0xc47d4a, 0x8fc46b])));
-        crate.position.set(sx - 1.6 + k * 1.6, GROUND_Y + 1.45, sz + rr(-0.5, 0.5));
-        crate.castShadow = true;
-        world.add(crate);
-      }
+  for (let i=0;i<4;i++) {
+    const sx=cx-8.1+i*5.4,sz=cz+6.5;
+    box(4.6,1.1,3.2,0xc9a06a,sx,GROUND_Y+.55,sz,{outline:true});
+    for(let stripe=0;stripe<8;stripe++){
+      const canopy=new THREE.Mesh(new THREE.BoxGeometry(5.1/8,.22,3.8),toon(stripe%2?0xffefd6:stallCols[i]));
+      canopy.position.set(sx-2.55+(stripe+.5)*5.1/8,GROUND_Y+3,sz);canopy.rotation.x=.1;canopy.castShadow=true;world.add(canopy);
+    }
+    for(const dx of [-2.2,2.2])for(const dz of [-1.5,1.5]){
+      const pole=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,3,5),toon(0xf0e6d2));pole.position.set(sx+dx,GROUND_Y+1.5,sz+dz);world.add(pole);
+    }
+    for(let k=0;k<3;k++){
+      const crate=new THREE.Mesh(new THREE.BoxGeometry(.9,.7,.9),toon(pick([0xd9a441,0xc47d4a,0x8fc46b])));crate.position.set(sx-1.6+k*1.6,GROUND_Y+1.45,sz+rr(-.5,.5));crate.castShadow=true;world.add(crate);
     }
   }
   /* 中央小喷泉 */

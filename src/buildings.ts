@@ -1,4 +1,4 @@
-import {PLANS,planGeometry,type BuildingPlan} from './buildingPlans';
+import {createMassing,massingGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rnd, clamp } from "./random";
@@ -99,7 +99,7 @@ export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
   base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan;
 }
-export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
+export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
 const buildingGroups: THREE.Group[] = [];
 const accentMaterials = new Map<number, THREE.MeshToonMaterial>();
 function accent(color: number) {
@@ -112,7 +112,7 @@ export function makeBuilding(o: BuildingOptions) {
     roof = 0x3d6281, lit = 0.25, style = 'flat', plan = 'rect', detail = true, elevation = GROUND_Y } = o;
   buildingStats.count++;
   buildingStats.plans[plan]=(buildingStats.plans[plan]||0)+1;
-  if(plan!=='rect')buildingStats.samples.push({plan,x,z,w,d,h});
+
   buildingStats.styles[style] = (buildingStats.styles[style] || 0) + 1;
   buildingFootprints.push({ x, z, w: Math.abs(w*Math.cos(ry))+Math.abs(d*Math.sin(ry)), d: Math.abs(d*Math.cos(ry))+Math.abs(w*Math.sin(ry)) });
   const g = new THREE.Group();
@@ -135,17 +135,29 @@ export function makeBuilding(o: BuildingOptions) {
     solid(new THREE.BoxGeometry(bw, bh, bd), material, px, py, pz);
 
   if(plan!=='rect'){
-    const stepped=style==='stepped'||style==='artdeco',lower=stepped?h*.72:h;
-    solid(planGeometry(plan,w,d,lower),[sideMat,roofMat],0,0,0);
-    solid(planGeometry(plan,w*1.02,d*1.02,.45),[trim,roofMat],0,lower,0);
-    if(stepped)solid(planGeometry(plan,w*.72,d*.72,h*.28),[sideMat,roofMat],0,lower,0);
-    // Parapet follows each return in the floor plan, preserving E/T/H silhouettes.
-    const points=PLANS[plan];
-    for(let i=0;i<points.length;i++){
-      const a=points[i],b=points[(i+1)%points.length];
-      const dx=(b[0]-a[0])*w,dz=(b[1]-a[1])*d;
-      const rail=block(Math.hypot(dx,dz),.32,.16,lower+.55,trim,(a[0]+b[0])*w/2,(a[1]+b[1])*d/2);
-      rail.rotation.y=-Math.atan2(dz,dx);
+    const wings=createMassing(plan,x*37.1+z*19.7);
+    buildingStats.samples.push({plan,x,z,w,d,h,wings});
+    g.userData.massing=wings;
+    const {geometry,rims}=massingGeometry(wings,w,d,h);
+    const wingFacade=style==='glass'?facadeMaterial(getFacadeTex('#598ea5','#254f6c',floors,clamp(Math.round(w/2.5),2,8),lit)):sideMat;
+    solid(geometry,[wingFacade,roofMat],0,0,0);
+    for(const {a,b,height} of rims){
+      const edge=block(Math.hypot(b[0]-a[0],b[1]-a[1])+.08,.28,.17,height+.14,trim,(a[0]+b[0])/2,(a[1]+b[1])/2);
+      edge.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);
+    }
+    for(const wing of wings){
+      const cx=(wing.x0+wing.x1)*w/2,cz=(wing.z0+wing.z1)*d/2,ww=(wing.x1-wing.x0)*w,dd=(wing.z1-wing.z0)*d,y=wing.height*h;
+      if(wing.role==='link'){
+        // Low connectors become occupied terraces instead of an equally tall letter stroke.
+        block(ww*.7,.15,dd*.52,y+.12,accent(0xb8a385),cx,cz);
+        for(const side of [-1,1]){
+          block(.55,.5,.55,y+.4,trim,cx+side*ww*.27,cz);
+          solid(new THREE.IcosahedronGeometry(.43,1),accent(0x568263),cx+side*ww*.27,y+.9,cz);
+        }
+      }else if(wing.role==='main'&&Math.min(ww,dd)>2.4){
+        block(ww*.42,.8,Math.min(dd*.3,2.5),y+.4,trim,cx,cz);
+        block(ww*.46,.14,Math.min(dd*.34,2.8),y+.88,blue,cx,cz);
+      }
     }
   } else if (style === 'round') {
     // A distinct cylindrical tower with blue glazing, horizontal rings and a tapered crown.

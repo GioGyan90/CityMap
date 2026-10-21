@@ -1,3 +1,4 @@
+import {billiardEmblem} from './marketEmblem';
 import * as THREE from 'three';
 import { world } from './scene';
 import { GROUND_Y } from './config';
@@ -13,7 +14,7 @@ export function sign(text: string,x: number,y: number,z: number,w: number,h: num
   ctx.font='bold 48px "Microsoft YaHei",sans-serif';ctx.fillText(text,256,68,480);
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
-  mesh.position.set(x,GROUND_Y+y,z);world.add(mesh);return mesh;
+  mesh.position.set(x,GROUND_Y+y,z);mesh.userData.signText=text;world.add(mesh);return mesh;
 }
 export function awning(x:number,y:number,z:number,w:number,d:number,color=0x207fa9) {
   for(let i=0;i<10;i++) {
@@ -21,22 +22,41 @@ export function awning(x:number,y:number,z:number,w:number,d:number,color=0x207f
     mesh.position.set(x-w/2+(i+.5)*w/10,GROUND_Y+y,z);mesh.rotation.x=.12;mesh.castShadow=true;world.add(mesh);
   }
 }
-export function billiardsHall(x:number,z:number,n:number) {
+export function billiardsHall(x:number,z:number,n:number,symbolOnly=false) {
   makeBuilding({x,z,w:7,d:7,h:6.8,style:'arcade',base:n===2?'#b56e4c':'#f4e4bd',roof:n===3?0x272f3d:0x246d85});
   const face=z+3.61;
   box(7.1,2.3,.25,n===3?0x202836:0x216578,x,GROUND_Y+5.2,face,{outline:false});
-  sign(`⑧  ${n}  BILLIARDS`,x,5.2,face+.16,6.8,2);
+  if(symbolOnly)billiardEmblem(x,7.35,z,.58);
+  else sign(`⑧  ${n}  BILLIARDS`,x,5.2,face+.16,6.8,2);
   awning(x,3.7,z+4,7.5,2.2,n===2?0x24805b:0x19769b);
   for(const xx of [-2,0,2]) box(.12,2.6,.15,0xd9bc72,x+xx,GROUND_Y+1.5,face+.02,{outline:false});
 }
 export function marketDetails(cx:number,cz:number) {
-  for(const dx of [-8,8]) {
-    makeBuilding({x:cx+dx,z:cz-8,w:7,d:7,h:9,style:'flat',base:dx<0?'#e7c998':'#b76e4b',roof:0x3e7585});
-    awning(cx+dx,3.7,cz-3,7.5,2.6,dx<0?0xc64b46:0x247eaa);
-    sign(dx<0?'CUE & BALL':'BILLIARD SUPPLY',cx+dx,6,cz-4.4,6.4,1.5);
+  // Taller workshop and lower barrel-roof gallery flank an open market court.
+  const workshop=makeBuilding({x:cx-7.3,z:cz-6.7,w:9,d:8,h:9.4,style:'flat',detail:false,base:'#eedbb7',roof:0x266c85});
+  workshop.name='market-cue-workshop';
+  box(9.3,.35,8.3,0xeadbb7,cx-7.3,GROUND_Y+9.55,cz-6.7,{outline:false});
+  box(4.4,2,2.2,0xeadbb7,cx-7.3,GROUND_Y+10.4,cz-9.5,{outline:false});
+  box(4.7,.22,2.5,0x28657d,cx-7.3,GROUND_Y+11.5,cz-9.5,{outline:false});
+  awning(cx-7.3,3.5,cz-1.9,9.6,2.4,0x247f8d);
+  billiardEmblem(cx-7.3,9.85,cz-6.7,1);
+  const gallery=makeBuilding({x:cx+6.8,z:cz-6.7,w:7.6,d:7.8,h:6.8,style:'flat',detail:false,base:'#b97852',roof:0x315e78});
+  gallery.name='market-arched-gallery';
+  const barrel=new THREE.Mesh(new THREE.CylinderGeometry(3.9,3.9,7.8,24,1,true,0,Math.PI),toon(0x347e9b,{side:THREE.DoubleSide}));
+  barrel.rotation.z=Math.PI/2;barrel.position.set(cx+6.8,GROUND_Y+6.85,cz-6.7);barrel.name='market-barrel-roof';barrel.castShadow=true;world.add(barrel);
+  for(const side of [-1,1]){
+    const end=new THREE.Mesh(new THREE.CircleGeometry(3.9,24,0,Math.PI),toon(0x7ab1bf,{side:THREE.DoubleSide}));end.rotation.y=Math.PI/2;end.position.set(cx+6.8+side*3.91,GROUND_Y+6.85,cz-6.7);world.add(end);
   }
-  for(const dx of [-6,6]) box(.45,7,.45,0x36576b,cx+dx,GROUND_Y+3.5,cz+10,{outline:false});
-  sign('台球用品市场',cx,7.1,cz+10,14,2.6,'#efe4c6','#243e51');
+  for(const dx of [-3.8,-1.3,1.3,3.8]){
+    const points=Array.from({length:25},(_,i)=>{const a=i*Math.PI/24;return new THREE.Vector3(cx+6.8+dx,GROUND_Y+6.9+3.93*Math.sin(a),cz-6.7+3.93*Math.cos(a));});
+    const rib=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),24,.055,5,false),toon(0xe8d6ab));world.add(rib);
+  }
+  awning(cx+6.8,3.4,cz-2,8,2.3,0xb75b45);
+  // Deep display windows and entrance frames use shapes instead of written signage.
+  for(const dx of [-9.8,-6.7,4.3,7.3]){
+    box(2.3,2.2,.16,0x3d7c91,cx+dx,GROUND_Y+4.8,cz-2.64,{outline:false});
+    box(2.5,.16,.3,0xe9d5a4,cx+dx,GROUND_Y+6,cz-2.6,{outline:false});
+  }
   // Upright cues and balls distinguish these stalls from a generic food market.
   for(let i=0;i<6;i++) {
     const cue=new THREE.Mesh(new THREE.CylinderGeometry(.04,.08,3.7,5),toon(0xc89d56));
@@ -44,7 +64,7 @@ export function marketDetails(cx:number,cz:number) {
     const ball=new THREE.Mesh(new THREE.SphereGeometry(.24,8,6),toon([0xf7d05a,0x2879af,0xdd5a60][i%3]));
     ball.position.set(cx+5+i*.48,GROUND_Y+1.6,cz+6);world.add(ball);
   }
-  billiardsHall(cx,cz+28,2);
+  billiardsHall(cx,cz+28,2,true);
 }
 export function commercialDistrict(cx:number,cz:number) {
   makeBuilding({x:cx-2,z:cz-2,w:13,d:13,h:82,style:'artdeco',base:'#e7dfc8',win:'#478db5',roof:0x1f76a8});
