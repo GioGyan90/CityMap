@@ -23,6 +23,7 @@ export function finalizeOutlines() {
     merged,
     new THREE.LineBasicMaterial({ color: 0x252a42, transparent: true, opacity: 0.8 })
   );
+  lines.name = "city-building-outlines";
   world.add(lines);
   outlineParts.forEach(part => part.dispose());
   outlineParts.length = 0;
@@ -192,6 +193,8 @@ function rrHeight(h: number) { return h > 45 ? 4 : 2; }
 export function batchBuildings() {
   const buckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
   for (const g of buildingGroups) {
+    // Special buildings keep independent geometry for hover focus.
+    if (g.parent !== world) continue;
     g.updateMatrixWorld(true);
     g.traverse(obj => {
       if (!(obj instanceof THREE.Mesh)) return;

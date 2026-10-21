@@ -1,3 +1,4 @@
+import { updateFocus } from './focus';
 import * as THREE from 'three';
 import { renderer, scene, camera, controls, world } from "./scene";
 import { waveTex } from "./environment";
@@ -74,10 +75,11 @@ export function animate() {
   }
 
   /* 灯塔光束旋转 */
-  const beaconLight = world.children.find(o => o instanceof THREE.PointLight);
+  const beaconLight = world.getObjectByName('lighthouse-beacon');
   if (beaconLight instanceof THREE.PointLight) beaconLight.intensity = 4 + Math.sin(t * 2.2) * 3;
 
   controls.update();
+  updateFocus(frameDt);
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
 }

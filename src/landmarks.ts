@@ -79,17 +79,17 @@ export function buildHospital(cx, cz) {
   /* 主楼 */
   box(15, 17, 13, 0xf7fbff, cx - 1, GROUND_Y + 8.5, cz - 1);
   /* 裙楼 */
-  box(10, 9, 9, 0xeaf3fb, cx + 9.5, GROUND_Y + 4.5, cz + 2);
+  box(7, 9, 8, 0xeaf3fb, cx + 7, GROUND_Y + 4.5, cz + 2);
   /* 屋顶红十字 */
   box(6.2, 0.5, 1.7, 0xe8423c, cx - 1, GROUND_Y + 17.3, cz - 1, { outline: false });
   box(1.7, 0.5, 6.2, 0xe8423c, cx - 1, GROUND_Y + 17.3, cz - 1, { outline: false });
 
   /* 停机坪 */
-  const pad = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.3, 18), toon(0x9aa7b8));
-  pad.position.set(cx + 9.5, GROUND_Y + 9.15, cz + 2);
+  const pad = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 0.3, 18), toon(0x9aa7b8));
+  pad.position.set(cx + 7, GROUND_Y + 9.15, cz + 2);
   world.add(pad);
   const hMark = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 3.0, 0.12, 18), toon(0xfdfbf2));
-  hMark.position.set(cx + 9.5, GROUND_Y + 9.32, cz + 2);
+  hMark.position.set(cx + 7, GROUND_Y + 9.32, cz + 2);
   world.add(hMark);
 
   /* 救护车 */
@@ -110,16 +110,10 @@ export function buildHospital(cx, cz) {
 export function buildHotel(cx, cz) {
   flatQuad(cx, cz, 27, 25, GROUND_Y + 0.06, toon(0xf2eadb));
 
-  /* 主塔楼 */
-  makeBuilding({
-    x: cx - 5, z: cz - 4, w: 12, d: 12, h: 23,
-    base: '#fdf7e8', win: '#3d7ba8', roof: 0x2f7fa8, style: 'pitched', lit: 0.5
-  });
-  /* 裙楼 */
-  makeBuilding({
-    x: cx + 6.5, z: cz - 6, w: 10, d: 9, h: 10,
-    base: '#fff8ea', win: '#4a86ad', roof: 0xd9a441, style: 'flat', lit: 0.45
-  });
+  /* White seaside wings and a central blue-roofed belvedere. */
+  makeBuilding({x:cx,z:cz-4,w:12,d:9,h:17,base:'#fff8ed',win:'#4d90b4',roof:0x2c78a6,style:'pitched'});
+  for (const dx of [-8,8]) makeBuilding({x:cx+dx,z:cz-3,w:5,d:9,h:12,base:'#fff7e6',win:'#4d90b4',roof:0x2c78a6,style:'pitched'});
+  makeBuilding({x:cx,z:cz-5,w:5,d:5,h:23,base:'#fff8e6',win:'#4d90b4',roof:0x246997,style:'pitched'});
 
   /* 泳池 */
   const deck = new THREE.Mesh(new THREE.BoxGeometry(14, 0.2, 8), toon(0xf5ecd8));
@@ -161,7 +155,7 @@ export function buildMarket(cx, cz) {
       /* 摊位桌 */
       box(4.6, 1.1, 3.2, 0xc9a06a, sx, GROUND_Y + 0.55, sz, { outline: true });
       /* 条纹顶棚 */
-      const canopy = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.22, 3.8), toon(stallCols[(ix + 1) * 3 + iz + 1]));
+      const canopy = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.22, 3.8), toon(stallCols[((ix + 1) * 3 + iz + 1) % stallCols.length]));
       canopy.position.set(sx, GROUND_Y + 3.0, sz);
       canopy.castShadow = true;
       world.add(canopy);
@@ -196,7 +190,7 @@ export function buildCafe(cx, cz) {
 
   makeBuilding({
     x: cx - 4, z: cz - 4, w: 12, d: 10, h: 9,
-    base: '#fff2d9', win: '#5a7fa0', roof: 0xb5543f, style: 'pitched', lit: 0.6
+    base: '#fff2d9', win: '#5a7fa0', roof: 0x356b93, style: 'pitched', lit: 0.6
   });
 
   /* 条纹遮阳棚 */
@@ -204,7 +198,7 @@ export function buildCafe(cx, cz) {
   awn.position.set(cx - 4, GROUND_Y + 4.6, cz + 3.4);
   awn.rotation.x = -0.16;
   awn.castShadow = true;
-  world.add(awn);
+  // Replaced by striped awnings in conceptDetails.ts.
 
   /* 户外咖啡座 */
   for (let i = 0; i < 5; i++) {
@@ -244,7 +238,7 @@ export function buildRestaurant(cx, cz) {
   awn.position.set(cx - 2, GROUND_Y + 4.2, cz + 3.2);
   awn.rotation.x = -0.14;
   awn.castShadow = true;
-  world.add(awn);
+  // Replaced by striped awnings in conceptDetails.ts.
 
   /* 海边桌椅 */
   for (let i = 0; i < 6; i++) {

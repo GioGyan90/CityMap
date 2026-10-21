@@ -37,3 +37,11 @@
   .lbl.mtn{ background:rgba(226,245,220,.95); }
 
 #loading{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#bfe3ff;color:#1b2038;font-weight:bold} .toolbar{max-height:calc(100dvh - 36px);overflow:auto;padding:0 5px 6px} button:focus-visible{outline:3px solid #ffb52e;outline-offset:3px} .lbl{font-family:inherit} @media(max-width:640px){.hud{left:12px;top:12px}.hud h1{font-size:15px;letter-spacing:1px}.hud p{font-size:10px;max-width:190px}.toolbar{right:8px;top:72px;gap:6px}.toolbar button{padding:7px 9px;font-size:11px}.legend{left:12px;bottom:12px;max-width:75vw;gap:4px}.legend span{font-size:9px;padding:3px 6px}.lbl{font-size:10px;padding:2px 6px;letter-spacing:.5px}}
+
+.lbl[data-special]{pointer-events:auto;cursor:pointer;transition:opacity .2s,background .2s,border-color .2s}
+.lbl.is-focused{background:#fff0bb;border-color:#bc7d23;z-index:2}
+.lbl.is-muted{opacity:.34}
+.lbl:focus-visible{outline:3px solid #e9ae3d;outline-offset:3px}
+.focus-card{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:30;pointer-events:none;background:#fff8e9f2;border:2px solid #bc9051;box-shadow:3px 3px 0 #1b203833;border-radius:12px;padding:12px 20px;color:#20324a;text-align:center;max-width:70vw}
+.focus-card[hidden]{display:none}.focus-card strong,.focus-card span{display:block}.focus-card strong{font-size:15px}.focus-card span{font-size:11px;margin-top:4px}
+@media(max-width:640px){.focus-card{bottom:75px;width:85vw;max-width:85vw;padding:9px 12px}.focus-card strong{font-size:13px}}

@@ -1,3 +1,4 @@
+import { buildCruiseShip } from './cruiseShip';
 import * as THREE from 'three';
 import { rnd, rr, TAU } from "./random";
 import { gradientMap, toon } from "./materials";
@@ -49,72 +50,7 @@ export function buildPort() {
   jib.castShadow = true;
   world.add(jib);
 
-  /* ---------- 邮轮 ---------- */
-  const ship = new THREE.Group();
-  ship.position.set(-96, 0, 73);
-  world.add(ship);
-
-  /* 船体（俯视轮廓挤出） */
-  const hullShape = new THREE.Shape();
-  hullShape.moveTo(-28, 0);
-  hullShape.lineTo(-22, 7);
-  hullShape.lineTo(12, 7);
-  hullShape.lineTo(28, 0);
-  hullShape.lineTo(12, -7);
-  hullShape.lineTo(-22, -7);
-  hullShape.closePath();
-
-  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 6, bevelEnabled: false, curveSegments: 2 });
-  const hull = new THREE.Mesh(hullGeo, toon(0xf6f9ff));
-  hull.rotation.x = -Math.PI / 2;
-  hull.position.y = 5.2;
-  hull.castShadow = true;
-  hull.receiveShadow = true;
-  ship.add(hull);
-
-  /* 吃水线 */
-  const waterline = new THREE.Mesh(new THREE.BoxGeometry(52, 0.6, 13.4), toon(0x1e3d63));
-  waterline.position.y = 1.6;
-  ship.add(waterline);
-
-  /* 甲板层 */
-  box(46, 2.0, 12.4, 0xeaf0fa, -96, 12.2, 73);
-  box(42, 4.0, 11.6, 0xfbfdff, -96, 15.2, 73);
-  box(36, 3.6, 10.6, 0xf5f9ff, -97, 19.0, 73);
-  box(28, 3.2, 9.4, 0xfbfdff, -98, 22.4, 73);
-
-  /* 蓝色窗带 */
-  for (const [yy, ww] of [[15.4, 41], [19.2, 35], [22.6, 27]]) {
-    for (const s of [-1, 1]) {
-      const band = new THREE.Mesh(new THREE.BoxGeometry(ww, 1.0, 0.3), toon(0x2f6f9e));
-      band.position.set(-96, yy, 73 + s * (5.6 + (ww === 41 ? 0 : ww === 35 ? -0.4 : -1)));
-      ship.add(band);
-    }
-  }
-
-  /* 救生艇 */
-  for (let i = 0; i < 6; i++) {
-    for (const s of [-1, 1]) {
-      const life = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.2, 1.6), toon(0xff8c42));
-      life.position.set(-114 + i * 7, 17.9, 73 + s * 6.6);
-      life.castShadow = true;
-      ship.add(life);
-    }
-  }
-
-  /* 烟囱 */
-  const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.3, 6.0, 12), toon(0xfbfdff));
-  funnel.position.set(-96, 27.0, 73);
-  funnel.castShadow = true;
-  ship.add(funnel);
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 1.2, 12), toon(0x2f7fa8));
-  cap.position.set(-96, 30.4, 73);
-  ship.add(cap);
-
-  /* 船头桅杆 */
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 8, 6), toon(0xdfe7f5));
-  mast.position.set(-72, 12, 73);
-  ship.add(mast);
+  buildCruiseShip();
 
   /* ---------- 灯塔 ---------- */
   const lx = -56, lz = 100;
@@ -150,6 +86,7 @@ export function buildPort() {
 
   /* 引导灯点光 */
   const beacon = new THREE.PointLight(0xffe066, 6, 40, 2);
+  beacon.name = "lighthouse-beacon";
   beacon.position.set(lx, GROUND_Y + 15.4, lz);
   world.add(beacon);
 
@@ -166,6 +103,7 @@ export function buildPort() {
 export function makeSailboat(x, z) {
   const g = new THREE.Group();
   g.position.set(x, 0, z);
+  g.userData.ambient = true;
 
   const hull = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.0, 8, 1), toon(0xfbfdff));
   hull.scale.set(1, 1, 3.4);

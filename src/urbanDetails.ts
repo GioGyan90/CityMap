@@ -22,6 +22,9 @@ export function buildUrbanDetails() {
       box(.4,2,.4,0x8a6848,x+dx,GROUND_Y+1,z+dz,{outline:false});
     }
   }
+}
+
+export function buildCampus() {
   // Low-rise blue-roofed academy plus a sports ground, a distinct landmark in the east.
   for (const x of [136,152]) makeBuilding({x,z:24,w:7,d:16,h:12,style:'arcade',base:'#ecdcbc',roof:0x355a7a});
   makeBuilding({x:144,z:19,w:11,d:7,h:17,style:'artdeco',base:'#f2e3c8',roof:0x355a7a});
