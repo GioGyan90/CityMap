@@ -33,7 +33,7 @@ test('government portico leaves a clear human-height route from the steps to the
 });
 
 test('complete city assembles with finite geometry and explicit rail termini',async()=>{
- world.clear();await import('../src/city');world.updateMatrixWorld(true);
+ world.clear();await import('../src/environment');await import('../src/city');world.updateMatrixWorld(true);
  assert.ok(world.getObjectByName('north-rail-terminus'));
  assert.ok(world.getObjectByName('south-rail-terminus'));
  let meshes=0;
@@ -42,4 +42,29 @@ test('complete city assembles with finite geometry and explicit rail termini',as
   for(let i=0;i<p.count;i++)assert.ok(Number.isFinite(p.getX(i))&&Number.isFinite(p.getY(i))&&Number.isFinite(p.getZ(i)),'finite geometry');
  });
  assert.ok(meshes>100);
+});
+
+
+test('harbor ground faces point upward and reclaimed fill is separated from the terrain',()=>{
+ const terrain=world.getObjectByName('irregular-elevated-terrain') as THREE.Mesh;
+ const fill=world.getObjectByName('reclaimed-quay-fill') as THREE.Mesh;
+ assert.ok(terrain&&fill);
+ const box=new THREE.Box3().setFromObject(fill);
+ assert.ok(box.max.y<1.06-.2,'no coincident cap at the terrain height');
+ const g=terrain.geometry,p=g.attributes.position,idx=g.index!;
+ for(let i=0;i<idx.count;i+=3){
+  const a=new THREE.Vector3().fromBufferAttribute(p,idx.getX(i)),b=new THREE.Vector3().fromBufferAttribute(p,idx.getX(i+1)),c=new THREE.Vector3().fromBufferAttribute(p,idx.getX(i+2));
+  assert.ok(b.sub(a).cross(c.sub(a)).y>=0,'terrain has no inverted ground triangles');
+ }
+});
+test('three ports have separate functions and the cruise hull clears its quay',()=>{
+ const cargo=world.getObjectByName('cargo-harbor')!,fish=world.getObjectByName('fish-market-wharf')!,passenger=world.getObjectByName('passenger-harbor')!,ship=world.getObjectByName('cruise-ship')!;
+ assert.ok(cargo&&fish&&passenger&&ship);
+ assert.equal(fish.getObjectByName('freight-container'),undefined);
+ assert.ok(cargo.getObjectByName('freight-container'));
+ const bounds=[cargo,fish,passenger].map(g=>new THREE.Box3().setFromObject(g));
+ for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)assert.equal(bounds[i].intersectsBox(bounds[j]),false,'separate port districts');
+ const shipBounds=new THREE.Box3().setFromObject(ship);
+ assert.ok(shipBounds.min.z>170,'ship hull clears the passenger pier edge');
+ assert.ok(shipBounds.max.x<0,'cruise berth is away from the fish market');
 });

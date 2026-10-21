@@ -1,3 +1,4 @@
+import {RECLAIMED_FILL_TOP} from './harborPlan';
 import {terrainRows,terrainCols,terrainPositions} from './terrainSurface';
 import {createGroundMaterial} from './groundRoadMaterial';
 import {COAST_PALETTE as palette,beachExtension} from './visualStyle';
@@ -32,7 +33,7 @@ for(const edge of [westCoast,eastCoast]){
  const m=new THREE.Mesh(g,toon(palette.rock,{side:THREE.DoubleSide}));m.name='coastal-rock-wall';world.add(m);
 }
 // Reclaimed harbor quay joins the natural peninsula and supports the terminal.
-const quay=new THREE.Mesh(new THREE.BoxGeometry(70,1.8,38),toon(palette.quay));quay.position.set(155,.16,163);quay.receiveShadow=true;world.add(quay);
+const quay=new THREE.Mesh(new THREE.BoxGeometry(70,1.8,38),toon(palette.quay));quay.name='reclaimed-quay-fill';quay.position.set(155,RECLAIMED_FILL_TOP-.9,163);quay.receiveShadow=true;world.add(quay);
 world.userData.terrain={minimum:1.06,maximum:Math.max(...positions.filter((_,i)=>i%3===1)),rows,cols};
 
 // Gently sloping gold foreshore. This leaves roads and landmark sites in place.

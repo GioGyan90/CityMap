@@ -1,3 +1,4 @@
+import {HARBOR_SITES} from './harborPlan';
 /** Geography and zoning shared by terrain, parcels, roads, picking and labels. */
 export const SHORE_Z=[-200,-180,-150,-120,-90,-50,0,40,80,120,160,202];
 export const WEST_X=[-30,-69,-79,-76,-84,-69,-71,-83,-70,-60,-55,0];
@@ -8,6 +9,7 @@ export const eastCoast=(z:number)=>shore(z,EAST_X);
 export function isLand(x:number,z:number){return z>=-200&&z<=202&&x>=westCoast(z)&&x<=eastCoast(z)||x>=120&&x<=190&&z>=145&&z<=181;}
 export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;level?:number}
 export const ZONES:Record<string,Zone>={
+ cargo:{...HARBOR_SITES.cargo,sx:1,sz:1,level:1.06},passenger:{...HARBOR_SITES.passenger,sx:1,sz:1,level:1.06},
  villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
  park:{x:-20,z:-65,w:42,d:87,sx:1.65,sz:1.6},market:{x:-18,z:35,w:45,d:76,sx:1.65,sz:1.4},
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
@@ -15,7 +17,7 @@ export const ZONES:Record<string,Zone>={
  cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:137,w:35,d:36,sx:1.3,sz:1.3},
  promenade:{x:westCoast(98)-1,z:98,w:22,d:20,sx:1,sz:1,level:1.06},
  port:{x:156,z:167,w:50,d:38,sx:1.15,sz:1.15,level:1.06},
- commercial:{x:70,z:-126,w:33,d:33,sx:1.2,sz:1.15},cruise:{x:157,z:205,w:75,d:25,sx:1,sz:1,level:0}
+ commercial:{x:70,z:-126,w:33,d:33,sx:1.2,sz:1.15},cruise:{x:-106,z:180,w:75,d:25,sx:1,sz:1,level:0}
 };
 function smooth(a:number,b:number,v:number){const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);}
 function rawHeight(x:number,z:number){
@@ -32,7 +34,7 @@ export function terrainHeight(x:number,z:number){
  if(quayDistance<=0)return 1.06;
  if(quayDistance<10)h=1.06+(h-1.06)*smooth(0,10,quayDistance);
  for(const [id,s] of Object.entries(ZONES)){
-  if(id==='cruise'||id==='port')continue;
+  if(['cruise','port','cargo','passenger'].includes(id))continue;
   const distance=Math.max(Math.abs(x-s.x)-s.w/2,Math.abs(z-s.z)-s.d/2);
   if(distance<5){const level=s.level??rawHeight(s.x,s.z);h=h+(level-h)*(1-smooth(0,5,distance));}
  }

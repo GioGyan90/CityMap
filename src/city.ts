@@ -1,3 +1,5 @@
+import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
+import {buildCruiseShip} from './cruiseShip';
 import {buildCoastalRealm} from './coastalRealm';
 import {buildHillAccess} from './hillAccess';
 import {referenceHotel,referenceHospital} from './referenceLandmarks';
@@ -44,12 +46,14 @@ registerSpecial('cafe','海风咖啡馆','蓝白条纹遮棚与露天咖啡座',
 registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
   buildRestaurant(-20,60);restaurantDetails(-20,60);
 });
-registerSpecial('port','码头市场 · 5 号球馆','码头市集、候船楼与港口球馆',[-61,96],[42,25,32],()=>{
-  buildPort();billiardsHall(-44,100,5);
+registerSpecial('port','码头市场 · 5 号球馆','渔船栈桥、鲜鱼摊位与港口球馆',[0,0],[50,25,38],()=>{
+  buildPort();billiardsHall(15,-5,5);
 });
 registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入户台阶',[0,0],[20,18,24],buildHillVilla);
 registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
-const ship=world.getObjectByName('cruise-ship') as THREE.Group;
+registerSpecial('cargo','集装箱货运码头','独立货场、集装箱与装卸起重机',[0,0],[56,24,34],buildCargoHarbor);
+registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与登船廊桥',[0,0],[66,15,35],buildPassengerHarbor);
+const ship=buildCruiseShip();
 world.attach(ship);
 registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
 registerSpecial('commercial','市中心商业区 · 3 号球馆','蓝金穹顶高楼、玻璃裙楼与精品球馆',[36,-108],[27,100,27],()=>commercialDistrict(36,-108));
@@ -68,6 +72,7 @@ for(const entry of specialBuildings){
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
+buildHarborAccess();
 buildHillAccess();
 buildCoastalRealm();
 buildSiteDetails();

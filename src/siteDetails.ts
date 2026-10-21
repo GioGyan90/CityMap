@@ -6,7 +6,7 @@ import { world } from './scene';
 
 export function buildSiteDetails(){
  for(const entry of specialBuildings){
-  if(['cruise','commercial','port','promenade','villa','lighthouse'].includes(entry.id))continue;
+  if(['cruise','commercial','port','promenade','villa','lighthouse','cargo','passenger'].includes(entry.id))continue;
   const zone=ZONES[entry.id],base=zone.level??terrainHeight(zone.x,zone.z);
   const add=(mesh:THREE.Mesh,x:number,y:number,z:number)=>{mesh.position.set(x,y,z);world.add(mesh);entry.group.attach(mesh);mesh.castShadow=mesh.receiveShadow=true;};
   // Perimeter gardens make facility boundaries legible without forcing square city blocks.

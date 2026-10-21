@@ -1,4 +1,4 @@
-import { buildCruiseShip } from './cruiseShip';
+import {kit} from './referenceArchitecture';
 import * as THREE from 'three';
 import { rnd, rr, TAU } from "./random";
 import { gradientMap, toon } from "./materials";
@@ -9,57 +9,30 @@ import { addOutline, makeBuilding, box } from "./buildings";
 export const boats = [];
 
 export function buildPort() {
-  /* ---------- 栈桥 ---------- */
-  const pierX = -74, pierZ = 86, pierL = 54, pierW = 11;
-  box(pierL, 1.4, pierW, 0xc9a373, pierX, 0.6, pierZ);
-  /* 木桩 */
-  const pilMat = toon(0x8a6b4a);
-  for (let i = 0; i < 9; i++) {
-    const px = pierX - pierL / 2 + 3 + i * 6;
-    for (const pz of [pierZ - 4.6, pierZ + 4.6]) {
-      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 3.4, 6), pilMat);
-      c.position.set(px, -0.4, pz);
-      world.add(c);
-    }
+ const root=new THREE.Group();root.name='fish-market-wharf';root.position.y=GROUND_Y;world.add(root);const k=kit(root);
+ k.box(42,.4,28,0xe6d3aa,0,.3,0);
+ // A pedestrian market has small pitched stalls, fish counters and working boats.
+ for(const x of [-13,-4,5])for(const z of [-7,3]){
+  k.box(7,3.4,5,0xffedc7,x,2.2,z);
+  const roof=k.mesh(new THREE.ConeGeometry(1,1,4),z<0?0x2d92ac:0xd67e50,x,4.6,z);roof.rotation.y=Math.PI/4;roof.scale.set(5.5,1.5,4.1);
+  k.box(6.4,.16,1.8,0x3d94a7,x,3.2,z+3);
+  k.box(5.5,.85,1.2,0xb4cbd0,x,1.05,z+2.7);
+  for(let i=-1;i<=1;i++){
+   k.box(1.3,.16,.8,0x4d8d9b,x+i*1.65,1.55,z+2.7);
+   const fish=k.mesh(new THREE.SphereGeometry(.35,8,5),0xbcdce3,x+i*1.65,1.8,z+2.7);fish.scale.set(1.6,.4,.6);
   }
-
-  /* ---------- 候船楼 ---------- */
-  makeBuilding({
-    x: -60, z: 96, w: 14, d: 9, h: 8,
-    base: '#fdf1dc', win: '#3f7c9c', roof: 0x2f7fa8, style: 'pitched', lit: 0.55
-  });
-
-  /* 集装箱 */
-  const boxCols = [0xef476f, 0x118ab2, 0x06d6a0, 0xffd166, 0x9b5de5];
-  for (let i = 0; i < 7; i++) {
-    const cxr = -58 - (i % 3) * 7 + rr(-1, 1);
-    const czr = 80 + Math.floor(i / 3) * 5 + rr(-1, 1);
-    const c = new THREE.Mesh(new THREE.BoxGeometry(6, 2.6, 2.6), toon(boxCols[i % 5]));
-    c.position.set(cxr, GROUND_Y + 1.3 + (i > 4 ? 2.7 : 0), czr);
-    c.castShadow = true;
-    world.add(c);
-    addOutline(new THREE.BoxGeometry(6, 2.6, 2.6), cxr, GROUND_Y + 1.3 + (i > 4 ? 2.7 : 0), czr);
-  }
-
-  /* 吊机 */
-  const craneMat = toon(0xf0b429);
-  const mastH = 16;
-  box(1.4, mastH, 1.4, 0xf0b429, -66, GROUND_Y + mastH / 2, 82);
-  const jib = new THREE.Mesh(new THREE.BoxGeometry(16, 1.0, 1.0), craneMat);
-  jib.position.set(-72, GROUND_Y + mastH, 82);
-  jib.castShadow = true;
-  world.add(jib);
-
-  buildCruiseShip();
-
-  /* ---------- 帆船 ---------- */
-  for (let i = 0; i < 6; i++) {
-    const b = makeSailboat(
-      -120 - rnd() * 60,
-      -60 + rnd() * 240
-    );
-    boats.push({ mesh: b, phase: rnd() * TAU, speed: rr(0.08, 0.22), dir: rnd() > 0.5 ? 1 : -1 });
-  }
+ }
+ for(const x of [-12,5]){
+  k.box(4,.4,15,0xbf9d6a,x,.3,20);
+  for(const z of [15,24])k.box(.6,2,.6,0x876e4f,x,-.6,z);
+  const boat=makeSailboat(x+4.8,22);boat.userData.ambient=false;boat.name='market-fishing-boat';
+  root.attach(boat);boat.position.set(x+4.8,-.8,22);boat.scale.set(.65,.5,.85);
+ }
+ for(const x of [-19,19])for(const z of [-10,10])k.mesh(new THREE.CylinderGeometry(.18,.3,.65,8),0x547680,x,.8,z);
+ for(let i=0;i<6;i++){
+  const b=makeSailboat(-150-rnd()*70,-60+rnd()*240);
+  boats.push({mesh:b,phase:rnd()*TAU,speed:rr(.08,.22),dir:rnd()>.5?1:-1});
+ }
 }
 
 export function buildLighthouse() {
