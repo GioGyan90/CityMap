@@ -29,7 +29,7 @@ export function addLabel(text, x, y, z, cls = '') {
   }
   const obj = new CSS2DObject(div);
   const specialId=div.dataset.special;
-  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='commercial'?105:specialId==='hotel'?29:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:31);}}
+  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='commercial'?105:specialId==='hotel'?35:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:31);}}
   else if(text==='山 脉'){x=205;z=-170;y=terrainHeight(x,z)+15;}
   else if(text==='山麓住宅'){x=211;z=10;y=terrainHeight(x,z)+17;}
   else if(text==='城市花园'){x=72;z=75;y=terrainHeight(x,z)+8;}

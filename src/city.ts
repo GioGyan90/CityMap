@@ -1,3 +1,4 @@
+import {referenceHotel,referenceHospital} from './referenceLandmarks';
 import {buildPromenadeRestaurant} from './promenadeRestaurant';
 import {buildSiteDetails} from './siteDetails';
 import { ZONES, terrainHeight } from './layout';
@@ -26,10 +27,10 @@ registerSpecial('park','海滨游乐场 · 1 号球馆','摩天轮、过山车�
 });
 registerSpecial('civic','政府广场','蓝色穹顶、柱廊与中央喷泉',[8,4],[27,27,27],()=>buildGovernment(8,4));
 registerSpecial('hospital','医院学院区 · 4 号球馆','蓝白医院、屋顶停机坪与街角球馆',[36,-10],[27,25,54],()=>{
-  buildHospital(36,-24);hospitalDetails(36,-24);
+  referenceHospital(36,-24);billiardsHall(36,4,4);
 });
-registerSpecial('hotel','海滨酒店','蓝色坡屋顶、阳台与露天泳池',[-20,32],[28,32,26],()=>{
-  buildHotel(-20,32);hotelDetails(-20,32);
+registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
+  referenceHotel(-20,32);
 });
 registerSpecial('market','台球用品市场 · 2 号球馆','球与交叉球杆屋顶雕塑、高低商铺、拱形屋顶与台球用品街',[8,46],[27,18,54],()=>{
   buildMarket(8,32);marketDetails(8,32);
@@ -45,7 +46,7 @@ registerSpecial('port','码头市场 · 5 号球馆','灯塔、码头市集、�
 });
 const ship=world.getObjectByName('cruise-ship') as THREE.Group;
 world.attach(ship);
-registerGroup('cruise','Lucky Break 豪华邮轮','多层观景甲板、泳池、救生艇与蓝色烟囱',ship,[-101,72],[70,28,18]);
+registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
 registerSpecial('commercial','市中心商业区 · 3 号球馆','蓝金穹顶高楼、玻璃裙楼与精品球馆',[36,-108],[27,100,27],()=>commercialDistrict(36,-108));
 registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
 registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);

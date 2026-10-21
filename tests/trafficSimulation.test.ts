@@ -1,3 +1,6 @@
+import {hotelPlazaOutline} from '../src/hotelPlaza';
+import {nearestRoad} from '../src/roadNetwork';
+import {ZONES} from '../src/layout';
 import {surfaceHeight,terrainPositions,terrainRows,terrainCols} from '../src/terrainSurface';
 import {roadProfiles} from '../src/roadNetwork';
 import {entranceWall} from '../src/buildingAccess';
@@ -72,4 +75,16 @@ test('entrances attach to an exterior wall with enough width and headroom',()=>{
   const inside=(x:number,z:number)=>wings.some(v=>x>v.x0*18&&x<v.x1*18&&z>v.z0*16&&z<v.z1*16);
   assert.equal(inside(wall.x+wall.nx*.01,wall.z+wall.nz*.01),false);assert.equal(inside(wall.x-wall.nx*.01,wall.z-wall.nz*.01),true);assert.ok(wall.length>1.35&&wall.ceiling>2.7);
  }
+});
+
+test('clipped hotel plaza clears the road and sidewalk along every boundary edge',()=>{
+ const zone=ZONES.hotel;let minimum=Infinity;
+ for(let i=0;i<hotelPlazaOutline.length;i++){
+  const a=hotelPlazaOutline[i],b=hotelPlazaOutline[(i+1)%hotelPlazaOutline.length];
+  for(let j=0;j<=100;j++){
+   const x=zone.x+(a[0]+(b[0]-a[0])*j/100)*zone.sx,z=zone.z+(a[1]+(b[1]-a[1])*j/100)*zone.sz;
+   const road=nearestRoad(x,z),clearance=road.distance-road.width/2;minimum=Math.min(minimum,clearance);
+   assert.ok(clearance>1.2,`hotel plaza intrudes into road/sidewalk at ${x},${z}: ${clearance}`);
+  }
+ }console.log({hotelRoadClearance:minimum});
 });
