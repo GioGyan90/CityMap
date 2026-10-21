@@ -2,6 +2,12 @@ name: Build and deploy city map
 on:
   push:
     branches: [main]
+  # A legacy branch-based Pages build may otherwise overwrite the compiled app.
+  # Republish the Vite artifact after that build; the named workflow does not recurse.
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +18,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
