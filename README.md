@@ -57,4 +57,4 @@ npm run preview
 - 摩天轮绕局部 Z 轴转动，吊舱反向补偿以保持直立；支架固定，旋转木马独立绕 Y 轴运动。
 - 静态建筑按材质合并，保留车辆、游乐设施、船只的独立动画。新增或修改建筑后应在全部建造完毕时调用 `batchBuildings()`。
 
-仓库仍使用“Deploy from a branch”时，GitHub 自带的分支发布可能晚于 Vite 发布并覆盖页面。工作流监听该发布完成事件，随后重新发布编译产物，确保最终页面可运行。推荐在 Settings → Pages 中把 Source 改为 GitHub Actions，这样每次更新只需一次构建。
+仓库仍使用“Deploy from a branch”时，GitHub 自带的分支发布可能晚于 Vite 发布并覆盖页面。工作流在最终部署前等待同一提交的分支发布结束，再发布编译产物，确保最终页面可运行。推荐在 Settings → Pages 中把 Source 改为 GitHub Actions，这样每次更新只需一次构建。
