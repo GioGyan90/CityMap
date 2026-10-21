@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>海岸城 · Lucky Break 3D 地图</title></head><body>
+<div id="app"></div>
+
+<div class="hud">
+  <h1>海岸城 · COASTAL CITY</h1>
+  <p>拖拽旋转 · 滚轮缩放 · 右键平移 / 双指操作</p>
+</div>
+
+<div class="toolbar">
+  <button data-view="hero">海岸全景</button>
+  <button data-view="top">俯视地图</button>
+  <button data-view="park">游乐园</button>
+  <button data-view="port">海运码头</button>
+  <button data-view="civic">政府广场</button>
+  <button data-view="hospital">医院</button>
+<button data-view="hotel">高档酒店</button>
+<button data-view="market">市场</button>
+<button data-view="cafe">咖啡馆</button>
+<button data-view="restaurant">餐厅</button>
+<button id="toggleMotion" aria-pressed="false">暂停动画</button>
+<button id="toggleLabels" aria-pressed="true">隐藏地名</button>
+</div>
+
+<div class="legend">
+  <span>🎡 游乐园</span><span>🏛 政府大厅</span><span>🏥 医院</span><span>🏨 高档酒店</span>
+  <span>⚓ 海运码头</span><span>🍴 餐厅</span><span>☕ 咖啡馆</span><span>🧺 市场</span>
+</div>
+
+<div id="loading" role="status">正在建造海岸城…</div><script type="module" src="/src/main.ts"></script></body></html>
