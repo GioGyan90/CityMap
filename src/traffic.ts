@@ -4,12 +4,32 @@ import { world } from './scene';
 import { terrainHeight } from './layout';
 import { roadCurves } from './roads';
 import { toon } from './materials';
-export const cars:{mesh:THREE.Group;curve:THREE.CatmullRomCurve3;offset:number;speed:number;direction:number;elevated:boolean}[]=[];
+import { makeTrafficRoute,poseAt,findJunctions,stepTraffic,vehiclesOverlap,type Vehicle } from './trafficSimulation';
+export const cars:(Vehicle&{mesh:THREE.Group})[]=[];
+const routes=roadCurves.map((curve,id)=>makeTrafficRoute(curve,id));
+let junctions:ReturnType<typeof findJunctions>=[];
 export function buildCars(){
- for(let i=0;i<24;i++){const mesh=new THREE.Group();mesh.name=i%6===0?'city-bus':'road-car';world.add(mesh);const bus=i%6===0;
-  const body=new THREE.Mesh(new THREE.BoxGeometry(bus?2:1.6,bus?2.5:1.25,bus?5.7:3.2),toon([0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4]));body.position.y=bus?1.5:1;mesh.add(body);
+ if(motorwayCurve)routes.push(makeTrafficRoute(motorwayCurve,routes.length,true));
+ junctions=findJunctions(routes);
+ for(let i=0;i<28;i++){
+  const bus=i%7===0,route=routes[i%routes.length],mesh=new THREE.Group();mesh.name=bus?'city-bus':'road-car';
+  const car:typeof cars[number]={id:i,mesh,route,distance:0,length:bus?5.7:3.2,width:bus?2:1.6,desiredSpeed:route.elevated?10+(i%3):5+(i%4)*.6,speed:0,waiting:0,pose:poseAt(route,0)};
+  // Allocate actual free space, including other roads at intersections, before spawning.
+  let placed=false;
+  for(let attempt=0;attempt<160;attempt++){
+   car.distance=((Math.floor(i/routes.length)+.2)*route.length/4+attempt*7.3)%route.length;car.pose=poseAt(route,car.distance);
+   if(junctions.some(z=>Math.hypot(car.pose.position.x-z.position.x,car.pose.position.z-z.position.z)<z.radius+car.length))continue;
+   if(!cars.some(other=>vehiclesOverlap(car,other,3))){placed=true;break;}
+  }
+  if(!placed)continue;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(car.width,bus?2.5:1.25,car.length),toon([0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4]));body.position.y=bus?1.5:1;mesh.add(body);
   const window=new THREE.Mesh(new THREE.BoxGeometry(bus?2.03:1.5,bus?1:.7,bus?4.8:1.8),toon(0x355b73));window.position.y=bus?2.1:1.65;mesh.add(window);
-  cars.push({mesh,curve:i>=20&&motorwayCurve?motorwayCurve:roadCurves[i%roadCurves.length],elevated:i>=20&&!!motorwayCurve,offset:(i*.173)%1,speed:.015+(i%4)*.003,direction:i%2?1:-1});
+  for(const x of [-car.width*.5,car.width*.5])for(const z of [-car.length*.32,car.length*.32]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.18,8),toon(0x30353c));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.48,z);mesh.add(wheel);}
+  mesh.traverse(o=>{if(o instanceof THREE.Mesh)o.castShadow=true;});world.add(mesh);cars.push(car);
  }
+ world.userData.traffic={version:'separated-lanes-reservations-v1',vehicles:cars,junctions};updateTraffic(0);
 }
-export function updateTraffic(dt:number){for(const car of cars){car.offset=(car.offset+dt*car.speed)%1;const t=car.offset<.5?car.offset*2:2-car.offset*2;const p=car.curve.getPointAt(Math.max(.001,Math.min(.999,t))),tan=car.curve.getTangentAt(t);p.x+=-tan.z*car.direction*1.25;p.z+=tan.x*car.direction*1.25;p.y=car.elevated?p.y+.22:terrainHeight(p.x,p.z)+.22;car.mesh.position.copy(p);car.mesh.rotation.y=Math.atan2(tan.x,tan.z)+(car.offset>.5?Math.PI:0);car.mesh.rotation.x=-Math.atan2(tan.y,Math.hypot(tan.x,tan.z));}}
+export function updateTraffic(dt:number){
+ if(dt>0)stepTraffic(cars,junctions,dt);
+ for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);car.mesh.position.y=car.route.elevated?position.y+.22:terrainHeight(position.x,position.z)+.22;car.mesh.rotation.set(pitch,heading,0,'YXZ');}
+}

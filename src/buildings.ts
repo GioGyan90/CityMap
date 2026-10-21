@@ -1,3 +1,4 @@
+import {PLANS,planGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rnd, clamp } from "./random";
@@ -96,9 +97,9 @@ export function facadeMaterial(tex) {
 export type BuildingStyle = 'flat' | 'pitched' | 'glass' | 'stepped' | 'artdeco' | 'round' | 'arcade' | 'apartment' | 'villa' | 'warehouse';
 export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
-  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number;
+  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan;
 }
-export const buildingStats = { count: 0, styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
+export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
 const buildingGroups: THREE.Group[] = [];
 const accentMaterials = new Map<number, THREE.MeshToonMaterial>();
 function accent(color: number) {
@@ -108,8 +109,10 @@ function accent(color: number) {
 
 export function makeBuilding(o: BuildingOptions) {
   const { x, z, w = 8, d = 8, h = 10, ry = 0, base = '#f3ebdd', win = '#48759c',
-    roof = 0x3d6281, lit = 0.25, style = 'flat', detail = true, elevation = GROUND_Y } = o;
+    roof = 0x3d6281, lit = 0.25, style = 'flat', plan = 'rect', detail = true, elevation = GROUND_Y } = o;
   buildingStats.count++;
+  buildingStats.plans[plan]=(buildingStats.plans[plan]||0)+1;
+  if(plan!=='rect')buildingStats.samples.push({plan,x,z,w,d,h});
   buildingStats.styles[style] = (buildingStats.styles[style] || 0) + 1;
   buildingFootprints.push({ x, z, w: Math.abs(w*Math.cos(ry))+Math.abs(d*Math.sin(ry)), d: Math.abs(d*Math.cos(ry))+Math.abs(w*Math.sin(ry)) });
   const g = new THREE.Group();
@@ -131,7 +134,20 @@ export function makeBuilding(o: BuildingOptions) {
   const block = (bw: number, bh: number, bd: number, py: number, material = sideMat, px = 0, pz = 0) =>
     solid(new THREE.BoxGeometry(bw, bh, bd), material, px, py, pz);
 
-  if (style === 'round') {
+  if(plan!=='rect'){
+    const stepped=style==='stepped'||style==='artdeco',lower=stepped?h*.72:h;
+    solid(planGeometry(plan,w,d,lower),[sideMat,roofMat],0,0,0);
+    solid(planGeometry(plan,w*1.02,d*1.02,.45),[trim,roofMat],0,lower,0);
+    if(stepped)solid(planGeometry(plan,w*.72,d*.72,h*.28),[sideMat,roofMat],0,lower,0);
+    // Parapet follows each return in the floor plan, preserving E/T/H silhouettes.
+    const points=PLANS[plan];
+    for(let i=0;i<points.length;i++){
+      const a=points[i],b=points[(i+1)%points.length];
+      const dx=(b[0]-a[0])*w,dz=(b[1]-a[1])*d;
+      const rail=block(Math.hypot(dx,dz),.32,.16,lower+.55,trim,(a[0]+b[0])*w/2,(a[1]+b[1])*d/2);
+      rail.rotation.y=-Math.atan2(dz,dx);
+    }
+  } else if (style === 'round') {
     // A distinct cylindrical tower with blue glazing, horizontal rings and a tapered crown.
     solid(new THREE.CylinderGeometry(w*.48, w*.48, h, 16), blue, 0, h/2, 0);
     for (let y=3; y<h; y+=5) solid(new THREE.CylinderGeometry(w*.50,w*.50,.45,16),trim,0,y,0);

@@ -1,4 +1,4 @@
-import { updateFocus } from './focus';
+import { updateFocus, renderFocusOutline } from './focus';
 import * as THREE from 'three';
 import { renderer, scene, camera, controls, world } from "./scene";
 import { updateWater } from './water';
@@ -68,6 +68,7 @@ export function animate() {
   controls.update();
   updateFocus(frameDt);
   renderer.render(scene, camera);
+  renderFocusOutline();
   labelRenderer.render(scene, camera);
 }
 animate();

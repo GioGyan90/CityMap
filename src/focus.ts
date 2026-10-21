@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { camera, controls, renderer, world } from './scene';
-import { GROUND_Y } from './config';
+import { camera, controls, renderer, world, scene } from './scene';
 import { backgroundBuildings, specialBuildings, pickTargets, type SpecialBuilding } from './specialBuildings';
 
 const gray = new THREE.MeshToonMaterial({color:0xb5bdc5,transparent:true,opacity:.80,depthWrite:false});
@@ -14,21 +13,40 @@ for(const group of groups) {
     if(obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) originalMaterials.set(obj,obj.material);
   });
 }
-// Edge geometry follows each individual building part, including moving rides.
-const edgeMaterial=new THREE.LineBasicMaterial({color:0xffcc69,transparent:true,opacity:.95,depthWrite:false});
-const outlines=new Map<string,THREE.LineSegments[]>();
-for(const entry of specialBuildings) {
-  const lines:THREE.LineSegments[]=[];
-  const meshes:THREE.Mesh[]=[];
-  entry.group.traverse(obj=>{if(obj instanceof THREE.Mesh)meshes.push(obj)});
-  for(const mesh of meshes) {
-    if(new THREE.Box3().setFromObject(mesh).max.y<GROUND_Y+1)continue;
-    const line=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,35),edgeMaterial);
-    line.name='focus-building-outline';line.visible=false;line.renderOrder=5;
-    mesh.add(line);lines.push(line);
-  }
-  outlines.set(entry.id,lines);
+// One screen-space mask for the entire selected facility. Touching/overlapping
+// meshes merge in the mask, so roof seams, windows and furniture edges disappear.
+const maskTarget=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true});
+const maskMaterial=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide});
+const outlineScene=new THREE.Scene(),outlineCamera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const outlineMaterial=new THREE.ShaderMaterial({
+ uniforms:{mask:{value:maskTarget.texture},texel:{value:new THREE.Vector2()},color:{value:new THREE.Color(0xffcc69)}},
+ vertexShader:`varying vec2 uvPos;void main(){uvPos=uv;gl_Position=vec4(position.xy,0.,1.);}`,
+ fragmentShader:`uniform sampler2D mask;uniform vec2 texel;uniform vec3 color;varying vec2 uvPos;
+ void main(){float center=texture2D(mask,uvPos).r;float outer=0.;
+ for(int i=0;i<16;i++){float a=float(i)*6.2831853/16.;outer=max(outer,texture2D(mask,uvPos+vec2(cos(a),sin(a))*texel*2.3).r);}
+ float alpha=outer*(1.-center);if(alpha<.03)discard;gl_FragColor=vec4(color,alpha*.95);}`,
+ transparent:true,depthTest:false,depthWrite:false,toneMapped:false
+});
+outlineScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),outlineMaterial));
+const bufferSize=new THREE.Vector2(),savedColor=new THREE.Color();
+export function renderFocusOutline(){
+ if(!selectedSpecial)return;
+ renderer.getDrawingBufferSize(bufferSize);
+ if(maskTarget.width!==bufferSize.x||maskTarget.height!==bufferSize.y){maskTarget.setSize(bufferSize.x,bufferSize.y);outlineMaterial.uniforms.texel.value.set(1/bufferSize.x,1/bufferSize.y);}
+ const target=renderer.getRenderTarget(),autoClear=renderer.autoClear,alpha=renderer.getClearAlpha(),layers=camera.layers.mask;
+ const override=scene.overrideMaterial,shadows=renderer.shadowMap.autoUpdate;
+ renderer.getClearColor(savedColor);
+ try{
+  camera.layers.set(1);scene.overrideMaterial=maskMaterial;renderer.shadowMap.autoUpdate=false;
+  renderer.setRenderTarget(maskTarget);renderer.setClearColor(0x000000,1);renderer.autoClear=true;renderer.render(scene,camera);
+  scene.overrideMaterial=override;camera.layers.mask=layers;
+  renderer.setRenderTarget(target);renderer.autoClear=false;renderer.render(outlineScene,outlineCamera);
+ }finally{
+  scene.overrideMaterial=override;camera.layers.mask=layers;renderer.setRenderTarget(target);
+  renderer.setClearColor(savedColor,alpha);renderer.autoClear=autoClear;renderer.shadowMap.autoUpdate=shadows;
+ }
 }
+world.userData.focusOutline='unified-silhouette';
 
 const card=document.createElement('div');card.className='focus-card';card.hidden=true;
 const title=document.createElement('strong'),description=document.createElement('span');
@@ -74,7 +92,9 @@ function hitTarget() {
 function select(id: string|null) {
   const next=specialBuildings.find(s=>s.id===id)??null;
   if(next===selectedSpecial)return;
+  selectedSpecial?.group.traverse(obj=>{if(obj instanceof THREE.Mesh)obj.layers.disable(1);});
   selectedSpecial=next;
+  next?.group.traverse(obj=>{if(obj instanceof THREE.Mesh)obj.layers.enable(1);});
   for(const group of groups) {
     const muted=!!next && group!==next.group;
     group.traverse(obj=>{
@@ -84,7 +104,6 @@ function select(id: string|null) {
   }
   canvas.style.cursor=next?'pointer':'';
   card.hidden=!next;
-  for(const [id,lines] of outlines)for(const line of lines)line.visible=id===next?.id;
   if(next) {
     title.textContent=next.name;description.textContent=next.description;
 
