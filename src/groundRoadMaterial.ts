@@ -11,7 +11,7 @@ function path(curve:THREE.Curve<THREE.Vector3>,width:number,color:string){
  ctx.strokeStyle=color;ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
 }
 // All sidewalks first, then the complete asphalt network: junctions have one surface.
-path(promenadeCurve,2.5,'#00ff00');for(const road of roadProfiles)path(road.curve,road.width+3,'#00ff00');
+path(promenadeCurve,3.4,'#00ff00');for(const road of roadProfiles)path(road.curve,road.width+3,'#00ff00');
 for(const road of roadProfiles)path(road.curve,road.width,'#ff0000');
 for(const road of roadProfiles){const count=Math.floor(road.curve.getLength()/7);for(let i=0;i<count;i++){
  const t=(i+.5)/count,p=road.curve.getPointAt(t),v=road.curve.getTangentAt(t);const [x,y]=project(p.x,p.z);

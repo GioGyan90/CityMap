@@ -105,3 +105,16 @@ test('villa and coastal lighthouse sites stay on land and clear transit and road
  const a=ZONES.lighthouse,b=ZONES.port;
  assert.ok(Math.abs(a.x-b.x)>(a.w+b.w)/2+5||Math.abs(a.z-b.z)>(a.d+b.d)/2+5);
 });
+
+test('beach rest areas stay on land, outside landmark lots and clear of driving lanes',async()=>{
+ const {BEACH_ENTRIES}=await import('../src/urbanDesign');
+ const {westCoast,roadDistance,reserved}=await import('../src/layout');
+ for(const z of BEACH_ENTRIES){
+  const x=westCoast(z)+6;
+  for(const dx of [-4,4])for(const dz of [-5.5,5.5]){
+   assert.ok(isLand(x+dx,z+dz),'plaza remains on land');
+   assert.ok(roadDistance(x+dx,z+dz)>0,'plaza does not obstruct the road');
+   assert.equal(reserved(x+dx,z+dz,0,0),false,'plaza avoids landmark sites');
+  }
+ }
+});

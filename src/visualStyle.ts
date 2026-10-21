@@ -9,5 +9,5 @@ export const SEA_PALETTE={shallow:'#23c5c6',deep:'#0677ad'};
 /** Broaden the sandy foreshore, leaving the restaurant's waterfront inlet open. */
 export function beachExtension(z:number){
  const smooth=(a:number,b:number,v:number)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
- return smooth(-196,-168,z)*(1-smooth(160,196,z))*(7.5+2*Math.sin(z*.026))*(1-Math.exp(-Math.pow((z-98)/17,2)));
+ return smooth(-196,-168,z)*(1-smooth(160,196,z))*(9.5+3.5*Math.sin(z*.026)+1.5*Math.cos(z*.063))*(1-Math.exp(-Math.pow((z-98)/17,2)));
 }

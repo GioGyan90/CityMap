@@ -48,6 +48,6 @@ for(let row=0;row<=beachRows;row++){
 for(let row=0;row<beachRows;row++)for(let col=0;col<beachCols;col++){const a=row*(beachCols+1)+col,b=a+beachCols+1;beachIndices.push(a,b,a+1,a+1,b,b+1);}
 const beachGeo=new THREE.BufferGeometry();beachGeo.setAttribute('position',new THREE.Float32BufferAttribute(beachPositions,3));beachGeo.setAttribute('color',new THREE.Float32BufferAttribute(beachColors,3));beachGeo.setIndex(beachIndices);beachGeo.computeVertexNormals();
 const beach=new THREE.Mesh(beachGeo,toon(0xffffff,{vertexColors:true}));beach.name='sunlit-golden-foreshore';beach.receiveShadow=true;world.add(beach);
-world.userData.visualStyle='sunny-coast-v1';
+world.userData.visualStyle='terraced-sunny-coast-v2';
 
 world.userData.roadSurface={mode:'shared-terrain-material',groundLayers:1,markings:'integrated'};

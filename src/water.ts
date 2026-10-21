@@ -26,7 +26,7 @@ const material=new THREE.ShaderMaterial({
       float west=westShore[0].x,east=eastShore[0].x;
       for(int i=0;i<11;i++){if(shoreZ>=westShore[i].y){float k=clamp((shoreZ-westShore[i].y)/(westShore[i+1].y-westShore[i].y),0.,1.);k=k*k*(3.-2.*k);west=mix(westShore[i].x,westShore[i+1].x,k);east=mix(eastShore[i].x,eastShore[i+1].x,k);}}
       // Same foreshore profile as the terrain; keep the promenade restaurant inlet open.
-      float beachWidth=smoothstep(-196.,-168.,p.y)*(1.-smoothstep(160.,196.,p.y))*(7.5+2.*sin(p.y*.026))*(1.-exp(-pow((p.y-98.)/17.,2.)));
+      float beachWidth=smoothstep(-196.,-168.,p.y)*(1.-smoothstep(160.,196.,p.y))*(9.5+3.5*sin(p.y*.026)+1.5*cos(p.y*.063))*(1.-exp(-pow((p.y-98.)/17.,2.)));
       west-=beachWidth;
       vec2 shoreDistance=vec2(max(west-p.x,p.x-east),max(-200.-p.y,p.y-202.));
       float distanceToCoast=length(max(shoreDistance,vec2(0.)))+min(max(shoreDistance.x,shoreDistance.y),0.);

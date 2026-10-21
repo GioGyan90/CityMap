@@ -1,3 +1,4 @@
+import {coastalPublicSpace,groveDensity} from './urbanDesign';
 import {parkingAccessBlocked} from './parking';
 import {surfaceHeight} from './terrainSurface';
 import { isLand,terrainHeight,roadDistance,reserved,railCorridor } from './layout';
@@ -78,7 +79,7 @@ export function roundTreeGeometry(leafColor) {
 export const treeMat = toon(0xffffff, { vertexColors: true });
 
 export function blocked(x, z) {
-  if(parkingAccessBlocked(x,z))return true;
+  if(coastalPublicSpace(x,z,2)||parkingAccessBlocked(x,z))return true;
   for (const b of buildingFootprints) if (Math.abs(x-b.x) < b.w/2+1.5 && Math.abs(z-b.z) < b.d/2+1.5) return true;
   if(roadDistance(x,z)<3||reserved(x,z,2,2)||railCorridor(x,z))return true;
   return false;
@@ -93,20 +94,20 @@ export function plantTrees() {
   const palms = [];
   for (let z = Z0 + 4; z < Z1 - 4; z += 5.5) {
     const cx = COAST(z) + rr(2.5, 10.5);
-    palms.push([cx, z + rr(-1.6, 1.6), rr(0.8, 1.25)]);
+    if(!blocked(cx,z)&&Math.abs(cx-COAST(z)-8)>3.4)palms.push([cx, z, rr(0.8, 1.1)]);
   }
   for (let z = Z0 + 6; z < Z1 - 6; z += 9) {
-    if (rnd() < 0.5) palms.push([COAST(z) + rr(13, 16), z, rr(0.8, 1.2)]);
+    const x=COAST(z)+rr(25,29);if(rnd()<.4&&!blocked(x,z))palms.push([x,z,rr(.8,1.1)]);
   }
   /* --- 内陆树 --- */
   const trees = [];
   let tries = 0;
-  while (trees.length < 420 && tries < 4000) {
+  while (trees.length < 480 && tries < 7500) {
     tries++;
     const x = rr(-50, 274);
     const z = rr(Z0 + 6, Z1 - 6);
     if (!isLand(x,z) || x < COAST(z) + BEACH_W + 1) continue;
-    if (blocked(x, z)) continue;
+    if (blocked(x, z)||rnd()>groveDensity(x,z)) continue;
     trees.push([x, z, rr(0.75, 1.35)]);
   }
 

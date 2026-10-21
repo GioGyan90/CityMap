@@ -1,3 +1,4 @@
+import {buildCoastalRealm} from './coastalRealm';
 import {buildHillAccess} from './hillAccess';
 import {referenceHotel,referenceHospital} from './referenceLandmarks';
 import {buildPromenadeRestaurant} from './promenadeRestaurant';
@@ -68,6 +69,7 @@ for(const entry of specialBuildings){
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
 buildHillAccess();
+buildCoastalRealm();
 buildSiteDetails();
 buildParcels();
 plantTrees();buildTransport();buildCars();buildStreetFurniture();buildClouds();
