@@ -27,7 +27,10 @@ export function animate() {
 
   updateCamera(frameDt);
   /* 摩天轮 & 旋转木马 */
-  for (const w of spinWheels) w.rotation.y += dt * 0.55;
+  for (const ride of spinWheels) {
+    ride.rotor.rotation[ride.axis] = (ride.rotor.rotation[ride.axis] + dt * ride.speed) % (Math.PI * 2);
+    for (const cabin of ride.cabins) cabin.rotation.z = -ride.rotor.rotation.z;
+  }
 
   /* 过山车 */
   for (const c of movingCarts) {

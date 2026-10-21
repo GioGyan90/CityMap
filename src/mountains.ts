@@ -9,8 +9,8 @@ export function buildMountains() {
 
   for (let i = 0; i < 22; i++) {
     const z = Z0 + 12 + i * ((Z1 - Z0 - 24) / 21) + rr(-5, 5);
-    const baseX = 104 + Math.abs(z) * 0.16 + rr(-6, 10);
-    const h = 40 + rr(-10, 26) + (1 - Math.abs(z) / 170) * 26;
+    const baseX = 240 + Math.abs(z) * 0.08 + rr(-6, 10);
+    const h = 40 + rr(-10, 26) + (1 - Math.abs(z) / 220) * 20;
     const r = clamp(h * rr(0.72, 0.95), 26, 46);
 
     const geo = new THREE.ConeGeometry(r, h, 6, 2, false);
@@ -33,7 +33,7 @@ export function buildMountains() {
   /* 山脚低矮丘陵 */
   for (let i = 0; i < 26; i++) {
     const z = rr(Z0 + 6, Z1 - 6);
-    const x = rr(78, 100);
+    const x = rr(212, 230);
     const r = rr(6, 13);
     const geo = new THREE.SphereGeometry(r, 8, 6, 0, TAU, 0, Math.PI / 2);
     const m = new THREE.Mesh(geo, toon(pick([0x6ec27a, 0x5cae6b, 0x7ccb86])));

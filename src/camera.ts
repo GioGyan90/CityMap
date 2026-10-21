@@ -3,8 +3,8 @@ import { camera, controls } from "./scene";
 import { labelObjs } from "./labels";
 
 export const VIEWS = {
-  hero:   { pos: [-215, 172, 205], target: [8, 4, 6] },
-  top:    { pos: [10, 330, 6.01],    target: [10, 0, 6] },
+  hero:   { pos: [-270, 225, 285], target: [65, 10, 0] },
+  top:    { pos: [80, 560, 0.01],    target: [80, 0, 0] },
   park:   { pos: [-72, 34, 26],    target: [-20, 8, -24] },
   port:   { pos: [-150, 52, 145],  target: [-78, 6, 82] },
   hospital: { pos: [0, 48, 24], target: [36, 8, -24] },
@@ -12,6 +12,8 @@ export const VIEWS = {
   market: { pos: [-24, 38, 76], target: [8, 5, 32] },
   cafe: { pos: [0, 32, 73], target: [36, 5, 32] },
   restaurant: { pos: [-60, 34, 102], target: [-20, 5, 60] },
+  skyline: { pos: [-120, 110, 30], target: [58, 36, -106] },
+  residential: { pos: [10, 100, 230], target: [132, 8, 92] },
   civic:  { pos: [-6, 40, 66],     target: [8, 10, 6] }
 };
 

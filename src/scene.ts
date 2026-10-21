@@ -10,18 +10,18 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.getElementById('app').appendChild(renderer.domElement);
 
 export const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xd2e9ff, 520, 1150);
+scene.fog = new THREE.Fog(0xd2e9ff, 720, 1500);
 
 export const camera = new THREE.PerspectiveCamera(43, innerWidth / innerHeight, 0.5, 4000);
-camera.position.set(-215, 172, 205);
+camera.position.set(-270, 225, 285);
 
 export const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(8, 4, 6);
+controls.target.set(65, 10, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.075;
 controls.maxPolarAngle = 1.45;
 controls.minDistance = 40;
-controls.maxDistance = 640;
+controls.maxDistance = 950;
 controls.panSpeed = 0.85;
 
 export const world = new THREE.Group();
@@ -32,15 +32,15 @@ export const hemi = new THREE.HemisphereLight(0xdff0ff, 0xffd9a8, 0.85);
 scene.add(hemi);
 
 export const sun = new THREE.DirectionalLight(0xfff4dd, 1.05);
-sun.position.set(-130, 185, 130);
+sun.position.set(-130, 260, 160);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -230;
-sun.shadow.camera.right = 230;
+sun.shadow.camera.right = 330;
 sun.shadow.camera.top = 230;
 sun.shadow.camera.bottom = -230;
 sun.shadow.camera.near = 1;
-sun.shadow.camera.far = 640;
+sun.shadow.camera.far = 850;
 sun.shadow.bias = -0.0006;
 sun.shadow.normalBias = 0.5;
 scene.add(sun);

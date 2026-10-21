@@ -3,8 +3,8 @@ import { toon } from "./materials";
 import { GROUND_Y } from "./config";
 import { world } from "./scene";
 
-export const ROAD_X = [-34, -6, 22, 50, 74];
-export const ROAD_Z = [-66, -38, -10, 18, 46, 74];
+export const ROAD_X = [-34, -6, 22, 50, 74, 102, 130, 158, 186];
+export const ROAD_Z = [-150, -122, -94, -66, -38, -10, 18, 46, 74, 102, 130, 158];
 export const RW = 7;
 export const ROAD_Y = GROUND_Y + 0.02;
 

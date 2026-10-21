@@ -5,7 +5,7 @@ import { GROUND_Y } from "./config";
 import { world } from "./scene";
 import { box } from "./buildings";
 
-export const spinWheels = [];
+export const spinWheels: { rotor: THREE.Group; axis: "y" | "z"; speed: number; cabins: THREE.Group[] }[] = [];
 export const movingCarts = [];
 
 export function buildAmusement(cx, cz) {
@@ -28,23 +28,23 @@ export function buildAmusement(cx, cz) {
   const frameMat = toon(0xf4f7ff);
   const strutMat = toon(0xff5d73);
 
-  for (const s of [-1, 1]) {
-    const legA = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.45, R * 1.35, 6), frameMat);
-    legA.position.set(s * 0.9, -R * 0.35, 0);
-    legA.rotation.z = s * 0.16;
-    legA.rotation.x = 0.28;
-    legA.castShadow = true;
-    wheelG.add(legA);
-
-    const legB = legA.clone();
-    legB.position.x = s * 0.9;
-    legB.rotation.x = -0.28;
-    wheelG.add(legB);
+  // Four stationary A-frame legs reach from the ground to either end of the axle.
+  for (const side of [-1,1]) for (const foot of [-1,1]) {
+    const top = new THREE.Vector3(0,0,side*1.5);
+    const bottom = new THREE.Vector3(foot*4.5,-(R+3.2),side*3.2);
+    const direction = top.clone().sub(bottom);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.25,.4,direction.length(),6),frameMat);
+    leg.position.copy(top).add(bottom).multiplyScalar(.5);
+    leg.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());
+    leg.castShadow=true;
+    wheelG.add(leg);
   }
 
   const rotor = new THREE.Group();
   wheelG.add(rotor);
-  spinWheels.push(rotor);
+  const cabins: THREE.Group[] = [];
+  rotor.name = "ferris-rotor";
+  spinWheels.push({ rotor, axis: "z", speed: 0.18, cabins });
 
   /* 双环 */
   for (const zz of [-0.9, 0.9]) {
@@ -61,14 +61,25 @@ export function buildAmusement(cx, cz) {
     sp.castShadow = true;
     rotor.add(sp);
   }
-  /* 吊舱 */
+  /* 吊舱以轮缘为支点，反向补偿轮盘角度，始终悬垂。 */
   const cabColors = [0xffd166, 0x06d6a0, 0xef476f, 0x118ab2, 0xff9f1c, 0x9b5de5];
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * TAU;
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.5, 1.7), toon(cabColors[i % cabColors.length]));
-    cab.position.set(Math.cos(a) * R, Math.sin(a) * R, 0);
+    const pivot = new THREE.Group();
+    pivot.name = 'ferris-cabin';
+    pivot.position.set(Math.cos(a) * R, Math.sin(a) * R, 0);
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 1.7), toon(cabColors[i % cabColors.length]));
+    cab.position.y = -1;
     cab.castShadow = true;
-    rotor.add(cab);
+    pivot.add(cab);
+    const glazing = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.65, 1.5), toon(0x98daf0));
+    glazing.position.y = -0.35;
+    pivot.add(glazing);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.2, 1.9), frameMat);
+    roof.position.y = 0.08;
+    pivot.add(roof);
+    rotor.add(pivot);
+    cabins.push(pivot);
   }
   /* 中心轴 */
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 2.6, 12), toon(0xffd166));
@@ -133,7 +144,7 @@ export function buildAmusement(cx, cz) {
   const spinTop = new THREE.Group();
   spinTop.position.y = 1.0;
   carousel.add(spinTop);
-  spinWheels.push(spinTop);
+  spinWheels.push({ rotor: spinTop, axis: "y", speed: 0.55, cabins: [] });
 
   const canopy = new THREE.Mesh(new THREE.ConeGeometry(3.8, 2.2, 12), toon(0xef476f));
   canopy.position.y = 4.2;

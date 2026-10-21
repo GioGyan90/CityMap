@@ -22,20 +22,20 @@ export function makeWaveTexture() {
   }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(30, 30);
+  t.repeat.set(100, 100);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
 export const waveTex = makeWaveTexture();
 
-export const sea = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), toon(0x2b8fcd));
+export const sea = new THREE.Mesh(new THREE.PlaneGeometry(10000, 10000), toon(0x2b8fcd));
 sea.rotation.x = -Math.PI / 2;
 sea.position.y = -0.25;
 sea.receiveShadow = true;
 world.add(sea);
 
 export const seaWaves = new THREE.Mesh(
-  new THREE.PlaneGeometry(3000, 3000),
+  new THREE.PlaneGeometry(10000, 10000),
   new THREE.MeshBasicMaterial({ map: waveTex, transparent: true, opacity: 0.55, depthWrite: false, fog: true })
 );
 seaWaves.rotation.x = -Math.PI / 2;

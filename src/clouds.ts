@@ -15,7 +15,8 @@ export function buildClouds() {
       s.scale.y = rr(0.55, 0.85);
       g.add(s);
     }
-    g.position.set(rr(-260, 260), rr(85, 140), rr(-260, 260));
+    g.scale.setScalar(.6);
+    g.position.set(rr(-260, 260), rr(150, 190), rr(-260, 260));
     world.add(g);
   }
 }

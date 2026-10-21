@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { rnd, rr, TAU } from "./random";
 import { toon } from "./materials";
-import { GROUND_Y, Z0, COAST, BEACH_W, Z1 } from "./config";
+import { GROUND_Y, Z0, COAST, BEACH_W, Z1, buildingFootprints } from "./config";
 import { world } from "./scene";
 import { ROAD_X, ROAD_Z } from "./roads";
 
@@ -75,6 +75,7 @@ export function roundTreeGeometry(leafColor) {
 export const treeMat = toon(0xffffff, { vertexColors: true });
 
 export function blocked(x, z) {
+  for (const b of buildingFootprints) if (Math.abs(x-b.x) < b.w/2+1.5 && Math.abs(z-b.z) < b.d/2+1.5) return true;
   /* 避开道路 */
   for (const rx of ROAD_X) if (Math.abs(x - rx) < 5.4 && z > ROAD_Z[0] - 2 && z < ROAD_Z[ROAD_Z.length - 1] + 2) return true;
   for (const rz of ROAD_Z) if (Math.abs(z - rz) < 5.4 && x > ROAD_X[0] - 2 && x < ROAD_X[ROAD_X.length - 1] + 2) return true;
@@ -100,9 +101,9 @@ export function plantTrees() {
   /* --- 内陆树 --- */
   const trees = [];
   let tries = 0;
-  while (trees.length < 190 && tries < 4000) {
+  while (trees.length < 420 && tries < 4000) {
     tries++;
-    const x = rr(-26, 88);
+    const x = rr(-26, 218);
     const z = rr(Z0 + 6, Z1 - 6);
     if (x < COAST(z) + BEACH_W + 1) continue;
     if (blocked(x, z)) continue;
