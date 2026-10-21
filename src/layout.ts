@@ -42,12 +42,12 @@ export interface Road {id:string;width:number;points:[number,number][]}
 export const ROAD_PATHS:Road[]=[
  {id:'central-boulevard',width:9,points:[[-40,-154],[-7,-123],[20,-95],[28,-50],[25,-15],[22,40],[25,95],[26,163]]},
  {id:'hospital-ring',width:8,points:[[-7,-123],[30,-109],[94,-99],[177,-99],[197,-70],[196,-7],[195,65],[186,121],[167,148]]},
- {id:'civic-approach',width:7,points:[[25,-15],[60,-16],[95,-16],[108,-35],[108,-64],[97,-100]]},
- {id:'harbor-avenue',width:8,points:[[22,48],[62,46],[106,46],[123,79],[119,105],[119,150],[165,150]]},
+ {id:'civic-approach',width:7,points:[[25,-15],[60,-16],[95,-16],[108,-35],[108,-64],[94,-99]]},
+ {id:'harbor-avenue',width:8,points:[[22,40],[62,46],[106,46],[123,79],[119,105],[119,150],[165,150]]},
  {id:'hotel-drive',width:6,points:[[26,95],[55,104],[62,155],[26,163],[-12,169],[-40,155]]},
- {id:'old-town-lane',width:5,points:[[18,-92],[55,-76],[83,-64],[101,-59]]},
- {id:'hill-neighborhood',width:5,points:[[177,-99],[178,-127],[150,-149],[117,-151],[97,-100]]},
- {id:'garden-lane',width:5,points:[[106,46],[104,5],[113,-1],[107,-35]]},
+ {id:'old-town-lane',width:5,points:[[20,-95],[55,-76],[83,-64],[108,-64]]},
+ {id:'hill-neighborhood',width:5,points:[[177,-99],[178,-127],[150,-149],[117,-151],[94,-99]]},
+ {id:'garden-lane',width:5,points:[[106,46],[104,5],[113,-1],[108,-35]]},
  {id:'east-hill-road',width:6,points:[[195,65],[224,68],[239,32],[230,-25],[214,-70],[197,-70]]},
  {id:'seafront-road',width:5,points:Array.from({length:18},(_,i)=>{const z=-160+i*19;return [westCoast(z)+14,z] as [number,number]})}
 ];

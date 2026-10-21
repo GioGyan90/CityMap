@@ -1,3 +1,4 @@
+import {COMMUTER_POINTS,trainProgress} from './transitDesign';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
 import { world } from './scene';
@@ -24,13 +25,38 @@ function train(curve:THREE.CatmullRomCurve3,color:number,offset:number){
  for(const z of [-4,4]){box(2.4,2.5,6.8,color,0,1.5,z,g);box(2.46,.85,5.6,0x254d65,0,1.95,z,g);box(2.5,.32,6.8,0xe9e6d7,0,2.85,z,g);for(const side of [-1,1])box(.16,.25,5.7,0xf3e2ab,side*1.22,.85,z,g);}
  transit.push({mesh:g,curve,offset,speed:.025});
 }
+
+function buildRailTerminus(curve:THREE.CatmullRomCurve3,end:number){
+ const p=curve.getPointAt(end),t=curve.getTangentAt(end),root=new THREE.Group();
+ root.name=end?'south-rail-terminus':'north-rail-terminus';root.position.copy(p);
+ root.rotation.y=Math.atan2(t.x,t.z)+(end?Math.PI:0);root.rotation.x=-Math.atan2(t.y*(end?-1:1),Math.hypot(t.x,t.z));world.add(root);
+ // The station runs inward from the end, with the buffers closing the track visibly.
+ for(const side of [-1,1]){
+  box(2.7,.6,22,0xded3b6,side*4.1,.4,11,root);
+  box(3.2,.3,23,0x3a849d,side*4.1,4.7,11,root);
+  for(const z of [2,10,20])box(.18,4.1,.18,0x71868b,side*5.3,2.5,z,root);
+  box(.16,.05,21,0xeec653,side*2.85,.73,11,root);
+ }
+ box(10.9,.65,2.3,0xdbcfb3,0,.4,-1.2,root);
+ box(1.3,1.1,.45,0xa34f39,0,.85,.3,root);
+ box(2.8,.25,.35,0xf0c765,0,1.5,.3,root);
+ for(const side of [-1,1])box(.22,1.35,.22,0x5e7076,side*.85,.7,.3,root);
+ const base=surfaceHeight(p.x,p.z),drop=Math.max(.5,p.y-base);
+ for(const side of [-1,1]){
+  box(1.2,drop,1.6,0xa8b2a8,side*4,-drop/2,-1,root);
+  box(2.1,drop+4.5,2.3,0xcbd9d4,side*6,(4.5-drop)/2,3,root);
+  box(2.4,.25,2.6,0x3a849d,side*6,4.65,3,root);
+ }
+}
+
 export function buildTransport(){
  const coast=route(Array.from({length:17},(_,i)=>{const z=-150+i*14;return [westCoast(z)+20,z] as [number,number]}),.4);railway(coast,false);train(coast,0xe9b753,.25);
  const stop=coast.getPointAt(.6),direction=coast.getTangentAt(.6);
  const tramStop=new THREE.Group();tramStop.name='coastal-tram-stop';tramStop.position.copy(stop);tramStop.rotation.y=Math.atan2(direction.x,direction.z);world.add(tramStop);
  box(3,.55,16,0xd6c7a6,3.6,.5,0,tramStop);box(3.6,.25,17,0x347e98,3.6,3.6,0,tramStop);
  for(const z of [-6,0,6])box(.12,3,.12,0x6e858b,4.8,2,z,tramStop);
- const commuter=route([[4,-158],[83,-162],[172,-146],[208,-85],[208,-5],[199,68],[191,126]],10);railway(commuter,true);train(commuter,0x63aabc,.62);
+ const commuter=route(COMMUTER_POINTS,10);railway(commuter,true);train(commuter,0x63aabc,.62);
+ for(const end of [0,1])buildRailTerminus(commuter,end);
  // Raised highway with a gentle approach, concrete piers and metal safety barriers.
  const highway=route([[192,-125],[225,-82],[235,-14],[226,57],[206,114]],7);
  motorwayCurve=highway;
@@ -61,7 +87,7 @@ export function buildTransport(){
  }
  world.userData.transport={tram:true,elevatedRail:true,elevatedHighway:true,stations:3};
 }
-export function updateTransport(dt:number){for(const vehicle of transit){vehicle.offset=(vehicle.offset+dt*vehicle.speed)%1;const t=vehicle.offset<.5?vehicle.offset*2:2-vehicle.offset*2;const p=vehicle.curve.getPointAt(Math.min(.999,Math.max(.001,t))),tangent=vehicle.curve.getTangentAt(t);vehicle.mesh.position.copy(p);vehicle.mesh.rotation.y=Math.atan2(tangent.x,tangent.z)+(vehicle.offset>.5?Math.PI:0);vehicle.mesh.rotation.x=-Math.atan2(tangent.y,Math.hypot(tangent.x,tangent.z));}}
+export function updateTransport(dt:number){for(const vehicle of transit){vehicle.offset=(vehicle.offset+dt*vehicle.speed)%1;const t=trainProgress(vehicle.curve,vehicle.offset);const p=vehicle.curve.getPointAt(Math.min(.999,Math.max(.001,t))),tangent=vehicle.curve.getTangentAt(t);vehicle.mesh.position.copy(p);vehicle.mesh.rotation.y=Math.atan2(tangent.x,tangent.z)+(vehicle.offset>.5?Math.PI:0);vehicle.mesh.rotation.x=-Math.atan2(tangent.y,Math.hypot(tangent.x,tangent.z));}}
 export function buildStreetFurniture(){
  for(const [x,z,text,color] of [[42,-82,'LUCKY BREAK','#1e5579'],[89,-92,'CITY LEAGUE','#345c85'],[42,70,'CUE & BALL','#b74f51'],[105,101,'SEASIDE HOTEL','#247b93']] as const){
   const y=surfaceHeight(x,z);for(const dx of [-4,4])box(.28,8,.28,0x61717a,x+dx,y+4,z);

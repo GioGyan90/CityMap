@@ -118,3 +118,20 @@ test('beach rest areas stay on land, outside landmark lots and clear of driving 
   }
  }
 });
+
+test('local street junctions meet the same road centreline instead of nearly touching',()=>{
+ const joins:[string,number,string][]=[['harbor-avenue',0,'central-boulevard'],['old-town-lane',0,'central-boulevard'],['old-town-lane',1,'civic-approach'],['civic-approach',1,'hospital-ring'],['hill-neighborhood',1,'hospital-ring'],['garden-lane',1,'civic-approach']];
+ for(const [id,end,target] of joins){
+  const route=roadProfiles.find(r=>r.id===id)!,other=roadProfiles.find(r=>r.id===target)!,p=route.curve.getPointAt(end);
+  const distance=Math.min(...other.curve.getSpacedPoints(5000).map(q=>Math.hypot(q.x-p.x,q.z-p.z)));
+  assert.ok(distance<.1,`${id} misses ${target} by ${distance}`);
+ }
+});
+test('whole trains stop before both terminal buffers',async()=>{
+ const {COMMUTER_POINTS,trainProgress}=await import('../src/transitDesign');
+ const curve=source(COMMUTER_POINTS),length=curve.getLength();
+ for(let i=0;i<=1000;i++){
+  const distance=trainProgress(curve,i/1000)*length;
+  assert.ok(distance>=8.9&&length-distance>=8.9,'train body stays within the usable track');
+ }
+});

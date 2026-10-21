@@ -19,8 +19,10 @@ export function buildGovernment(cx, cz) {
   block(24.4,.24,16.4,0xf8efdb,0,2.08,-4.5);
   block(20,8,12,0xfbf5e4,0,6,-4.5);
   // Broad landing and shallow, evenly rising steps finish before the basin.
-  for(let i=0;i<5;i++)block(13,.4,3.8-i*.6,0xd8cfb6,0,.28+i*.4,5-i*.3);
-  for(const x of [-7.6,-4.56,-1.52,1.52,4.56,7.6]){
+  // Five solid nested treads meet a full-width landing at the door threshold.
+  for(let i=0;i<5;i++)block(13,.4,4.5-i*.6,0xd8cfb6,0,.28+i*.4,4.65-i*.3);
+  block(13,.24,2.1,0xe5d8b8,0,2.12,2.45);
+  for(const x of [-8,-5.4,-3.2,3.2,5.4,8]){
     mesh(new THREE.CylinderGeometry(.58,.68,7.3,12),0xfffbf0,x,6.1,2.4);
     block(1.7,.35,1.7,0xe5d6b5,x,2.4,2.4);
     block(1.6,.4,1.6,0xf8edcf,x,9.7,2.4);

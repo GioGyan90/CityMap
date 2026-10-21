@@ -1,3 +1,4 @@
+import {nearestRoad} from './roadNetwork';
 import * as THREE from 'three';
 import {world} from './scene';
 import {terrainHeight,ZONES} from './layout';
@@ -15,8 +16,10 @@ export function buildHillAccess(){
   const zone=ZONES[site.id],level=terrainHeight(zone.x,zone.z);
   const width=site.id==='villa'?3:2.2;
   const points:THREE.Vector3[]=[];
-  for(let j=1;j<site.points.length;j++){
-   const a=site.points[j-1],b=site.points[j],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1]));
+  const join=nearestRoad(site.points[0][0],site.points[0][1]);
+  const controls=site.points.map((p,i)=>i===0?[join.x,join.z]:[p[0],p[1]]);
+  for(let j=1;j<controls.length;j++){
+   const a=controls[j-1],b=controls[j],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1]));
    for(let i= j===1?0:1;i<=n;i++){
     const t=i/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;
     // Lift the narrow deck clear of the uphill edge, not only its centreline.

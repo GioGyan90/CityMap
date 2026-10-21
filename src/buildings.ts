@@ -133,7 +133,8 @@ export function makeBuilding(o: BuildingOptions) {
     return m;
   };
   const block = (bw: number, bh: number, bd: number, py: number, material = sideMat, px = 0, pz = 0) =>
-    solid(new THREE.BoxGeometry(bw, bh, bd), material, px, py, pz);
+    solid(new THREE.BoxGeometry(bw, bh, bd),
+      material===sideMat?[sideMat,sideMat,roofMat,trim,sideMat,sideMat]:material,px,py,pz);
 
   if(plan!=='rect'){
     const wings=createMassing(plan,x*37.1+z*19.7);
@@ -173,7 +174,7 @@ export function makeBuilding(o: BuildingOptions) {
     block(w*.53, h*.18, d*.53, h*.91);
     for (const [scale, y] of [[1.05,h*.52],[.83,h*.82],[.57,h]]) block(w*scale,.7,d*scale,y,trim);
     if (style === 'artdeco') {
-      for (const xx of [-w*.35,0,w*.35]) block(.55,h*.5,.6,h*.26,trim,xx,d*.5+.2);
+      for (const xx of [-w*.35,w*.35]) block(.55,h*.5,.6,h*.26,trim,xx,d*.5+.2);
       solid(new THREE.SphereGeometry(w*.27,12,8,0,Math.PI*2,0,Math.PI/2), roofMat, 0,h,0);
       solid(new THREE.CylinderGeometry(.12,.23,7,6),accent(0xe8be59),0,h+w*.27+3.5,0);
     }
@@ -205,7 +206,7 @@ export function makeBuilding(o: BuildingOptions) {
     } else if (style === 'arcade') {
       block(w+1,.65,d+.6,h,trim);
       block(w+1,.5,d+.6,h*.64,trim);
-      for (const xx of [-w*.37,0,w*.37]) block(.55,h*.32,.65,h*.16,trim,xx,d/2+.5);
+      for (const xx of [-w*.37,w*.37]) block(.55,h*.32,.65,h*.16,trim,xx,d/2+.5);
       const awning=solid(new THREE.BoxGeometry(w*.9,.35,2.3),accent(roof),0,h*.35,d/2+.9);
       awning.rotation.x=.15;
       block(w*.7,.9,.2,h*.48,accent(0xe8be59),0,d/2+.13);
