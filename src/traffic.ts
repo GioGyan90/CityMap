@@ -1,3 +1,4 @@
+import {surfaceHeight} from './terrainSurface';
 import { motorwayCurve } from './transport';
 import * as THREE from 'three';
 import { world } from './scene';
@@ -24,12 +25,12 @@ export function buildCars(){
   if(!placed)continue;
   const body=new THREE.Mesh(new THREE.BoxGeometry(car.width,bus?2.5:1.25,car.length),toon([0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4]));body.position.y=bus?1.5:1;mesh.add(body);
   const window=new THREE.Mesh(new THREE.BoxGeometry(bus?2.03:1.5,bus?1:.7,bus?4.8:1.8),toon(0x355b73));window.position.y=bus?2.1:1.65;mesh.add(window);
-  for(const x of [-car.width*.5,car.width*.5])for(const z of [-car.length*.32,car.length*.32]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.18,8),toon(0x30353c));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.48,z);mesh.add(wheel);}
+  for(const x of [-car.width*.5,car.width*.5])for(const z of [-car.length*.32,car.length*.32]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.18,8),toon(0x30353c));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.32,z);mesh.add(wheel);}
   mesh.traverse(o=>{if(o instanceof THREE.Mesh)o.castShadow=true;});world.add(mesh);cars.push(car);
  }
  world.userData.traffic={version:'separated-lanes-reservations-v1',vehicles:cars,junctions};updateTraffic(0);
 }
 export function updateTraffic(dt:number){
  if(dt>0)stepTraffic(cars,junctions,dt);
- for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);car.mesh.position.y=car.route.elevated?position.y+.22:terrainHeight(position.x,position.z)+.22;car.mesh.rotation.set(pitch,heading,0,'YXZ');}
+ for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);car.mesh.position.y=car.route.elevated?position.y+.12:surfaceHeight(position.x,position.z)+.02;car.mesh.rotation.set(pitch,heading,0,'YXZ');}
 }

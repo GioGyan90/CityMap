@@ -1,3 +1,4 @@
+import {entranceWall,addBuildingEntrance} from './buildingAccess';
 import {createMassing,massingGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -97,9 +98,9 @@ export function facadeMaterial(tex) {
 export type BuildingStyle = 'flat' | 'pitched' | 'glass' | 'stepped' | 'artdeco' | 'round' | 'arcade' | 'apartment' | 'villa' | 'warehouse';
 export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
-  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan;
+  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan; frontage?: [number,number];
 }
-export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0 };
+export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0, entrances: [] as {x:number;z:number;kind:string;height:number}[] };
 const buildingGroups: THREE.Group[] = [];
 const accentMaterials = new Map<number, THREE.MeshToonMaterial>();
 function accent(color: number) {
@@ -213,6 +214,13 @@ export function makeBuilding(o: BuildingOptions) {
       block(w*.25,1.2,d*.24,h+1.3,trim,w*.16);
     }
   }
+  const target=o.frontage?{x:(o.frontage[0]-x)*Math.cos(ry)-(o.frontage[1]-z)*Math.sin(ry),z:(o.frontage[0]-x)*Math.sin(ry)+(o.frontage[1]-z)*Math.cos(ry)}:undefined;
+  const large=h>25,kind=style==='warehouse'?'warehouse':large?'office':style==='arcade'?'shop':'house';
+  const wall=entranceWall(style==='round'?w*1.2:w,style==='round'?d*1.2:d,style==='round'?3:h,g.userData.massing,target);
+  if(style==='arcade')wall.ceiling=Math.min(wall.ceiling,h*.35+.30);
+  addBuildingEntrance(g,wall,large,kind,0,style!=='arcade');
+  g.userData.entranceWall=wall;
+  buildingStats.entrances.push({x:x+wall.x*Math.cos(ry)+wall.z*Math.sin(ry),z:z-wall.x*Math.sin(ry)+wall.z*Math.cos(ry),kind,height:wall.ceiling});
   return g;
 }
 function rrHeight(h: number) { return h > 45 ? 4 : 2; }

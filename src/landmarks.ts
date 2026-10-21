@@ -1,3 +1,4 @@
+import {addBuildingEntrance} from './buildingAccess';
 import * as THREE from 'three';
 import { rr, pick, TAU } from "./random";
 import { toon } from "./materials";
@@ -30,6 +31,9 @@ export function buildGovernment(cx, cz) {
   box(21.4, 1.7, 6.4, 0xf3ead6, cx, GROUND_Y + 10.85, cz + 6.2);
   /* 山花 */
   prism(21.4, 3.6, 6.4, 0xf7efdd, cx, GROUND_Y + 11.7, cz + 6.2);
+
+  const entranceRoot=new THREE.Group();entranceRoot.position.set(cx,GROUND_Y,cz);world.add(entranceRoot);
+  addBuildingEntrance(entranceRoot,{x:0,z:4.04,nx:0,nz:1,length:6,ceiling:8},true,'office',2,false);
 
   /* 穹顶 */
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(5.0, 5.4, 3.2, 16), toon(0xf2ead6));
@@ -91,6 +95,9 @@ export function buildHospital(cx, cz) {
   const hMark = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 3.0, 0.12, 18), toon(0xfdfbf2));
   hMark.position.set(cx + 7, GROUND_Y + 9.32, cz + 2);
   world.add(hMark);
+
+  const hospitalEntry=new THREE.Group();hospitalEntry.position.set(cx,GROUND_Y,cz);world.add(hospitalEntry);
+  addBuildingEntrance(hospitalEntry,{x:-1,z:5.56,nx:0,nz:1,length:7,ceiling:17},true,'office',0,false);
 
   /* 救护车 */
   const amb = new THREE.Group();

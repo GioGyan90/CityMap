@@ -1,3 +1,4 @@
+import {surfaceHeight} from './terrainSurface';
 import {DAY_LIGHTING} from './visualStyle';
 import * as THREE from 'three';
 import { scene, world, sky, hemi, sun, fill, camera } from './scene';
@@ -48,11 +49,11 @@ const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.07,.11,3.5,5),ne
 const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.38,6,5),new THREE.MeshBasicMaterial({color:0xffda87}),sites.length);
 const pools=new THREE.InstancedMesh(new THREE.CircleGeometry(2.5,16),new THREE.MeshBasicMaterial({color:0xf5b95b,transparent:true,opacity:.14,depthWrite:false}),sites.length);
 const matrix=new THREE.Matrix4();const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2);
-sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,terrainHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,terrainHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,terrainHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
+sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,surfaceHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,surfaceHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,surfaceHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
 world.add(poles);nightGroup.add(lamps,pools);
 for(const id of ['park','hotel','market','hospital','port','restaurant','promenade']){
  const zone=ZONES[id],x=zone.x,z=zone.z;
- const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,terrainHeight(x,z)+8,z);nightGroup.add(light);
+ const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,surfaceHeight(x,z)+8,z);nightGroup.add(light);
 }
 // A distant camera-relative backdrop stays visible above an isometric city view.
 const space=new THREE.Group();space.name='night-sky-backdrop';space.visible=false;camera.add(space);scene.add(camera);

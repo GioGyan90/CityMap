@@ -1,3 +1,5 @@
+import {terrainRows,terrainCols,terrainPositions} from './terrainSurface';
+import {createGroundMaterial} from './groundRoadMaterial';
 import {COAST_PALETTE as palette,beachExtension} from './visualStyle';
 import * as THREE from 'three';
 import { toon } from './materials';
@@ -6,11 +8,11 @@ import { westCoast,eastCoast,terrainHeight } from './layout';
 import './water';
 
 const positions:number[]=[],colors:number[]=[],indices:number[]=[];
-const rows=135,cols=110;
+const rows=terrainRows,cols=terrainCols;
 for(let row=0;row<=rows;row++){
  const z=-200+402*row/rows,left=westCoast(z),right=eastCoast(z);
  for(let col=0;col<=cols;col++){
-  const x=left+(right-left)*col/cols,y=terrainHeight(x,z);positions.push(x,y,z);
+  const index=(row*(cols+1)+col)*3,x=terrainPositions[index],y=terrainPositions[index+1];positions.push(x,y,z);
   const coastDistance=Math.min(x-left,right-x),patch=(Math.sin(x*.043+z*.017)+Math.cos(z*.071-x*.025))*.25+.5;
   const color=new THREE.Color(coastDistance<12?palette.sand:y>49?palette.ridge:y>23?palette.hill:palette.grass);
   if(coastDistance>=12)color.lerp(new THREE.Color(y>23?0xb3b95f:0x76b14d),patch*.27);
@@ -21,7 +23,7 @@ for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
  const a=row*(cols+1)+col,b=a+cols+1;indices.push(a,b,a+1,a+1,b,b+1);
 }
 const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(indices);geometry.computeVertexNormals();
-const terrain=new THREE.Mesh(geometry,toon(0xffffff,{vertexColors:true}));terrain.name='irregular-elevated-terrain';terrain.receiveShadow=true;world.add(terrain);
+const terrain=new THREE.Mesh(geometry,createGroundMaterial());terrain.name='irregular-elevated-terrain';terrain.receiveShadow=true;world.add(terrain);
 // Rock-faced coastal side walls expose the elevation difference at the shore.
 for(const edge of [westCoast,eastCoast]){
  const verts:number[]=[];
@@ -47,3 +49,5 @@ for(let row=0;row<beachRows;row++)for(let col=0;col<beachCols;col++){const a=row
 const beachGeo=new THREE.BufferGeometry();beachGeo.setAttribute('position',new THREE.Float32BufferAttribute(beachPositions,3));beachGeo.setAttribute('color',new THREE.Float32BufferAttribute(beachColors,3));beachGeo.setIndex(beachIndices);beachGeo.computeVertexNormals();
 const beach=new THREE.Mesh(beachGeo,toon(0xffffff,{vertexColors:true}));beach.name='sunlit-golden-foreshore';beach.receiveShadow=true;world.add(beach);
 world.userData.visualStyle='sunny-coast-v1';
+
+world.userData.roadSurface={mode:'shared-terrain-material',groundLayers:1,markings:'integrated'};

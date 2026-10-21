@@ -1,3 +1,6 @@
+import {surfaceHeight,terrainPositions,terrainRows,terrainCols} from '../src/terrainSurface';
+import {roadProfiles} from '../src/roadNetwork';
+import {entranceWall} from '../src/buildingAccess';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -49,4 +52,24 @@ test('full street network: safe spawning, five minutes without overlaps, and liv
 test('faster following car cannot pass through slower car, including lane reversal',()=>{
  const route=makeTrafficRoute(source([[0,0],[0,160]]),0);const cars=[0,1,2,3].map((id):Vehicle=>({id,route,distance:id*35,length:id===1?5.7:3.2,width:2,desiredSpeed:id%2?3:12,speed:0,waiting:0,pose:poseAt(route,id*35)}));
  for(let i=0;i<2400;i++){stepTraffic(cars,[],.05);for(let a=0;a<cars.length;a++)for(let b=a+1;b<cars.length;b++)assert.equal(vehiclesOverlap(cars[a],cars[b],0),false);}
+});
+
+test('ground contact samples the exact rendered terrain triangles on road slopes',()=>{
+ let sampled=0,maxError=0;
+ for(let row=0;row<terrainRows;row+=3)for(let col=2;col<terrainCols-2;col+=5){
+  const a=(row*(terrainCols+1)+col)*3,b=a+(terrainCols+1)*3,c=a+3,d=b+3;
+  for(const triangle of [[a,b,c],[c,b,d]]){
+   const weights=[.21,.37,.42],p=[0,0,0];triangle.forEach((i,j)=>{for(let k=0;k<3;k++)p[k]+=terrainPositions[i+k]*weights[j];});
+   const error=Math.abs(surfaceHeight(p[0],p[2])-p[1]);maxError=Math.max(maxError,error);sampled++;assert.ok(error<.0001,`terrain contact error ${error}`);
+  }
+ }
+ assert.ok(sampled>4000);console.log(JSON.stringify({terrainSamples:sampled,maxError}));
+ for(const road of roadProfiles)for(const p of road.curve.getSpacedPoints(40))assert.ok(Number.isFinite(surfaceHeight(p.x,p.z)));
+});
+test('entrances attach to an exterior wall with enough width and headroom',()=>{
+ for(const plan of ['E','T','H','L','U'] as const)for(const target of [{x:40,z:0},{x:-40,z:0},{x:0,z:40},{x:0,z:-40}]){
+  const wings=createMassing(plan,47),wall=entranceWall(18,16,12,wings,target);
+  const inside=(x:number,z:number)=>wings.some(v=>x>v.x0*18&&x<v.x1*18&&z>v.z0*16&&z<v.z1*16);
+  assert.equal(inside(wall.x+wall.nx*.01,wall.z+wall.nz*.01),false);assert.equal(inside(wall.x-wall.nx*.01,wall.z-wall.nz*.01),true);assert.ok(wall.length>1.35&&wall.ceiling>2.7);
+ }
 });

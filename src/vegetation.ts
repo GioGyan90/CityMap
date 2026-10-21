@@ -1,3 +1,5 @@
+import {parkingAccessBlocked} from './parking';
+import {surfaceHeight} from './terrainSurface';
 import { isLand,terrainHeight,roadDistance,reserved,railCorridor } from './layout';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -76,6 +78,7 @@ export function roundTreeGeometry(leafColor) {
 export const treeMat = toon(0xffffff, { vertexColors: true });
 
 export function blocked(x, z) {
+  if(parkingAccessBlocked(x,z))return true;
   for (const b of buildingFootprints) if (Math.abs(x-b.x) < b.w/2+1.5 && Math.abs(z-b.z) < b.d/2+1.5) return true;
   if(roadDistance(x,z)<3||reserved(x,z,2,2)||railCorridor(x,z))return true;
   return false;
@@ -114,7 +117,7 @@ export function plantTrees() {
     const v = new THREE.Vector3();
     const s = new THREE.Vector3();
     list.forEach((p, i) => {
-      v.set(p[0], terrainHeight(p[0],p[1]), p[1]);
+      v.set(p[0], surfaceHeight(p[0],p[1]), p[1]);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * TAU);
       s.setScalar(p[2]);
       m.compose(v, q, s);

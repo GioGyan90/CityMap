@@ -1,8 +1,13 @@
+import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
-import { camera, controls } from "./scene";
+import { camera, controls, world } from "./scene";
 import { labelObjs } from "./labels";
 
+const parkingLots=world.userData.streetLife?.parkingLots??[];
+const lot=parkingLots.find(p=>p.z>40)??parkingLots[0];
+const parkingView=(()=>{if(!lot)return {pos:[-64,140,-3],target:[70,42,-126]};const dx=lot.x-lot.serves[0],dz=lot.z-lot.serves[1],length=Math.hypot(dx,dz),y=surfaceHeight(lot.x,lot.z);return {pos:[lot.x+dx/length*33,y+28,lot.z+dz/length*33],target:[lot.x,y+2,lot.z]};})();
 export const VIEWS = {
+ parking:parkingView,
  hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},
  park:{pos:[-109,76,20],target:[-20,12,-65]},market:{pos:[-89,67,109],target:[-18,9,35]},
  hotel:{pos:[-99,70,219],target:[-12,11,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
