@@ -26,15 +26,25 @@ test('palm assemblies keep attachments when height, bend and frond count change'
   const heading=seededRandom(41)()*Math.PI*2,path=palmPath(height,bend,heading);
   assert.ok(crown.position.distanceTo(path.getPointAt(1))<1e-6);
   assert.ok(new THREE.Vector3(0,1,0).applyQuaternion(crown.quaternion).distanceTo(path.getTangentAt(1))<1e-6);
-  let leaves=0;tree.traverse(o=>{if(o.name==='palm-frond'){leaves++;assert.ok(o.position.length()<.3,'leaf bases stay in crown');assert.equal(o.getObjectByName('paired-leaflets')!.children.length,24);}});assert.equal(leaves,fronds);
+  let leaves=0;tree.traverse(o=>{if(o.name==='palm-frond'){leaves++;assert.ok(o.position.length()<.3,'leaf bases stay in crown');const blade=o.getObjectByName('notched-leaf-blade') as THREE.Mesh;assert.ok(blade);assert.equal(blade.geometry.userData.operation,'planar-difference');assert.ok(blade.geometry.userData.cutArea<blade.geometry.userData.originalArea*.98);assert.equal(blade.geometry.userData.pieces,1,'cuts leave the leaf attached');}});assert.equal(leaves,fronds);
   tree.updateMatrixWorld(true);const sourceBox=new THREE.Box3().setFromObject(tree,true),baked=bakePalm(tree);assert.ok(baked.boundingBox!.min.distanceTo(sourceBox.min)<1e-5);assert.ok(baked.boundingBox!.max.distanceTo(sourceBox.max)<1e-5);
   for(const a of Object.values(baked.attributes))for(const n of a.array)assert.ok(Number.isFinite(n));
-  assert.ok(baked.attributes.position.count/3<10000,'variant has a bounded triangle budget');
+  assert.ok(baked.attributes.position.count/3<fronds*1200+1500,'variant has a bounded triangle budget');
   assert.ok((crown.getObjectByName('palm-coconuts')!.children).every(o=>o.position.y<0),'fruit hangs below the crown');
  }
  assert.deepEqual(Array.from(bakePalm(createPalm({seed:41})).attributes.position.array),Array.from(bakePalm(createPalm({seed:41})).attributes.position.array));
  const relocated=createPalm({seed:41});relocated.position.set(100,4,-20);relocated.rotation.y=.8;const local=bakePalm(relocated).attributes.position,reference=bakePalm(createPalm({seed:41})).attributes.position;
  for(let i=0;i<local.count;i++)assert.ok(new THREE.Vector3().fromBufferAttribute(local,i).distanceTo(new THREE.Vector3().fromBufferAttribute(reference,i))<1e-5,'baking excludes the tree placement transform');
+});
+test('palm barrels and cut leaves vary structurally instead of using uniform taper and spacing',()=>{
+ const tree=createPalm({seed:41}),trunk=tree.getObjectByName('palm-trunk')!;
+ const sections=trunk.children.map(o=>o.userData),heights=sections.map(s=>s.to-s.from),radii=sections.map(s=>s.radius);
+ assert.ok(Math.max(...heights)/Math.min(...heights)>1.3,'barrel heights differ');
+ assert.ok(radii.some((r,i)=>i>0&&r>radii[i-1]),'radius does not only decrease');
+ const closedEdge=(geometry:THREE.BufferGeometry)=>{const edges=new Map<string,number>(),index=geometry.index!;for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const a=index.getX(i+j),b=index.getX(i+(j+1)%3),key=[a,b].sort((a,b)=>a-b).join(':');edges.set(key,(edges.get(key)??0)+1);}return [...edges.values()].every(n=>n===2);};
+ for(const o of trunk.children)assert.ok(closedEdge((o as THREE.Mesh).geometry),'each bucket is a closed connected solid');
+ const group=tree.getObjectByName('spread-fronds')!,lengths=group.children.map(o=>o.userData.length);assert.ok(Math.max(...lengths)/Math.min(...lengths)>1.12);
+ const angles=group.children.map(o=>(o.rotation.y%(Math.PI*2)+Math.PI*2)%(Math.PI*2)).sort((a,b)=>a-b),gaps=angles.map((a,i)=>(angles[(i+1)%angles.length]-a+Math.PI*2)%(Math.PI*2));assert.ok(Math.max(...gaps)/Math.min(...gaps)>1.2,'angular gaps differ visibly');
 });
 test('upward faces of ordinary building boxes never use window facade textures',()=>{
  for(const style of ['flat','stepped','artdeco','apartment','villa','arcade'] as const){

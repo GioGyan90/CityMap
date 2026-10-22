@@ -20,8 +20,9 @@ export function initAssetTools(){
  for(const [name,title] of [['horizontal-sailboat-hull','帆船'],['moving-train','城际列车']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
  const palms=palmSamples();items.push({id:'tree-0',title:'绿化 · 树木样式 1 · 椰树',source:palms[0]});
  for(let i=1;i<palms.length;i++)items.push({id:'palm-variant-'+i,title:'绿化 · 椰树变体 '+(i+1),source:palms[i]});
- items.push({id:'palm-part-trunk',title:'椰树原件 · 弯曲树干与叶痕',source:palms[0].getObjectByName('palm-trunk')!},
- {id:'palm-part-frond',title:'椰树原件 · 单片羽状椰叶',source:createPalmFrond()},
+ items.push({id:'palm-part-barrel',title:'椰树原件 · 单个桶节',source:palms[0].getObjectByName('palm-trunk')!.children[3]},
+ {id:'palm-part-trunk',title:'椰树原件 · 不规则桶节树干',source:palms[0].getObjectByName('palm-trunk')!},
+ {id:'palm-part-frond',title:'椰树原件 · 单片切口宽叶',source:createPalmFrond()},
  {id:'palm-part-crown',title:'椰树原件 · 分层树冠',source:palms[0].getObjectByName('palm-crown')!},
  {id:'palm-part-fruit',title:'椰树原件 · 成簇椰子',source:palms[0].getObjectByName('palm-coconuts')!});
  for(let i=0;i<3;i++){const o=world.getObjectByName('vegetation-round-'+i) as THREE.InstancedMesh;if(o){const m=new THREE.Mesh(o.geometry,o.material);items.push({id:'tree-'+(i+1),title:'绿化 · 阔叶树样式 '+(i+1),source:m});}}
