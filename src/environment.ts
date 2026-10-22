@@ -1,5 +1,5 @@
 import {RECLAIMED_FILL_TOP} from './harborPlan';
-import {terrainRows,terrainCols,terrainPositions} from './terrainSurface';
+import {terrainRows,terrainCols,terrainPositions,surfaceHeight} from './terrainSurface';
 import {createGroundMaterial} from './groundRoadMaterial';
 import {COAST_PALETTE as palette,beachExtension} from './visualStyle';
 import * as THREE from 'three';
@@ -28,7 +28,7 @@ const terrain=new THREE.Mesh(geometry,createGroundMaterial());terrain.name='irre
 // Rock-faced coastal side walls expose the elevation difference at the shore.
 for(const edge of [westCoast,eastCoast]){
  const verts:number[]=[];
- for(let z=-200;z<202;z+=2){const zz=Math.min(z+2,202),x=edge(z),xx=edge(zz),y=terrainHeight(x,z),yy=terrainHeight(xx,zz);verts.push(x,-.7,z,x,y,z,xx,yy,zz,x,-.7,z,xx,yy,zz,xx,-.7,zz);}
+ for(let z=-200;z<202;z+=2){const zz=Math.min(z+2,202),x=edge(z),xx=edge(zz),y=surfaceHeight(x,z),yy=surfaceHeight(xx,zz);verts.push(x,-.7,z,x,y,z,xx,yy,zz,x,-.7,z,xx,yy,zz,xx,-.7,zz);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.computeVertexNormals();
  const m=new THREE.Mesh(g,toon(palette.rock,{side:THREE.DoubleSide}));m.name='coastal-rock-wall';world.add(m);
 }

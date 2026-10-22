@@ -1,3 +1,4 @@
+import {createResidentialCliff} from './residentialCliff';
 import {createBeachFishMarket} from './beachFishMarket';
 import {HALL_THEMES,createThemedHall} from './themedHalls';
 import {auditPlacedPlants} from './plantPlacement';
@@ -81,6 +82,7 @@ buildHarborAccess();
 buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
+const residentialCliff=createResidentialCliff();world.add(residentialCliff);
 buildSiteDetails();
 buildParcels();
 plantTrees();buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildClouds();

@@ -1,3 +1,4 @@
+import {residentialCliffLift} from './residentialCliffPlan';
 import {HARBOR_SITES} from './harborPlan';
 /** Geography and zoning shared by terrain, parcels, roads, picking and labels. */
 export const SHORE_Z=[-200,-180,-150,-120,-90,-50,0,40,80,120,160,202];
@@ -29,7 +30,8 @@ function rawHeight(x:number,z:number){
  const hills=12*smooth(165,220,x);
  const north=smooth(-143,-194,z)*(31+12*Math.sin(x*.039)+6*Math.sin(x*.11));
  const east=smooth(208,282,x)*(30+12*Math.sin(z*.028)+8*Math.cos(z*.061));
- return 1.06+Math.max(0,terraces+hills+north+east)*inland;
+ const base=1.06+Math.max(0,terraces+hills+north+east)*inland;
+ return base+Math.min(residentialCliffLift(x,z,eastCoast),Math.max(0,6-base));
 }
 export function terrainHeight(x:number,z:number){
  let h=rawHeight(x,z);

@@ -25,6 +25,7 @@ export function initAssetTools(){
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const [name,title] of [['horizontal-sailboat-hull','帆船'],['moving-train','城际列车']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
  items.push({id:'palm-cluster',title:'景观组合 · 三棵椰树与沙丘',source:createPalmCluster()});
+ const cliff=world.getObjectByName('residential-coastal-cliff');if(cliff){items.push({id:'residential-cliff',title:'地貌组合 · 临海住宅低崖',source:cliff});for(const [name,title] of [['continuous-rock-core','连续岩体'],['fractured-cliff-blocks','错层岩块'],['nearshore-reef-clusters','近岸礁石']] as const){const source=cliff.getObjectByName(name);if(source)items.push({id:'cliff-'+name,title:'地貌分组 · '+title,source});}}
  const palms=palmSamples();items.push({id:'tree-0',title:'绿化 · 树木样式 1 · 椰树',source:palms[0]});
  for(let i=1;i<palms.length;i++)items.push({id:'palm-variant-'+i,title:'绿化 · 椰树变体 '+(i+1),source:palms[i]});
  items.push({id:'palm-part-barrel',title:'椰树原件 · 单个桶节',source:palms[0].getObjectByName('palm-trunk')!.children[3]},

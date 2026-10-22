@@ -344,3 +344,42 @@ test('night window masks exclude yellow walls, trim and unoccupied blue glass',a
   assert.ok(Array.from(data).some((v,i)=>i%4!==3&&v>0),'occupied glazing emits');
  }
 });
+
+test('residential headland stays local and leaves hotel/cafe sites and all port decks unchanged',async()=>{
+ const {residentialCliffLift}=await import('../src/residentialCliffPlan');
+ const {eastCoast,terrainHeight,ZONES}=await import('../src/layout');
+ for(const id of ['hotel','cafe','port','passenger','cargo','fishmarket']){
+  const zone=ZONES[id];for(const dx of [-.5,0,.5])for(const dz of [-.5,0,.5])assert.equal(residentialCliffLift(zone.x+zone.w*dx,zone.z+zone.d*dz,eastCoast),0,id+' site is outside headland uplift');
+ }
+ for(let z=175;z<=197;z+=.5){const x=eastCoast(z),lift=residentialCliffLift(x,z,eastCoast);assert.ok(lift>=0&&lift<=3.8);assert.ok(terrainHeight(x,z)<=6.001,'coastal top remains a low cliff');}
+ assert.ok(residentialCliffLift(eastCoast(186),186,eastCoast)>3.7);
+});
+
+test('headland roads retain gentle grades and rocks clear their full curved road corridor',async()=>{
+ const {roadProfiles}=await import('../src/roadNetwork');
+ const {createResidentialCliff}=await import('../src/residentialCliff');
+ const {roadEdgeDistance}=await import('../src/roadNetwork');
+ for(const road of roadProfiles){const samples=road.curve.getSpacedPoints(Math.ceil(road.curve.getLength()));for(let i=1;i<samples.length;i++){
+  const a=samples[i-1],b=samples[i];if(a.z<155||a.x>115)continue;
+  assert.ok(Math.abs(b.y-a.y)/Math.hypot(b.x-a.x,b.z-a.z)<.16,'residential road grade below 16%');
+ }}
+ const root=createResidentialCliff();root.updateMatrixWorld(true);
+ for(const m of root.getObjectByName('fractured-cliff-blocks')!.children){const box=new THREE.Box3().setFromObject(m);for(const x of [box.min.x,box.max.x])for(const z of [box.min.z,box.max.z])assert.ok(roadEdgeDistance(x,z)>1.5,'full rock footprint clears roads');}
+});
+
+test('cliff core is closed, reefs are submerged into seabed and assemblies are deterministic',async()=>{
+ const {createResidentialCliff}=await import('../src/residentialCliff');
+ const {isLand}=await import('../src/layout');
+ const a=createResidentialCliff(),b=createResidentialCliff();a.updateMatrixWorld(true);
+ const core=a.getObjectByName('closed-stratified-cliff-core') as THREE.Mesh;
+ const geometry=core.geometry,index=geometry.index!,counts=new Map<string,number>();
+ for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const key=[index.getX(i+j),index.getX(i+(j+1)%3)].sort((x,y)=>x-y).join(':');counts.set(key,(counts.get(key)??0)+1);}
+ assert.ok([...counts.values()].every(n=>n===2),'core includes closed ends and base');
+ const blocks=a.getObjectByName('fractured-cliff-blocks')!.children;
+ assert.ok(blocks.length>30);assert.ok(new Set(blocks.map(m=>m.rotation.y.toFixed(2))).size>10,'bedding angles vary');
+ for(const cluster of a.getObjectByName('nearshore-reef-clusters')!.children)for(const m of cluster.children){
+  const box=new THREE.Box3().setFromObject(m);assert.ok(Math.abs(box.min.y+3)<1e-5,'reef reaches seabed');assert.ok(box.max.y>-.26&&box.min.y<-.26,'reef crosses waterline');assert.equal(isLand(m.position.x,m.position.z),false);assert.ok(box.min.z>181,'working harbor remains clear');
+ }
+ assert.deepEqual(a.children.map(c=>c.children.map(m=>m.position.toArray())),b.children.map(c=>c.children.map(m=>m.position.toArray())));
+ for(const value of geometry.attributes.position.array)assert.ok(Number.isFinite(value));
+});
