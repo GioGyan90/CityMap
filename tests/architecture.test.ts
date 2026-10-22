@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {createPalm,bakePalm,palmPath} from '../src/palm';
+import {createPalm,createPalmCluster,bakePalm,palmPath} from '../src/palm';
 import {sweepProfile,circularProfile,leafRibbon,seededRandom,radialPlacements} from '../src/proceduralGeometry';
 // Canvas drawing is irrelevant to geometry, but facade textures retain their real identity.
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:()=>{}});
@@ -40,11 +40,18 @@ test('palm barrels and cut leaves vary structurally instead of using uniform tap
  const tree=createPalm({seed:41}),trunk=tree.getObjectByName('palm-trunk')!;
  const sections=trunk.children.map(o=>o.userData),heights=sections.map(s=>s.to-s.from),radii=sections.map(s=>s.radius);
  assert.ok(Math.max(...heights)/Math.min(...heights)>1.3,'barrel heights differ');
- assert.ok(radii.some((r,i)=>i>0&&r>radii[i-1]),'radius does not only decrease');
+ assert.ok(radii.every((r,i)=>i===0||r<radii[i-1]),'barrel envelope shrinks towards the crown');const steps=radii.slice(1).map((r,i)=>radii[i]-r);assert.ok(Math.max(...steps)/Math.min(...steps)>1.2,'taper increments vary');
  const closedEdge=(geometry:THREE.BufferGeometry)=>{const edges=new Map<string,number>(),index=geometry.index!;for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const a=index.getX(i+j),b=index.getX(i+(j+1)%3),key=[a,b].sort((a,b)=>a-b).join(':');edges.set(key,(edges.get(key)??0)+1);}return [...edges.values()].every(n=>n===2);};
  for(const o of trunk.children)assert.ok(closedEdge((o as THREE.Mesh).geometry),'each bucket is a closed connected solid');
  const group=tree.getObjectByName('spread-fronds')!,lengths=group.children.map(o=>o.userData.length);assert.ok(Math.max(...lengths)/Math.min(...lengths)>1.12);
  const angles=group.children.map(o=>(o.rotation.y%(Math.PI*2)+Math.PI*2)%(Math.PI*2)).sort((a,b)=>a-b),gaps=angles.map((a,i)=>(angles[(i+1)%angles.length]-a+Math.PI*2)%(Math.PI*2));assert.ok(Math.max(...gaps)/Math.min(...gaps)>1.2,'angular gaps differ visibly');
+});
+test('three-palm landscape has distinct trees, grounded roots and descending barrel envelopes',()=>{
+ const cluster=createPalmCluster(),trees=cluster.children.filter(o=>o.name.startsWith('cluster-palm-'));
+ assert.equal(trees.length,3);assert.equal(new Set(trees.map(o=>o.userData.seed)).size,3);
+ assert.ok(trees[0].userData.height>trees[1].userData.height&&trees[1].userData.height>trees[2].userData.height);
+ for(const tree of trees){assert.equal(tree.position.y,.85);const trunk=tree.getObjectByName('palm-trunk')!;const r=trunk.children.map(o=>o.userData.radius);assert.ok(r.every((v,i)=>i===0||v<r[i-1]));const root=trunk.children[0] as THREE.Mesh;root.geometry.computeBoundingBox();assert.ok(Math.abs(root.geometry.boundingBox!.min.y)<1e-5);}
+ for(let seed=0;seed<12;seed++){const trunk=createPalm({seed}).getObjectByName('palm-trunk')!;const sizes=trunk.children.map(o=>o.userData.radius*1.2);assert.ok(sizes.every((r,i)=>i===0||r<sizes[i-1]),'all sampled seeds taper');}
 });
 test('upward faces of ordinary building boxes never use window facade textures',()=>{
  for(const style of ['flat','stepped','artdeco','apartment','villa','arcade'] as const){

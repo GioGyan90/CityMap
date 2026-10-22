@@ -1,4 +1,4 @@
-import {palmSamples,createPalmFrond} from './palm';
+import {palmSamples,createPalmFrond,createPalmCluster} from './palm';
 import {updateFocus} from './focus';
 import * as THREE from 'three';
 import {scene,world,camera,controls,renderer,sky} from './scene';
@@ -18,6 +18,7 @@ export function initAssetTools(){
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const [name,title] of [['horizontal-sailboat-hull','帆船'],['moving-train','城际列车']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
+ items.push({id:'palm-cluster',title:'景观组合 · 三棵椰树与沙丘',source:createPalmCluster()});
  const palms=palmSamples();items.push({id:'tree-0',title:'绿化 · 树木样式 1 · 椰树',source:palms[0]});
  for(let i=1;i<palms.length;i++)items.push({id:'palm-variant-'+i,title:'绿化 · 椰树变体 '+(i+1),source:palms[i]});
  items.push({id:'palm-part-barrel',title:'椰树原件 · 单个桶节',source:palms[0].getObjectByName('palm-trunk')!.children[3]},
