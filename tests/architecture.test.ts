@@ -79,3 +79,32 @@ test('sailboat hull lies along the water and its bow follows the sailing heading
  assert.ok(size.x>size.z*2.5,'bow follows the X axis used by the sailing animation');
  const cafe=world.getObjectByName('old-town-cafe');assert.ok(cafe,'reference cafe is assembled in the full city');
 });
+
+test('market arches are through openings and the carved table has six real pockets',async()=>{
+ const {cutFacade}=await import('../src/carvedGeometry');
+ const facade=new THREE.Mesh(cutFacade(12,8,.6,[{x:0,y:.3,w:4,h:5}]),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+ facade.updateMatrixWorld(true);
+ const ray=new THREE.Raycaster(new THREE.Vector3(0,3,2),new THREE.Vector3(0,0,-1));
+ assert.equal(ray.intersectObject(facade).length,0,'door void must pass through the full wall thickness');
+ ray.set(new THREE.Vector3(4,3,2),new THREE.Vector3(0,0,-1));
+ assert.ok(ray.intersectObject(facade).length>0,'wall beside the doorway remains solid');
+ const {outdoorTable}=await import('../src/billiardsArchitecture');
+ const root=new THREE.Group();outdoorTable(root,0,0);root.updateMatrixWorld(true);
+ const body=root.getObjectByName('carved-table-body')!,cloth=root.getObjectByName('six-pocket-cloth')!;
+ for(const x of [-2.45,0,2.45])for(const z of [-1.2,1.2]){
+  ray.set(new THREE.Vector3(x,3,z),new THREE.Vector3(0,-1,0));
+  assert.equal(ray.intersectObjects([body,cloth]).length,0,'pockets cut through both cloth and wooden body');
+ }
+ ray.set(new THREE.Vector3(0,3,0),new THREE.Vector3(0,-1,0));
+ assert.ok(ray.intersectObject(cloth).length>0,'cloth remains solid between pockets');
+});
+test('the second hall has its own plot and the market no longer contains a duplicate hall',async()=>{
+ const {specialBuildings}=await import('../src/specialBuildings');
+ const market=specialBuildings.find(s=>s.id==='market')!,hall=specialBuildings.find(s=>s.id==='hall2')!;
+ assert.ok(market&&hall);
+ assert.equal(market.group.getObjectByName('independent-outdoor-billiards-hall'),undefined);
+ assert.ok(hall.group.getObjectByName('six-pocket-cloth'));
+ const m=new THREE.Box3().setFromObject(market.group),h=new THREE.Box3().setFromObject(hall.group);
+ assert.equal(m.intersectsBox(h),false,'separate facilities have breathing space');
+ assert.ok(market.group.getObjectByName('market-pierced-facade'));
+});

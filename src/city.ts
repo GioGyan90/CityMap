@@ -1,3 +1,5 @@
+import {buildSuppliesMarket,buildOutdoorHall} from './billiardsArchitecture';
+import {buildBilliardsAccess} from './billiardsAccess';
 import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
 import {buildCruiseShip} from './cruiseShip';
 import {buildCoastalRealm} from './coastalRealm';
@@ -37,9 +39,8 @@ registerSpecial('hospital','医院学院区 · 4 号球馆','蓝白医院、屋�
 registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
   referenceHotel(-20,32);
 });
-registerSpecial('market','台球用品市场 · 2 号球馆','球与交叉球杆屋顶雕塑、高低商铺、拱形屋顶与台球用品街',[8,46],[27,18,54],()=>{
-  buildMarket(8,32);marketDetails(8,32);
-});
+registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
+registerSpecial('hall2','街角台球厅 · 2 号球馆','独立木质拱门、绿色遮棚与室外球桌',[0,0],[18,13,22],buildOutdoorHall);
 registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
   buildCafe(36,32);
 });
@@ -73,6 +74,7 @@ for(const entry of specialBuildings){
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
 buildHarborAccess();
+buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
 buildSiteDetails();

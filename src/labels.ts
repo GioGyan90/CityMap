@@ -17,7 +17,7 @@ export function addLabel(text, x, y, z, cls = '') {
   const div = document.createElement('div');
   div.className = 'lbl ' + cls;
   div.textContent = text;
-  const ids: Record<string,string> = {'集装箱货运码头':'cargo','邮轮客运码头':'passenger','游乐园':'park','政府大厅':'civic','医院':'hospital','高档酒店':'hotel','市场':'market','咖啡馆':'cafe','餐厅':'restaurant','海运码头':'port','灯塔':'lighthouse','山麓别墅':'villa','金融中心':'commercial','海岸学院':'campus','豪华邮轮':'cruise','台球用品市场':'market','海滨酒店':'hotel','码头市场':'port','海滨长廊餐厅':'promenade','市中心商业区':'commercial'};
+  const ids: Record<string,string> = {'街角台球厅':'hall2','集装箱货运码头':'cargo','邮轮客运码头':'passenger','游乐园':'park','政府大厅':'civic','医院':'hospital','高档酒店':'hotel','市场':'market','咖啡馆':'cafe','餐厅':'restaurant','海运码头':'port','灯塔':'lighthouse','山麓别墅':'villa','金融中心':'commercial','海岸学院':'campus','豪华邮轮':'cruise','台球用品市场':'market','海滨酒店':'hotel','码头市场':'port','海滨长廊餐厅':'promenade','市中心商业区':'commercial'};
   if (ids[text]) {
     div.dataset.special=ids[text];div.tabIndex=0;div.setAttribute('role','button');div.setAttribute('aria-label',`聚焦${text}`);
     div.addEventListener('pointerenter',event=>{if(event.pointerType!=='touch')setLabelFocus(ids[text]);});
@@ -62,3 +62,5 @@ addLabel('豪华邮轮',-101,30,72);
 addLabel('海滨长廊餐厅',0,13,0);
 
 addLabel('集装箱货运码头',-95,24,-140);addLabel('邮轮客运码头',-90,17,151);
+
+addLabel('街角台球厅',-18,18,57);
