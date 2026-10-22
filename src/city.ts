@@ -40,8 +40,8 @@ registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨�
 registerSpecial('market','台球用品市场 · 2 号球馆','球与交叉球杆屋顶雕塑、高低商铺、拱形屋顶与台球用品街',[8,46],[27,18,54],()=>{
   buildMarket(8,32);marketDetails(8,32);
 });
-registerSpecial('cafe','海风咖啡馆','蓝白条纹遮棚与露天咖啡座',[36,32],[25,17,24],()=>{
-  buildCafe(36,32);cafeDetails(36,32);
+registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
+  buildCafe(36,32);
 });
 registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
   buildRestaurant(-20,60);restaurantDetails(-20,60);

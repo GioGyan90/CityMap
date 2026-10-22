@@ -94,12 +94,13 @@ export function makeSailboat(x, z) {
   g.position.set(x, 0, z);
   g.userData.ambient = true;
 
-  const hull = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 1.0, 8, 1), toon(0xfbfdff));
-  hull.scale.set(1, 1, 3.4);
-  hull.rotation.x = Math.PI / 2;
-  hull.position.y = 0.55;
-  hull.castShadow = true;
-  g.add(hull);
+  // Build the hull flat in X/Z, with the bow along +X like the sailing animation.
+  const profile=new THREE.Shape();profile.moveTo(-3.5,-.95);profile.lineTo(1.8,-1.1);
+  profile.quadraticCurveTo(3.3,-.8,4,0);profile.quadraticCurveTo(3.3,.8,1.8,1.1);
+  profile.lineTo(-3.5,.95);profile.quadraticCurveTo(-4,0,-3.5,-.95);
+  const hull=new THREE.Mesh(new THREE.ExtrudeGeometry(profile,{depth:.7,bevelEnabled:true,bevelSize:.12,bevelThickness:.12,bevelSegments:1,steps:1}),toon(0xfbfdff));
+  hull.name='horizontal-sailboat-hull';hull.rotation.x=-Math.PI/2;hull.position.y=-.25;
+  hull.castShadow=true;g.add(hull);
 
   const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 7, 5), toon(0xe4d6bd));
   mast.position.y = 4.0;

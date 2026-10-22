@@ -1,3 +1,4 @@
+import {buildReferenceCafe} from './cafeArchitecture';
 import {addBuildingEntrance} from './buildingAccess';
 import * as THREE from 'three';
 import { rr, pick, TAU } from "./random";
@@ -183,17 +184,7 @@ export function buildMarket(cx, cz) {
 export function buildCafe(cx, cz) {
   flatQuad(cx, cz, 25, 23, GROUND_Y + 0.06, toon(0xf0e8d6));
 
-  makeBuilding({
-    x: cx - 4, z: cz - 4, w: 12, d: 10, h: 9,
-    base: '#fff2d9', win: '#5a7fa0', roof: 0x356b93, style: 'pitched', lit: 0.6
-  });
-
-  /* 条纹遮阳棚 */
-  const awn = new THREE.Mesh(new THREE.BoxGeometry(13, 0.25, 4.2), toon(0xef476f));
-  awn.position.set(cx - 4, GROUND_Y + 4.6, cz + 3.4);
-  awn.rotation.x = -0.16;
-  awn.castShadow = true;
-  // Replaced by striped awnings in conceptDetails.ts.
+  buildReferenceCafe(cx,cz);
 
   /* 户外咖啡座 */
   for (let i = 0; i < 5; i++) {

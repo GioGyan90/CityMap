@@ -68,3 +68,14 @@ test('three ports have separate functions and the cruise hull clears its quay',(
  assert.ok(shipBounds.min.z>170,'ship hull clears the passenger pier edge');
  assert.ok(shipBounds.max.x<0,'cruise berth is away from the fish market');
 });
+
+
+test('sailboat hull lies along the water and its bow follows the sailing heading',async()=>{
+ const {makeSailboat}=await import('../src/port');
+ const boat=makeSailboat(0,0);boat.updateMatrixWorld(true);
+ const hull=boat.getObjectByName('horizontal-sailboat-hull')!;
+ const size=new THREE.Box3().setFromObject(hull).getSize(new THREE.Vector3());
+ assert.ok(size.x>7&&size.z>1.5&&size.y<1.1,'long axis is horizontal and vertical draft stays shallow');
+ assert.ok(size.x>size.z*2.5,'bow follows the X axis used by the sailing animation');
+ const cafe=world.getObjectByName('old-town-cafe');assert.ok(cafe,'reference cafe is assembled in the full city');
+});
