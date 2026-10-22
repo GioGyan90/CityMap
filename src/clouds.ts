@@ -5,6 +5,7 @@ import { world } from "./scene";
 
 export function buildClouds() {
   const cloudMat = toon(0xfffdf2,{emissive:0xdceeff,emissiveIntensity:.09});
+  cloudMat.userData.lightingRole='sky-cloud';
   for (let i = 0; i < 14; i++) {
     const g = new THREE.Group();
     const n = ri(3, 6);

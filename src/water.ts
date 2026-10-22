@@ -1,10 +1,11 @@
+import {twilightProfile} from './twilight';
 import {SEA_PALETTE} from './visualStyle';
 import {SHORE_Z,WEST_X,EAST_X} from './layout';
 import * as THREE from 'three';
 import { world } from './scene';
 
 export const waterUniforms={
-  lightDirection:{value:new THREE.Vector3(-.3,.85,.4).normalize()},lightColor:{value:new THREE.Color(0xffefc7)},lightStrength:{value:1},skyReflection:{value:new THREE.Color(0x79c7ed)},fogColor:{value:new THREE.Color(0xbce2f7)},time:{value:0},night:{value:0},westShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(WEST_X[i],z))},eastShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(EAST_X[i],z))},
+  lightDirection:{value:new THREE.Vector3(-.3,.85,.4).normalize()},lightColor:{value:new THREE.Color(0xffefc7)},lightStrength:{value:1},skyReflection:{value:new THREE.Color(0x79c7ed)},fogColor:{value:new THREE.Color(0xbce2f7)},twilightStrength:{value:0},twilightHorizon:{value:new THREE.Color()},solarDirection:{value:new THREE.Vector3()},time:{value:0},night:{value:0},westShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(WEST_X[i],z))},eastShore:{value:SHORE_Z.map((z,i)=>new THREE.Vector2(EAST_X[i],z))},
   shallow:{value:new THREE.Color(SEA_PALETTE.shallow)},deep:{value:new THREE.Color(SEA_PALETTE.deep)}
 };
 const material=new THREE.ShaderMaterial({
@@ -15,8 +16,8 @@ const material=new THREE.ShaderMaterial({
     void main(){vec3 p=position;p.y+=swell(p.xz);vec4 wp=modelMatrix*vec4(p,1.);vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}
   `,
   fragmentShader:`
-    uniform vec3 lightDirection;uniform vec3 lightColor;uniform float lightStrength;uniform vec3 skyReflection;uniform vec3 fogColor;uniform vec2 westShore[12];uniform vec2 eastShore[12];uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
-    float surface(vec2 p){p.x+=sin(p.y*.041+time*.22)*2.5;p.y+=sin(p.x*.032-time*.15)*1.7;return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65)+.045*sin(dot(p,vec2(.52,.28))+time*1.5)+.025*sin(dot(p,vec2(-.32,.71))-time*1.8);}
+    uniform float twilightStrength;uniform vec3 twilightHorizon;uniform vec3 solarDirection;uniform vec3 lightDirection;uniform vec3 lightColor;uniform float lightStrength;uniform vec3 skyReflection;uniform vec3 fogColor;uniform vec2 westShore[12];uniform vec2 eastShore[12];uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
+    float surface(vec2 p){p.x+=sin(p.y*.041+time*.22)*2.5;p.y+=sin(p.x*.032-time*.15)*1.7;return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65)+(1.-smoothstep(80.,350.,length(cameraPosition.xz-p)))*(.045*sin(dot(p,vec2(.52,.28))+time*1.5)+.025*sin(dot(p,vec2(-.32,.71))-time*1.8));}
     void main(){
       vec2 p=vWorld.xz;float e=.12;
       vec3 n=normalize(vec3(surface(p-vec2(e,0.))-surface(p+vec2(e,0.)),2.*e,surface(p-vec2(0.,e))-surface(p+vec2(0.,e))));
@@ -32,7 +33,17 @@ const material=new THREE.ShaderMaterial({
       float distanceToCoast=length(max(shoreDistance,vec2(0.)))+min(max(shoreDistance.x,shoreDistance.y),0.);
       float nearShore=1.-smoothstep(0.,36.,distanceToCoast);
       vec3 color=mix(deep,shallow,nearShore*.88);
-      color=mix(color,skyReflection,fresnel*.7);
+      vec2 towardSun=solarDirection.xz/max(length(solarDirection.xz),.0001);
+      vec2 towardView=view.xz/max(length(view.xz),.0001);
+      float sunsetFacing=pow(max(dot(towardView,towardSun),0.),4.);
+      vec3 reflectedSky=mix(skyReflection,twilightHorizon,twilightStrength*sunsetFacing*.7);
+      color=mix(color,reflectedSky,fresnel*.7);
+      // A broken reflection path remains at dusk after direct sunlight ends.
+      float across=dot(towardView,vec2(-towardSun.y,towardSun.x));
+      float path=exp(-pow((across+.022*sin(p.y*.17+time*.5))/.055,2.));
+      float detail=1.-smoothstep(80.,350.,length(cameraPosition.xz-p));
+      float ripples=mix(.48,smoothstep(-.3,.7,sin(p.y*.9+p.x*.21+time*.8)),detail);
+      color+=twilightHorizon*path*ripples*twilightStrength*fresnel*.28;
       vec3 light=normalize(lightDirection);
       float sun=pow(max(dot(reflect(-light,n),view),0.),76.);
       color*=.9+max(dot(n,light),0.)*.14;
@@ -52,9 +63,9 @@ const material=new THREE.ShaderMaterial({
 const geo=new THREE.PlaneGeometry(10000,10000,220,220);geo.rotateX(-Math.PI/2);
 export const water=new THREE.Mesh(geo,material);water.name='animated-ocean';water.position.y=-.26;world.add(water);
 export function updateWater(time:number){waterUniforms.time.value=time;}
-const dayShallow=new THREE.Color(SEA_PALETTE.shallow),dayDeep=new THREE.Color(SEA_PALETTE.deep),nightShallow=new THREE.Color('#123a58'),nightDeep=new THREE.Color('#081d3e'),sunset=new THREE.Color(0xb4a786);
-export function setWaterLighting(night:number,warm:number,direct:number,moon:number,sunDirection:THREE.Vector3,moonDirection:THREE.Vector3,fogColor:THREE.Color){
- waterUniforms.night.value=night;waterUniforms.shallow.value.copy(dayShallow).lerp(nightShallow,night).lerp(sunset,warm*.2);waterUniforms.deep.value.copy(dayDeep).lerp(nightDeep,night);
- waterUniforms.lightDirection.value.copy(direct>0?sunDirection:moonDirection);waterUniforms.lightColor.value.set(direct>0?0xfff1d0:0x8aabe0);if(direct>0)waterUniforms.lightColor.value.lerp(new THREE.Color(0xff9e54),warm);
- waterUniforms.lightStrength.value=direct>0?direct/1.8:moon*.3;waterUniforms.skyReflection.value.set(0x79c7ed).lerp(new THREE.Color(0x050b1f),night).lerp(new THREE.Color(0xd9a16b),warm*.5);waterUniforms.fogColor.value.copy(fogColor);
+const dayShallow=new THREE.Color(SEA_PALETTE.shallow),dayDeep=new THREE.Color(SEA_PALETTE.deep),nightShallow=new THREE.Color('#123a58'),nightDeep=new THREE.Color('#081d3e');
+export function setWaterLighting(night:number,warm:number,direct:number,moon:number,sunDirection:THREE.Vector3,moonDirection:THREE.Vector3,fogColor:THREE.Color,twilight:ReturnType<typeof twilightProfile>){
+ waterUniforms.twilightStrength.value=twilight.glow;waterUniforms.twilightHorizon.value.set(twilight.horizon);waterUniforms.solarDirection.value.copy(sunDirection);waterUniforms.night.value=night;waterUniforms.shallow.value.copy(dayShallow).lerp(nightShallow,night);waterUniforms.deep.value.copy(dayDeep).lerp(nightDeep,night);
+ waterUniforms.lightDirection.value.copy(direct>0?sunDirection:moonDirection);waterUniforms.lightColor.value.set(direct>0?0xfff1d0:0x8aabe0);if(direct>0)waterUniforms.lightColor.value.lerp(new THREE.Color(twilight.sunlight),warm);
+ waterUniforms.lightStrength.value=direct>0?direct/1.8:moon*.3;waterUniforms.skyReflection.value.set(0x79c7ed).lerp(new THREE.Color(0x050b1f),night).lerp(new THREE.Color(twilight.rose),twilight.glow*.65);waterUniforms.fogColor.value.copy(fogColor);
 }

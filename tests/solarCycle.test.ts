@@ -16,3 +16,22 @@ test('a complete day has finite lighting and continuous sunrise, sunset and midn
  const start=civilTimestamp('2026-09-22',0);for(let minute=0;minute<=1440;minute+=15){const s=sampleSolar(start+minute*60000);for(const v of [...s.sunDirection,...s.moonDirection,s.sun.altitude,s.direct,s.daylight,s.night,s.warm,s.moonFraction])assert.ok(Number.isFinite(v));assert.ok(s.direct>=0&&s.direct<=1.8);for(const v of [s.daylight,s.night,s.warm,s.moonFraction])assert.ok(v>=0&&v<=1);assert.ok(Math.abs(Math.hypot(...s.sunDirection)-1)<1e-10);if(s.sun.altitude<=0)assert.equal(s.direct,0);}
  const e=solarEvents(start+12*3600000);for(const t of [+e.sunrise!,+e.sunset!,start+24*3600000]){const a=sampleSolar(t-500),b=sampleSolar(t+500);assert.ok(a.sunDirection.every((v,i)=>Math.abs(v-b.sunDirection[i])<.001));assert.ok(Math.abs(a.night-b.night)<.001);assert.ok(Math.abs(a.direct-b.direct)<.001);}
 });
+
+test('twilight persists below the horizon, clears by full day/night and remains continuous across seasons',async()=>{
+ const {twilightProfile}=await import('../src/twilight');
+ for(const az of [90,270]){
+  assert.equal(twilightProfile(25,az).glow,0);
+  assert.equal(twilightProfile(-15,az).glow,0);
+  assert.ok(twilightProfile(-4,az).glow>.9,'afterglow survives sunset');
+  assert.ok(twilightProfile(0,az).glow>.9,'sunrise/sunset has full colour');
+ }
+ assert.notEqual(twilightProfile(0,90).horizon,twilightProfile(0,270).horizon,'dawn and dusk have different art direction');
+ for(const date of ['2026-03-21','2026-06-21','2026-09-23','2026-12-21']){
+  const start=civilTimestamp(date,0);let previous=twilightProfile(sampleSolar(start).sun.altitude,0).glow;
+  for(let minute=1;minute<=1440;minute++){
+   const s=sampleSolar(start+minute*60000),p=twilightProfile(s.sun.altitude,s.sun.azimuth);
+   assert.ok(Number.isFinite(p.glow)&&p.glow>=0&&p.glow<=1);
+   assert.ok(Math.abs(p.glow-previous)<.06,'no one-minute flashes at colour boundaries');previous=p.glow;
+  }
+ }
+});
