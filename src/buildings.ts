@@ -1,3 +1,4 @@
+import {windowLightMask,type WindowLightRect} from './facadeLighting';
 import {entranceWall,addBuildingEntrance} from './buildingAccess';
 import {createMassing,massingGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
@@ -61,12 +62,15 @@ export function getFacadeTex(base, win, floors, cols, lit) {
   const cw = (S - margin * 2) / cols;
   const ch = (S - margin * 2) / floors;
 
+  const lightWindows:WindowLightRect[]=[];
   for (let r = 0; r < floors; r++) {
     for (let c = 0; c < cols; c++) {
       const px = margin + c * cw;
       const py = margin + r * ch;
       const padX = cw * (floors >= 9 ? .13 : .19), padY = ch * (floors >= 9 ? .16 : .21);
-      g.fillStyle = rnd() < lit ? '#ffe9a6' : win;
+      const illuminated=rnd()<lit;
+      g.fillStyle = illuminated ? '#ffe9a6' : win;
+      lightWindows.push({x:px+padX+.4,y:py+padY+.4,width:cw-padX*2-.8,height:ch-padY*2-.8,lit:illuminated});
       g.fillRect(px + padX, py + padY, cw - padX * 2, ch - padY * 2);
       g.strokeStyle = 'rgba(39,91,120,0.55)';
       g.lineWidth = .8;
@@ -82,6 +86,7 @@ export function getFacadeTex(base, win, floors, cols, lit) {
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
+  tex.userData.windowEmission=windowLightMask(S,lightWindows);
   facadeCache.set(key, tex);
   return tex;
 }
@@ -89,7 +94,8 @@ export function getFacadeTex(base, win, floors, cols, lit) {
 export function facadeMaterial(tex) {
   let m = matCache.get(tex.uuid);
   if (!m) {
-    m = toon(0xffffff, { map: tex });
+    m = toon(0xffffff, { map: tex, emissiveMap:tex.userData.windowEmission });
+    m.userData.lightingRole='window-facade';
     matCache.set(tex.uuid, m);
   }
   return m;

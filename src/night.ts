@@ -17,18 +17,7 @@ const glazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial
 for(const material of meshMaterials) {
   if(!(material instanceof THREE.MeshToonMaterial))continue;
   material.userData.dayEmission=material.emissive.clone();
-  if(material.map?.image instanceof HTMLCanvasElement) {
-    // Only warm window pixels emit: walls and roofs stay dark at night.
-    const src=material.map.image as HTMLCanvasElement;
-    const cv=document.createElement('canvas');cv.width=src.width;cv.height=src.height;
-    const c=cv.getContext('2d')!;c.drawImage(src,0,0);const pixels=c.getImageData(0,0,cv.width,cv.height);
-    let hasLight=false;
-    for(let i=0;i<pixels.data.length;i+=4) {
-      const lit=pixels.data[i]>240&&pixels.data[i+1]>215&&pixels.data[i+2]>145&&pixels.data[i+2]<180;
-      pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=lit?255:0;hasLight ||= lit;
-    }
-    if(hasLight){c.putImageData(pixels,0,0);material.emissiveMap=new THREE.CanvasTexture(cv);material.emissiveMap.colorSpace=THREE.SRGBColorSpace;material.needsUpdate=true;litMaterials.push(material);}
-  }
+  if(material.userData.lightingRole==='window-facade' && material.emissiveMap)litMaterials.push(material);
 }
 const rideMaterials=new Set<THREE.MeshToonMaterial>();
 world.getObjectByName('ferris-rotor')?.traverse(object=>{
@@ -86,7 +75,7 @@ export function refreshDayNight(){
  moon.position.copy(moonDir).multiplyScalar(1450);moon.visible=state.moon.altitude>-.4;moonMaterial.uniforms.sunDirection.value.copy(sunDir);moonMaterial.uniforms.visibility.value=(.25+.75*night)*state.moonVisibility;
  nightGroup.visible=night>.001;(lamps.material as THREE.MeshBasicMaterial).opacity=night;(pools.material as THREE.MeshBasicMaterial).opacity=.14*night;nightGroup.children.forEach(o=>{if(o instanceof THREE.PointLight)o.intensity=30*night;});
  for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
- for(const material of glazingMaterials){material.emissive.set(0x174a75);material.emissiveIntensity=.4*night;}
+ for(const material of glazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}
  setWaterLighting(night,warm,state.direct,night*state.moonVisibility,sunDir,moonDir,fogColor);
  nightMode=night>.55;document.body.dataset.time=nightMode?'night':'day';const button=document.getElementById('toggleNight');if(button){button.textContent=nightMode?'切到白天':'切到夜晚';button.setAttribute('aria-pressed',String(nightMode));}

@@ -321,3 +321,26 @@ test('fish-market footpath crosses the tram with flush infill and open rail chan
  for(const x of [-.8,.8]){const origin=new THREE.Vector3(x,2,0).applyMatrix4(crossing.matrixWorld),direction=new THREE.Vector3(0,-1,0);assert.equal(new THREE.Raycaster(origin,direction,0,2.1).intersectObject(crossing,true).length,0,'rail slot is unobstructed');}
  const origin=new THREE.Vector3(0,2,0).applyMatrix4(crossing.matrixWorld);assert.ok(new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,2.1).intersectObject(crossing,true).length>0,'infill supports the crossing');
 });
+
+
+test('night window masks exclude yellow walls, trim and unoccupied blue glass',async()=>{
+ const {windowLightMask}=await import('../src/facadeLighting');
+ const mask=windowLightMask(16,[{x:3,y:4,width:4,height:5,lit:true},{x:10,y:4,width:3,height:5,lit:false}]);
+ const pixels=mask.image.data;
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+  const expected=x>=3&&x<7&&y>=4&&y<9?255:0;
+  assert.equal(pixels[(y*16+x)*4],expected,`mask pixel ${x},${y}`);
+ }
+ assert.equal(mask.flipY,true,'mask shares canvas facade UV orientation');
+ const {getFacadeTex,facadeMaterial}=await import('../src/buildings');
+ for(const base of ['#ffe3a1','#ffe6b0','#fff1cf']){
+  const unlit=facadeMaterial(getFacadeTex(base,'#254f6c',4,3,0));
+  assert.equal(unlit.userData.lightingRole,'window-facade');
+  assert.ok(unlit.emissiveMap,'explicit mask attached before night module runs');
+  assert.ok(Array.from(unlit.emissiveMap!.image.data).every((v,i)=>i%4===3||v===0),'even yellow walls produce zero emission with lights off');
+  const occupied=facadeMaterial(getFacadeTex(base,'#254f6c',4,3,1));
+  const data=occupied.emissiveMap!.image.data;
+  assert.equal(data[0],0,'corner wall does not emit');
+  assert.ok(Array.from(data).some((v,i)=>i%4!==3&&v>0),'occupied glazing emits');
+ }
+});
