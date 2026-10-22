@@ -108,3 +108,31 @@ test('the second hall has its own plot and the market no longer contains a dupli
  assert.equal(m.intersectsBox(h),false,'separate facilities have breathing space');
  assert.ok(market.group.getObjectByName('market-pierced-facade'));
 });
+
+test('asymmetric plan extrusion preserves front and back and roofs sit over their walls',async()=>{
+ const {extrudedPlan,polygonPlan}=await import('../src/carvedGeometry');
+ const {HALL_PLAN,buildOutdoorHall,buildSuppliesMarket}=await import('../src/billiardsArchitecture');
+ const plan=new THREE.Mesh(extrudedPlan(polygonPlan(HALL_PLAN),2),new THREE.MeshBasicMaterial());
+ const b=new THREE.Box3().setFromObject(plan);
+ assert.ok(Math.abs(b.min.z+8)<.0001&&Math.abs(b.max.z+1)<.0001,'negative rear coordinates must stay behind the facade');
+ const hall=buildOutdoorHall(),market=buildSuppliesMarket();hall.updateMatrixWorld(true);market.updateMatrixWorld(true);
+ for(const [root,wallName,roofName] of [[hall,'hall-rear-shell','hall-inset-hip-roof'],[market,'market-ground-shell','market-ground-roof'],[market,'market-upper-shell','market-upper-roof']] as const){
+  const wall=new THREE.Box3();root.getObjectByName(wallName)!.traverse(o=>{if(o.name==='structural-shell-panel')wall.union(new THREE.Box3().setFromObject(o));});const roof=new THREE.Box3().setFromObject(root.getObjectByName(roofName)!);
+  for(const key of ['x','z'] as const){assert.ok(Math.abs(wall.min[key]-roof.min[key])<.001);assert.ok(Math.abs(wall.max[key]-roof.max[key])<.001);}
+  assert.ok(Math.abs(wall.max.y-roof.min.y)<.001,'roof springs directly from the top of the shell');
+ }
+});
+test('the actual outdoor table has unobstructed approaches from the front and both sides',async()=>{
+ const {buildOutdoorHall}=await import('../src/billiardsArchitecture');
+ const hall=buildOutdoorHall();hall.position.y=0;hall.updateMatrixWorld(true);
+ const obstacles:THREE.Mesh[]=[];
+ hall.traverse(o=>{if(o instanceof THREE.Mesh&&!['six-pocket-cloth','table-rail-ring','carved-table-body'].includes(o.name))obstacles.push(o);});
+ // Probe at waist and shoulder height around the playing area, beyond the table itself.
+ const ray=new THREE.Raycaster();
+ for(const height of [1,2.6])for(const [from,to] of [
+  [[0,height,10],[0,height,8.2]], [[-8,height,5.8],[-3.8,height,5.8]], [[8,height,5.8],[3.8,height,5.8]]
+ ]){
+  const a=new THREE.Vector3(...from),b=new THREE.Vector3(...to);ray.set(a,b.clone().sub(a).normalize());ray.far=a.distanceTo(b);
+  assert.equal(ray.intersectObjects(obstacles).length,0,'no enclosing wall blocks a player approaching the table');
+ }
+});
