@@ -1,3 +1,5 @@
+import {createBambooBasket,createFish,createFishTable} from './beachFishMarket';
+import {createMarketRack} from './billiardsArchitecture';
 import {hallSamples,createHallTable,createHallEntrance,createHallEmblem,HALL_THEMES} from './themedHalls';
 import {treeSamples,shrubSample,grassSample,flowerSample,planterSample,createGardenCluster} from './plantAssets';
 import {palmSamples,createPalmFrond,createPalmCluster} from './palm';
@@ -40,6 +42,8 @@ export function initAssetTools(){
  for(const theme of HALL_THEMES){const sample=hallSamples().get(theme.theme)!;for(const [part,title] of [['hall-shell','主体'],['hall-roof','屋顶'],['hall-emblem','招牌']] as const){const source=sample.getObjectByName(part);if(source)items.push({id:`hall-part-${theme.theme}-${part}`,title:`球馆原件 · ${theme.name} · ${title}`,source});}}
  items.push({id:'hall-part-table',title:'球馆原件 · 六袋球桌',source:createHallTable()},{id:'hall-part-entrance',title:'球馆原件 · 挖空门框与玻璃门',source:createHallEntrance()},{id:'hall-part-emblem',title:'球馆原件 · 秩序门与巨型八号球',source:createHallEmblem('order')});
  for(const t of HALL_THEMES){const sculpture=createHallEmblem(t.theme);items.push({id:'hall-sculpture-'+t.theme,title:'屋顶景观 · '+t.name,source:sculpture});const motif=sculpture.getObjectByName('sculpture-motif-'+t.theme)!;items.push({id:'hall-motif-'+t.theme,title:'屋顶原件 · '+t.name,source:motif});}
+ const fishSite=specialBuildings.find(s=>s.id==='fishmarket');if(fishSite){for(const [name,title] of [['small-fishing-pier','小渔船码头'],['fish-market-stalls','木屋与帆布摊棚']] as const)items.push({id:'fish-market-'+name,title:'鱼市原件 · '+title,source:fishSite.group.getObjectByName(name)!});}
+ items.push({id:'market-roof-rack',title:'市场原件 · 圆角码球三角架',source:createMarketRack()},{id:'fish-market-table',title:'鱼市原件 · 木板鱼桌',source:createFishTable()},{id:'fish-market-basket',title:'鱼市原件 · 编织竹筐',source:createBambooBasket()},{id:'fish-market-fish',title:'鱼市原件 · 立体鱼招牌',source:createFish()});
  const panel=document.createElement('section');panel.className='asset-panel';panel.hidden=true;
  panel.innerHTML=`<div class="asset-heading"><strong>资产与地图规划</strong><button id="asset-close" aria-label="关闭面板">×</button></div>
  <label>搜索资产<input id="asset-search" placeholder="建筑、车辆、树木…"></label><select id="asset-select" aria-label="选择资产"></select>

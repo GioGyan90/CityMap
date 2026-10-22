@@ -1,6 +1,6 @@
 import {ZONES,westCoast} from './layout';
 /** Shared clearances keep generated buildings, planting and public spaces consistent. */
-export const BEACH_ENTRIES=[-94,-42,38,126];
+export const BEACH_ENTRIES=[-94,-42,34,126];
 export function coastalPublicSpace(x:number,z:number,radius=0){
  return BEACH_ENTRIES.some(v=>Math.abs(z-v)<7+radius&&x>westCoast(z)-6-radius&&x<westCoast(z)+11+radius);
 }

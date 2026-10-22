@@ -12,6 +12,7 @@ export const ZONES:Record<string,Zone>={
  cargo:{...HARBOR_SITES.cargo,sx:1,sz:1,level:1.06},passenger:{...HARBOR_SITES.passenger,sx:1,sz:1,level:1.06},
  villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
  park:{x:-20,z:-87.4,w:48,d:48,sx:1.65,sz:1.6,level:3.5974665423},market:{x:-18,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-18,z:57,w:24,d:28,sx:1.25,sz:1.25},
+ fishmarket:{x:-82,z:57,w:20,d:24,sx:1,sz:1,level:.51,ry:Math.PI/2},
  hall1:{x:-20,z:-20,w:24,d:24,sx:1,sz:1},hall3:{x:41,z:-130,w:20,d:24,sx:1,sz:1},
  hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
@@ -36,7 +37,7 @@ export function terrainHeight(x:number,z:number){
  if(quayDistance<=0)return 1.06;
  if(quayDistance<10)h=1.06+(h-1.06)*smooth(0,10,quayDistance);
  for(const [id,s] of Object.entries(ZONES)){
-  if(['cruise','port','cargo','passenger'].includes(id))continue;
+  if(['cruise','port','cargo','passenger','fishmarket'].includes(id))continue;
   const distance=Math.max(Math.abs(x-s.x)-s.w/2,Math.abs(z-s.z)-s.d/2);
   if(distance<5){const level=s.level??rawHeight(s.x,s.z);h=h+(level-h)*(1-smooth(0,5,distance));}
  }

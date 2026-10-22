@@ -296,3 +296,28 @@ test('roof sculptures have five distinct motifs, supported giant eights and a re
  assert.equal(silhouettes.size,5);
  const flame=createEmotionEmblem('fire').getObjectByName('pierced-flame-silhouette')!;flame.updateWorldMatrix(true,false);const ray=new THREE.Raycaster(new THREE.Vector3(.25,3.35,4),new THREE.Vector3(0,0,-1));assert.equal(ray.intersectObject(flame).length,0,'flame centre is cut through');
 });
+
+
+test('supplies market uses the rounded ball rack and removes its previous black-ball roof sign',async()=>{
+ const {specialBuildings}=await import('../src/specialBuildings');const root=specialBuildings.find(s=>s.id==='market')!.group;const rack=root.getObjectByName('rounded-hollow-triangle-rack') as THREE.Mesh;assert.ok(rack);assert.equal(root.getObjectByName('market-black-ball'),undefined);assert.equal(root.getObjectByName('market-billiard-emblem'),undefined);assert.ok(rack.geometry.userData.roundedCorners);assert.ok((rack.geometry as THREE.ExtrudeGeometry).parameters.options.bevelSegments!>=3);
+ root.updateMatrixWorld(true);const roof=new THREE.Box3().setFromObject(root.getObjectByName('market-upper-roof')!),sign=new THREE.Box3().setFromObject(root.getObjectByName('market-rounded-triangle-sign')!);assert.ok(sign.min.y>roof.max.y);assert.ok(sign.min.x>roof.min.x&&sign.max.x<roof.max.x,'rack remains over the roof footprint');
+});
+
+test('beach fish market keeps a clear pier aisle, non-overlapping planks, grounded goods and roads free',async()=>{
+ const {createBeachFishMarket,createFishTable,createBambooBasket}=await import('../src/beachFishMarket');const {specialBuildings}=await import('../src/specialBuildings');const {roadEdgeDistance}=await import('../src/roadNetwork');
+ const source=createBeachFishMarket();source.updateMatrixWorld(true);let boats=0;source.traverse(o=>{if(o.name==='moored-wooden-fishing-boat')boats++;});assert.equal(boats,2);assert.ok(source.getObjectByName('large-fish-roof-sign'));
+ const planks:THREE.Box3[]=[];for(const id of ['fish-market-boardwalk','small-fishing-pier']){source.getObjectByName(id)!.traverse(o=>{if(o instanceof THREE.Mesh&&o.geometry.type==='BoxGeometry'&&(o.geometry as THREE.BoxGeometry).parameters.height===.18)planks.push(new THREE.Box3().setFromObject(o));});}
+ for(let i=0;i<planks.length;i++)for(let j=0;j<i;j++){const a=planks[i],b=planks[j];assert.ok(Math.min(a.max.x,b.max.x)-Math.max(a.min.x,b.min.x)<1e-5||Math.min(a.max.z,b.max.z)-Math.max(a.min.z,b.min.z)<1e-5,'coplanar deck boards do not overlap');}
+ const aisle=new THREE.Raycaster(new THREE.Vector3(0,2,9),new THREE.Vector3(0,0,-1),0,18);assert.equal(aisle.intersectObject(source.getObjectByName('fish-market-stalls')!,true).length,0,'central route reaches the pier');
+ const table=createFishTable();table.updateMatrixWorld(true);for(const fish of table.children.filter(o=>o.name==='market-fish')){const b=new THREE.Box3().setFromObject(fish,true);assert.ok(b.min.y<=1.366&&b.min.y>=1.34,'fish rests on its tray');}
+ const basket=createBambooBasket();basket.updateMatrixWorld(true);const bed=new THREE.Box3().setFromObject(basket.getObjectByName('basket-ice-bed')!),bottom=new THREE.Box3().setFromObject(basket.getObjectByName('basket-closed-bottom')!);assert.ok(bed.min.y<=bottom.max.y,'ice bed rests on basket bottom');
+ const entry=specialBuildings.find(s=>s.id==='fishmarket')!;entry.group.updateMatrixWorld(true);for(const name of ['fish-market-boardwalk','fish-market-stalls','fish-market-entry-ramp']){const b=new THREE.Box3().setFromObject(entry.group.getObjectByName(name)!,true);for(let x=b.min.x;x<=b.max.x;x+=.5)for(let z=b.min.z;z<=b.max.z;z+=.5)assert.ok(roadEdgeDistance(x,z)>.35,'fish market clears the real curved road');}
+ const hall=specialBuildings.find(s=>s.id==='hall2')!;assert.ok(Math.abs(hall.group.position.z-entry.group.position.z)<1,'fish market is beside the street-corner hall beach');
+});
+
+
+test('fish-market footpath crosses the tram with flush infill and open rail channels',()=>{
+ const crossing=world.getObjectByName('fish-market-tram-crossing')!;assert.ok(crossing);crossing.updateWorldMatrix(true,true);
+ for(const x of [-.8,.8]){const origin=new THREE.Vector3(x,2,0).applyMatrix4(crossing.matrixWorld),direction=new THREE.Vector3(0,-1,0);assert.equal(new THREE.Raycaster(origin,direction,0,2.1).intersectObject(crossing,true).length,0,'rail slot is unobstructed');}
+ const origin=new THREE.Vector3(0,2,0).applyMatrix4(crossing.matrixWorld);assert.ok(new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,2.1).intersectObject(crossing,true).length>0,'infill supports the crossing');
+});

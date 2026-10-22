@@ -1,7 +1,8 @@
+import {createBeachFishMarket} from './beachFishMarket';
 import {HALL_THEMES,createThemedHall} from './themedHalls';
 import {auditPlacedPlants} from './plantPlacement';
 import {buildSuppliesMarket} from './billiardsArchitecture';
-import {buildBilliardsAccess} from './billiardsAccess';
+import {buildBilliardsAccess,buildFishMarketTramCrossing} from './billiardsAccess';
 import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
 import {buildCruiseShip} from './cruiseShip';
 import {buildCoastalRealm} from './coastalRealm';
@@ -12,7 +13,7 @@ import {buildSiteDetails} from './siteDetails';
 import { ZONES, terrainHeight } from './layout';
 import { specialBuildings } from './specialBuildings';
 import { buildParcels } from './parcels';
-import { buildTransport,buildStreetFurniture } from './transport';
+import { buildTransport,buildStreetFurniture,transit } from './transport';
 import * as THREE from 'three';
 import { registerSpecial, registerGroup, collectBackgroundBuildings } from './specialBuildings';
 import { billiardsHall, marketDetails, commercialDistrict, hospitalDetails, hotelDetails, restaurantDetails, cafeDetails } from './conceptDetails';
@@ -43,6 +44,7 @@ registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨�
 });
 registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
 for(const t of HALL_THEMES){const hall=createThemedHall(t.theme);world.add(hall);registerGroup(t.id,t.name,t.description,hall,[0,0],[18,14,22]);}
+const beachMarket=createBeachFishMarket();world.add(beachMarket);registerGroup('fishmarket','码头鱼市','木屋、帆布鱼摊、竹筐、木板桌与小渔船码头',beachMarket,[0,0],[24,12,42]);
 registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
   buildCafe(36,32);
 });
@@ -81,7 +83,7 @@ buildHillAccess();
 buildCoastalRealm();
 buildSiteDetails();
 buildParcels();
-plantTrees();buildTransport();buildCars();buildStreetFurniture();buildClouds();
+plantTrees();buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildClouds();
 auditPlacedPlants(world);
 batchBuildings();finalizeOutlines();collectBackgroundBuildings();
 world.userData.layoutVersion='peninsula-terrain-v2';

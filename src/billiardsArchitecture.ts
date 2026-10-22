@@ -3,7 +3,6 @@ import {world} from './scene';
 import {GROUND_Y} from './config';
 import {kit,C} from './referenceArchitecture';
 import {cutFacade,roundPlan,extrudedPlan,insetRing,rackGeometry,polygonPlan,openPlanShell,polygonRing,insetLoft,type PlanPoint,archHole} from './carvedGeometry';
-import {billiardEmblem} from './marketEmblem';
 const wood=0x93602f,gold=0xe3b75e,green=0x397f3b;
 function start(name:string,attach=true){const root=new THREE.Group();root.name=name;root.position.y=attach?GROUND_Y:0;if(attach)world.add(root);return {root,k:kit(root)};}
 function canopy(root:THREE.Group,x:number,z:number,w:number,blue:boolean,y=4.3){
@@ -27,6 +26,15 @@ function rack(root:THREE.Group,x:number,y:number,z:number,size=3.1){
  let n=0;for(let row=0;row<3;row++)for(let col=0;col<3-row;col++){
   const r=size*.105;k.ball(r,[0xf3c447,0x2e99b0,0xdf654b,0xf8f1d0,0x74559b,0x5daa50][n++],x+(col-(2-row)/2)*r*2.05,y+size*.22+row*r*1.8,z+.23);
  }
+}
+export function createMarketRack(){
+ const root=new THREE.Group();root.name='market-rounded-triangle-sign';const k=kit(root),size=5;
+ const rounded=(points:[number,number][],cut:number)=>{const shape=new THREE.Shape();points.forEach((p,i)=>{const prev=points[(i+points.length-1)%points.length],next=points[(i+1)%points.length],a=new THREE.Vector2(...p),before=a.clone().add(new THREE.Vector2(prev[0]-p[0],prev[1]-p[1]).normalize().multiplyScalar(cut)),after=a.clone().add(new THREE.Vector2(next[0]-p[0],next[1]-p[1]).normalize().multiplyScalar(cut));if(i)shape.lineTo(before.x,before.y);else shape.moveTo(before.x,before.y);shape.quadraticCurveTo(p[0],p[1],after.x,after.y);});shape.closePath();return shape;};
+ const outer=rounded([[-size/2,0],[size/2,0],[0,size*.87]],.6),inner=rounded([[-size*.35,size*.1],[0,size*.7],[size*.35,size*.1]],.38);outer.holes.push(new THREE.Path(inner.getPoints(24)));
+ k.mesh(extrudedPlan(roundPlan(6.3,1.8,.35),.25),wood,0,0,0).name='rack-plinth';
+ const rack=k.mesh(new THREE.ExtrudeGeometry(outer,{depth:.27,bevelEnabled:true,bevelSize:.065,bevelThickness:.05,bevelSegments:3,curveSegments:14}),gold,0,.3,-.12);rack.name='rounded-hollow-triangle-rack';rack.geometry.userData.roundedCorners=true;
+ let n=0;for(let row=0;row<3;row++)for(let col=0;col<3-row;col++)k.ball(.44,[0xf3c447,0x2e99b0,0xdf654b,0xf8f1d0,0x74559b,0x5daa50][n++],(col-(2-row)/2)*.88,1.2+row*.76,.23);
+ return root;
 }
 export const TABLE_POCKETS:[number,number][]=[[-2.85,-1.5],[0,-1.6],[2.85,-1.5],[-2.85,1.5],[0,1.6],[2.85,1.5]];
 const POCKET_RADIUS=.3;
@@ -108,7 +116,7 @@ export function buildSuppliesMarket(){
  for(const x of [-5.4,5.4]){
   const display=new THREE.Group();display.name='wall-cue-display';display.position.set(x,0,2.5);root.add(display);cueDisplay(display,0,0);
  }
- billiardEmblem(-2.5,10.85,-5,.65);
+ const roofRack=createMarketRack();roofRack.position.set(-2.5,10.85,-5);root.add(roofRack);for(const x of [-4.3,-.7])k.rod(new THREE.Vector3(x,10.6,-5),new THREE.Vector3(x,10.85,-5),.1,gold);
  for(const x of [-7,7]){
   canopy(root,x,9.2,8,true);rack(root,x+1.55,1.35,8.6,3.3);
   for(const dx of [-1,1]){

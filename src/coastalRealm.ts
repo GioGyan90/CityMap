@@ -1,7 +1,7 @@
 import {renderPlant,createPlanter} from './plantAssets';
 import * as THREE from 'three';
 import {world} from './scene';
-import {westCoast} from './layout';
+import {westCoast,ZONES} from './layout';
 import {surfaceHeight} from './terrainSurface';
 import {paintGroundPath,paintGroundRect} from './groundRoadMaterial';
 import {kit,palm} from './referenceArchitecture';
@@ -38,6 +38,7 @@ export function buildCoastalRealm(){
  // Rhythmic palms establish a boulevard, with gaps at plazas and the restaurant.
  for(let z=-158;z<164;z+=15){
   if(Math.abs(z-98)<24||BEACH_ENTRIES.some(v=>Math.abs(v-z)<9))continue;
+  const site=ZONES.fishmarket;if(Math.abs(z-site.z)<site.d/2+4)continue;
   const x=westCoast(z)+4,tree=new THREE.Group();tree.position.set(x,surfaceHeight(x,z),z);root.add(tree);palm(tree,0,0,5.6);
  }
  world.userData.publicRealm={beachEntries:BEACH_ENTRIES.length,continuousPromenade:true};

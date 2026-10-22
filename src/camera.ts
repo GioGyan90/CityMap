@@ -13,6 +13,7 @@ export const VIEWS = {
  parking:parkingView,
  hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},
  park:{pos:[-109,76,20],target:[-20,12,-87.4]},market:{pos:[-78,45,70],target:[-18,8,15]},hall2:{pos:[-59,29,100],target:[-18,5,57]},
+ fishmarket:{pos:[-42,30,97],target:[-87,3,57]},
  hall1:{pos:[-54,29,18],target:[-20,7,-20]},hall3:{pos:[9,31,-91],target:[41,9,-130]},hall4:{pos:[144,34,7],target:[174,12,-32]},hall5:{pos:[143,30,128],target:[112,7,167]},
  hotel:{pos:[-64,49,199],target:[-12,14,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
  hospital:{pos:[87,52,10],target:[138,13,-48]},cafe:{pos:[22,59,193],target:[93,9,125]},
