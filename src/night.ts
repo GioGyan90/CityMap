@@ -79,7 +79,7 @@ export function refreshDayNight(){
  for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
  for(const material of glazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}
- for(const material of cloudMaterials){material.color.set(0xfffdf2).lerp(new THREE.Color(0x737d9c),night).lerp(new THREE.Color(twilight.cloud),twilight.glow*.7);material.emissive.set(0xdceeff).lerp(new THREE.Color(twilight.rose),twilight.glow);material.emissiveIntensity=.09+twilight.glow*.16;}
+ for(const material of cloudMaterials){material.color.set(0xfffdf2).lerp(new THREE.Color(0x737d9c),night).lerp(new THREE.Color(twilight.cloud),twilight.glow*.85);material.emissive.set(0xdceeff).lerp(new THREE.Color(twilight.rose),twilight.glow);material.emissiveIntensity=.09+twilight.glow*.20;}
  setWaterLighting(night,warm,state.direct,night*state.moonVisibility,sunDir,moonDir,fogColor,twilight);
  nightMode=night>.55;document.body.dataset.time=nightMode?'night':'day';const button=document.getElementById('toggleNight');if(button){button.textContent=nightMode?'切到白天':'切到夜晚';button.setAttribute('aria-pressed',String(nightMode));}
  phaseLabel.textContent=state.phase;world.userData.nightMode=nightMode;world.userData.solar={timestamp:solarClock.timestamp,clock:formatTime(solarClock.timestamp),speed:solarClock.speed,playing:solarClock.playing,altitude:state.sun.altitude,azimuth:state.sun.azimuth,sunDirection:state.sunDirection,night,direct:state.direct};syncUI();

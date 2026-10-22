@@ -36,7 +36,7 @@ const material=new THREE.ShaderMaterial({
       vec2 towardSun=solarDirection.xz/max(length(solarDirection.xz),.0001);
       vec2 towardView=view.xz/max(length(view.xz),.0001);
       float sunsetFacing=pow(max(dot(towardView,towardSun),0.),4.);
-      vec3 reflectedSky=mix(skyReflection,twilightHorizon,twilightStrength*sunsetFacing*.7);
+      vec3 reflectedSky=mix(skyReflection,twilightHorizon,twilightStrength*sunsetFacing*.8);
       color=mix(color,reflectedSky,fresnel*.7);
       // A broken reflection path remains at dusk after direct sunlight ends.
       float across=dot(towardView,vec2(-towardSun.y,towardSun.x));
@@ -67,5 +67,5 @@ const dayShallow=new THREE.Color(SEA_PALETTE.shallow),dayDeep=new THREE.Color(SE
 export function setWaterLighting(night:number,warm:number,direct:number,moon:number,sunDirection:THREE.Vector3,moonDirection:THREE.Vector3,fogColor:THREE.Color,twilight:ReturnType<typeof twilightProfile>){
  waterUniforms.twilightStrength.value=twilight.glow;waterUniforms.twilightHorizon.value.set(twilight.horizon);waterUniforms.solarDirection.value.copy(sunDirection);waterUniforms.night.value=night;waterUniforms.shallow.value.copy(dayShallow).lerp(nightShallow,night);waterUniforms.deep.value.copy(dayDeep).lerp(nightDeep,night);
  waterUniforms.lightDirection.value.copy(direct>0?sunDirection:moonDirection);waterUniforms.lightColor.value.set(direct>0?0xfff1d0:0x8aabe0);if(direct>0)waterUniforms.lightColor.value.lerp(new THREE.Color(twilight.sunlight),warm);
- waterUniforms.lightStrength.value=direct>0?direct/1.8:moon*.3;waterUniforms.skyReflection.value.set(0x79c7ed).lerp(new THREE.Color(0x050b1f),night).lerp(new THREE.Color(twilight.rose),twilight.glow*.65);waterUniforms.fogColor.value.copy(fogColor);
+ waterUniforms.lightStrength.value=direct>0?direct/1.8:moon*.3;waterUniforms.skyReflection.value.set(0x79c7ed).lerp(new THREE.Color(0x050b1f),night).lerp(new THREE.Color(twilight.rose),twilight.glow*.78);waterUniforms.fogColor.value.copy(fogColor);
 }
