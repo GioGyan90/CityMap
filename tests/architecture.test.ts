@@ -288,3 +288,11 @@ test('five themed halls are independent plots with clear carved doors, grounded 
  for(const id of ['park','hospital','commercial','port']){let old=0;specialBuildings.find(s=>s.id===id)!.group.traverse(o=>{if(/BILLIARDS/.test(o.userData.signText??''))old++;});assert.equal(old,0,'old hall removed from '+id);}
  const hall1=new THREE.Box3().setFromObject(specialBuildings.find(s=>s.id==='hall1')!.group),park=new THREE.Box3().setFromObject(specialBuildings.find(s=>s.id==='park')!.group);assert.equal(hall1.intersectsBox(park),false);
 });
+
+
+test('roof sculptures have five distinct motifs, supported giant eights and a real flame cutout',async()=>{
+ const {createEmotionEmblem}=await import('../src/hallEmblems');const silhouettes=new Set<string>();
+ for(const theme of ['fire','elegance','order','science','punk'] as const){const sculpture=createEmotionEmblem(theme);sculpture.updateMatrixWorld(true);const ball=sculpture.getObjectByName('eight-sphere')!,support=sculpture.getObjectByName('eight-support')!;assert.ok(ball&&support);const b=new THREE.Box3().setFromObject(ball),s=new THREE.Box3().setFromObject(support);assert.ok(s.max.y>=b.min.y&&s.min.y<=.251,'ball is connected to the pedestal');assert.ok(b.getSize(new THREE.Vector3()).x>=1.89,'eight is a landmark, not a small badge');assert.ok(sculpture.getObjectByName('sculpture-motif-'+theme));let numbers=0;sculpture.traverse(o=>{if(o.name==='raised-eight-number')numbers++;if(o.name==='sculpture-cue')assert.ok(o.getObjectByName('cue-mount-brace'),'cue has a physical mounting brace');});assert.equal(numbers,2,'eight reads from front and back');const bounds=new THREE.Box3().setFromObject(sculpture,true);assert.ok(Math.abs(bounds.min.y)<1e-5,theme+' minY '+bounds.min.y);silhouettes.add(bounds.getSize(new THREE.Vector3()).toArray().map(v=>v.toFixed(2)).join(','));}
+ assert.equal(silhouettes.size,5);
+ const flame=createEmotionEmblem('fire').getObjectByName('pierced-flame-silhouette')!;flame.updateWorldMatrix(true,false);const ray=new THREE.Raycaster(new THREE.Vector3(.25,3.35,4),new THREE.Vector3(0,0,-1));assert.equal(ray.intersectObject(flame).length,0,'flame centre is cut through');
+});

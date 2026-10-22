@@ -1,15 +1,16 @@
+import {createEmotionEmblem} from './hallEmblems';
 import * as THREE from 'three';
 import {kit,C} from './referenceArchitecture';
 import {buildOutdoorHall,outdoorTable} from './billiardsArchitecture';
-import {cutFacade,roundPlan,extrudedPlan,insetLoft,rackGeometry,polygonPlan,type PlanPoint} from './carvedGeometry';
+import {cutFacade,roundPlan,extrudedPlan,insetLoft,polygonPlan,type PlanPoint} from './carvedGeometry';
 
 export type HallTheme='fire'|'order'|'science'|'elegance'|'punk';
 export const HALL_THEMES:{id:string;theme:HallTheme;name:string;color:number;description:string}[]=[
- {id:'hall1',theme:'fire',name:'炽焰台球厅 · 火热',color:0xc94e39,description:'红色上扬双片屋顶、斜肋与开放球桌'},
- {id:'hall2',theme:'elegance',name:'常青台球厅 · 优雅',color:0x397f4d,description:'木质拱门、绿色遮棚与屋顶三角球架'},
- {id:'hall3',theme:'order',name:'蓝序台球厅 · 秩序',color:0x327fa9,description:'对称中轴、连续框架与阶梯屋顶'},
- {id:'hall4',theme:'science',name:'白弧台球厅 · 科学',color:0xf4f1df,description:'圆弧侧翼、环形标识与凹入式玻璃'},
- {id:'hall5',theme:'punk',name:'黑铆台球厅 · 朋克',color:0x37414a,description:'切角主体、锯齿屋顶与外露铆钉钢架'}
+ {id:'hall1',theme:'fire',name:'炽焰台球厅 · 火热',color:0xc94e39,description:'巨型火焰黑8、斜穿球杆与红色上扬屋顶'},
+ {id:'hall2',theme:'elegance',name:'常青台球厅 · 优雅',color:0x397f4d,description:'月桂黑8雕塑、木质拱门与绿色遮棚'},
+ {id:'hall3',theme:'order',name:'蓝序台球厅 · 秩序',color:0x327fa9,description:'竞技门架黑8雕塑、对称中轴与阶梯屋顶'},
+ {id:'hall4',theme:'science',name:'白弧台球厅 · 科学',color:0xf4f1df,description:'立体轨道黑8雕塑、圆弧侧翼与凹入式玻璃'},
+ {id:'hall5',theme:'punk',name:'黑铆台球厅 · 朋克',color:0x37414a,description:'闪电与破碎金属黑8雕塑、锯齿顶与铆钉钢架'}
 ];
 function group(root:THREE.Group,name:string){const g=new THREE.Group();g.name=name;root.add(g);return g;}
 function rectWall(w:number,h:number,depth:number,holes:{x:number;y:number;w:number;h:number}[]){
@@ -23,17 +24,7 @@ export function createHallEntrance(color=0x327fa9){const g=new THREE.Group();g.n
  for(const side of [-1,1]){k.box(1.5,4.5,.12,C.glass,side*.775,2.37,-.13);k.box(.12,4.7,.16,color,side*1.59,2.35,-.1);k.box(.05,.55,.14,C.gold,side*.16,2.3,-.03);}
  k.box(3.3,.1,.16,color,0,4.65,-.1);k.box(3.3,.12,.16,C.cream,0,.06,-.1);return g;
 }
-export function createHallEmblem(theme:HallTheme){const root=new THREE.Group();root.name='hall-module-emblem';const k=kit(root),accent=HALL_THEMES.find(t=>t.theme===theme)!.color;
- k.box(4.2,.25,1.2,accent,0,.125,0);
- if(theme==='punk')for(const side of [-1,1])k.rod(new THREE.Vector3(side*-1.5,.3,0),new THREE.Vector3(side*1.5,2.7,0),.075,C.gold);
- else k.mesh(rackGeometry(3.1),theme==='science'?0x97b8bd:C.gold,0,.25,0).name='hall-identity-triangle';
- const ball=k.ball(.48,0x263b40,0,1.15,.27);ball.name='hall-identity-ball';k.rod(new THREE.Vector3(0,.25,.2),new THREE.Vector3(0,.68,.27),.065,accent);
- const disc=k.mesh(new THREE.CircleGeometry(.25,16),C.white,0,1.15,.755);disc.name='ball-number-disc';
- for(const y of [1.07,1.23])k.mesh(new THREE.TorusGeometry(.07,.026,5,12),0x263b40,0,y,.77);
- if(theme==='science'){const ring=k.mesh(new THREE.TorusGeometry(1.1,.055,6,32),0x62a4b4,0,1.2,.15);ring.rotation.set(.25,0,.45);}
- if(theme==='order')for(const x of [-1.5,1.5])k.rod(new THREE.Vector3(x,.25,-.2),new THREE.Vector3(x,2.15,-.2),.045,C.white);
- return root;
-}
+export const createHallEmblem=createEmotionEmblem;
 function roofRibbon(x0:number,x1:number,depth:number,rise:number){
  const s=new THREE.Shape();for(let i=0;i<=12;i++){const u=i/12,x=THREE.MathUtils.lerp(x0,x1,u),y=rise*(.15+.85*Math.sin(u*Math.PI*.7));if(i)s.lineTo(x,y);else s.moveTo(x,y);}
  for(let i=12;i>=0;i--){const u=i/12;s.lineTo(THREE.MathUtils.lerp(x0,x1,u),rise*(.15+.85*Math.sin(u*Math.PI*.7))-.22);}s.closePath();
@@ -46,6 +37,7 @@ export function createThemedHall(theme:HallTheme){
   const entrance=createHallEntrance(0x476c43);entrance.position.set(0,.35,-2);entrance.scale.set(1.24,1,1);root.add(entrance);
   const parts=Object.fromEntries(['base','shell','entrance','roof','emblem','furniture'].map(n=>[n,group(root,'hall-'+n)]));
   for(const child of [...root.children]){if(Object.values(parts).includes(child as THREE.Group))continue;const bounds=new THREE.Box3().setFromObject(child);const part=child===entrance?'entrance':child.name==='rooftop-triangle-sign'?'emblem':child.name==='hall-rear-shell'||child.name==='hall-open-arch'?'shell':bounds.max.y<.7?'base':bounds.max.y>5.7?'roof':'furniture';parts[part].add(child);}
+  const old=parts.emblem.getObjectByName('rooftop-triangle-sign');if(old)old.parent!.remove(old);const sculpture=createHallEmblem(theme);sculpture.position.set(0,8.35,-4.5);sculpture.scale.setScalar(.95);parts.emblem.add(sculpture);
   return root;
  }
  const root=new THREE.Group();root.name='themed-hall-'+theme;root.userData={theme,color:spec.color,hallId:spec.id};
@@ -87,14 +79,12 @@ export function createThemedHall(theme:HallTheme){
   r.box(6.8,.4,4.8,C.white,-4,7.28,-4.6).name='science-vault-support-curb';
   const curveRoof=r.mesh(new THREE.CylinderGeometry(2.4,2.4,6.8,24,1,false,0,Math.PI),C.white,-4,7.48,-4.6);curveRoof.rotation.z=Math.PI/2;curveRoof.name='science-vault-roof';
   r.box(8.5,.25,3,0xd5e9e1,1.7,5.55,.25);for(const x of [-2.2,5.7])r.rod(new THREE.Vector3(x,.35,1.45),new THREE.Vector3(x,5.5,1.45),.11,0xb9d2cd);
-  // Roof equipment stays on the flat right wing.
-  for(const z of [-6.3,-3.6]){r.box(1.3,.5,1.1,0xc2d7d0,4.7,7.75,z);for(let i=0;i<3;i++)r.box(.08,.03,.8,0x5ba0ad,4.4+i*.3,8.02,z);}
  }else{
   for(let i=0;i<4;i++){const x=-6.7+i*3.4,shape=new THREE.Shape([new THREE.Vector2(x,0),new THREE.Vector2(x+3.4,0),new THREE.Vector2(x+3.4,1.65),new THREE.Vector2(x,1.0)]);r.mesh(new THREE.ExtrudeGeometry(shape,{depth:7.6,bevelEnabled:false}),accent,0,7.15,-8.4).name='punk-sawtooth-roof';}
   for(const side of [-1,1]){k.rod(new THREE.Vector3(side*6.1,.5,-1),new THREE.Vector3(side*2.6,6.6,-1),.12,0xad8255);for(let i=0;i<6;i++)k.ball(.085,0xbcc2b9,side*6.1,.8+i*.95,-.85);}
   r.mesh(new THREE.CylinderGeometry(.35,.35,2.1,10),0x899291,5,8.2,-5.5).name='punk-exhaust-stack';r.mesh(new THREE.TorusGeometry(.36,.085,6,12),0xabb2a6,5,9.25,-5.5).rotation.x=Math.PI/2;
  }
- const emblem=createHallEmblem(theme);emblem.scale.setScalar(.78);emblem.position.set(theme==='science'?3.2:0,theme==='order'?8.45:theme==='punk'?8.85:theme==='fire'?8.5:7.5,-4.6);identity.add(emblem);
+ const emblem=createHallEmblem(theme);emblem.scale.setScalar(theme==='science'?.85:1.05);emblem.position.set(theme==='science'?3.2:0,theme==='order'?8.45:theme==='punk'?8.85:theme==='fire'?8.5:7.5,-4.6);identity.add(emblem);
  // Two visible supports connect the sign plinth to the actual roof.
  for(const x of [-1.2,1.2])kit(identity).rod(new THREE.Vector3((theme==='science'?3.2:0)+x,7.3,-4.6),new THREE.Vector3((theme==='science'?3.2:0)+x,emblem.position.y,-4.6),.08,accent);
  const table=createHallTable();table.position.set(0,.25,5.3);furniture.add(table);
