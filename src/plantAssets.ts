@@ -10,7 +10,7 @@ function part(g:THREE.BufferGeometry,m:THREE.Material,name:string){const mesh=ne
 /** Continuous lobed crown: ring profiles, not intersecting primitive balls. */
 export function crownGeometry(seed:number,radius:number,height:number,color:number,pine=false){
  const random=seededRandom(seed),phases=Array.from({length:4},()=>random()*Math.PI*2),vertices:number[]=[],colors:number[]=[],indices:number[]=[];
- const rings=pine?16:9,sides=14,base=new THREE.Color(color),light=new THREE.Color(pine?0x9fbf54:0xd0dc70),dark=new THREE.Color(pine?0x376b48:0x538947);
+ const rings=pine?16:9,sides=14,base=new THREE.Color(color),light=new THREE.Color(pine?0x83be69:0xb4da78),dark=new THREE.Color(pine?0x376b48:0x538947);
  for(let i=0;i<=rings;i++)for(let j=0;j<sides;j++){
   const u=i/rings,a=j/sides*Math.PI*2;
   let r:number;
@@ -41,7 +41,7 @@ export function createTree(style:TreeStyle='shade',seed=51){
  }
  const specs=style==='slender'?[[0,0,1.35,3.0,4.4]]:style==='flowering'?[[-.95,.15,1.65,2.75,2.65],[1,.3,1.55,3.05,2.75],[.05,-.9,1.7,3.0,2.7]]:[[-1.05,.3,1.8,3.1,2.9],[1.1,.35,1.65,3.3,3.25],[.05,-1.0,1.9,3.35,3.45]];
  for(const [i,[x,z,r,y,h]] of specs.entries()){
-  const color=style==='flowering'?[0x72ad49,0x91bb50,0x5e9c48][i%3]:style==='slender'?0xa6bf46:[0x86b94b,0x9bc34e,0x73a746][i%3];
+  const color=style==='flowering'?[0x72ad49,0x91bb50,0x5e9c48][i%3]:style==='slender'?0x89c454:[0x86b94b,0x9bc34e,0x73a746][i%3];
   const crown=part(crownGeometry(seed+31+i*73,r,h,color),foliage,'sculpted-crown-cluster');crown.position.set(x+tip.x*.6,y,z+tip.z*.6);canopy.add(crown);
   branch(fork,new THREE.Vector3(tip.x*.65,stem*.76,tip.z*.65),new THREE.Vector3(crown.position.x,y+h*.38,crown.position.z),.14-i*.015);
   if(style==='slender')for(const side of [-1,1])branch(fork,tip.clone().multiplyScalar(.85),new THREE.Vector3(side*.65,4.2,.3),.085);

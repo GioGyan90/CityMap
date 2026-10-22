@@ -54,7 +54,7 @@ export function getFacadeTex(base, win, floors, cols, lit) {
   const lg = g.createLinearGradient(0, 0, 0, S);
   lg.addColorStop(0, 'rgba(255,255,255,0.22)');
   lg.addColorStop(0.55, 'rgba(255,255,255,0)');
-  lg.addColorStop(1, 'rgba(31,79,112,0.08)');
+  lg.addColorStop(1, 'rgba(31,79,112,0.04)');
   g.fillStyle = lg;
   g.fillRect(0, 0, S, S);
 
@@ -79,7 +79,7 @@ export function getFacadeTex(base, win, floors, cols, lit) {
   }
 
   /* Thin warm stone trim preserves light facades at city-map scale. */
-  g.strokeStyle = '#cbbb92';
+  g.strokeStyle = '#dedcd0';
   g.lineWidth = 2.6;
   g.strokeRect(1.5, 1.5, S - 3, S - 3);
 
