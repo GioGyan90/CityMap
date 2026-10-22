@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {scene,world,sky,hemi,sun,fill,camera} from './scene';
+import {setCloudLighting,disableCloudShadows} from './clouds';
 import {surfaceHeight} from './terrainSurface';
 import {twilightProfile} from './twilight';
 import {DAY_LIGHTING} from './visualStyle';
@@ -13,7 +14,6 @@ export const solarClock=new SolarClock();
 const nightGroup=new THREE.Group();nightGroup.name='night-lighting';nightGroup.visible=false;world.add(nightGroup);
 const meshMaterials=new Set<THREE.Material>();
 world.traverse(object=>{if(object instanceof THREE.Mesh && object.name.indexOf('pick-')!==0){const ms=Array.isArray(object.material)?object.material:[object.material];ms.forEach(m=>meshMaterials.add(m));}});
-const cloudMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial && m.userData.lightingRole==='sky-cloud');
 const litMaterials:THREE.MeshToonMaterial[]=[];
 const glazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial && m.color.getHex()===0x3987aa);
 for(const material of meshMaterials) {
@@ -79,12 +79,12 @@ export function refreshDayNight(){
  for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
  for(const material of glazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}
- for(const material of cloudMaterials){material.color.set(0xfffdf2).lerp(new THREE.Color(0x737d9c),night).lerp(new THREE.Color(twilight.cloud),twilight.glow*.85);material.emissive.set(0xdceeff).lerp(new THREE.Color(twilight.rose),twilight.glow);material.emissiveIntensity=.09+twilight.glow*.20;}
+ setCloudLighting(night,twilight.glow,twilight.cloud,twilight.rose,sunDir,state.direct);
  setWaterLighting(night,warm,state.direct,night*state.moonVisibility,sunDir,moonDir,fogColor,twilight);
  nightMode=night>.55;document.body.dataset.time=nightMode?'night':'day';const button=document.getElementById('toggleNight');if(button){button.textContent=nightMode?'切到白天':'切到夜晚';button.setAttribute('aria-pressed',String(nightMode));}
  phaseLabel.textContent=state.phase;world.userData.nightMode=nightMode;world.userData.solar={timestamp:solarClock.timestamp,clock:formatTime(solarClock.timestamp),speed:solarClock.speed,playing:solarClock.playing,altitude:state.sun.altitude,azimuth:state.sun.azimuth,sunDirection:state.sunDirection,night,direct:state.direct};syncUI();
 }
-export function enterAssetDaylight(){celestial.visible=false;hemi.color.set(DAY_LIGHTING.hemi.sky);hemi.groundColor.set(DAY_LIGHTING.hemi.ground);hemi.intensity=DAY_LIGHTING.hemi.intensity;sun.color.set(DAY_LIGHTING.sun.color);sun.intensity=DAY_LIGHTING.sun.intensity;sun.castShadow=true;fill.color.set(DAY_LIGHTING.fill.color);fill.intensity=DAY_LIGHTING.fill.intensity;moonLight.intensity=0;}
+export function enterAssetDaylight(){disableCloudShadows();celestial.visible=false;hemi.color.set(DAY_LIGHTING.hemi.sky);hemi.groundColor.set(DAY_LIGHTING.hemi.ground);hemi.intensity=DAY_LIGHTING.hemi.intensity;sun.color.set(DAY_LIGHTING.sun.color);sun.intensity=DAY_LIGHTING.sun.intensity;sun.castShadow=true;fill.color.set(DAY_LIGHTING.fill.color);fill.intensity=DAY_LIGHTING.fill.intensity;moonLight.intensity=0;}
 export function updateDayNight(seconds:number){const asset=!!world.userData.assetView;if(asset){if(!previousAsset)enterAssetDaylight();previousAsset=true;return;}if(previousAsset){previousAsset=false;skipAdvance=true;}if(!document.hidden&&!skipAdvance)solarClock.advance(Math.min(Math.max(seconds,0),1));skipAdvance=false;refreshDayNight();}
 export function setNightMode(value:boolean){solarClock.seek(civilParts(solarClock.timestamp).date,value?1320:720);solarClock.playing=false;refreshDayNight();save();}
 document.getElementById('toggleNight')!.addEventListener('click',()=>setNightMode(!nightMode));

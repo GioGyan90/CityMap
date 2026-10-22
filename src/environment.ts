@@ -1,3 +1,4 @@
+import {attachCloudShadows} from './cloudShadows';
 import {RECLAIMED_FILL_TOP} from './harborPlan';
 import {terrainRows,terrainCols,terrainPositions,surfaceHeight} from './terrainSurface';
 import {createGroundMaterial} from './groundRoadMaterial';
@@ -52,3 +53,5 @@ const beach=new THREE.Mesh(beachGeo,toon(0xffffff,{vertexColors:true}));beach.na
 world.userData.visualStyle='terraced-sunny-coast-v2';
 
 world.userData.roadSurface={mode:'shared-terrain-material',groundLayers:1,markings:'integrated'};
+
+for(const surface of [beach,quay]){surface.material.onBeforeCompile=attachCloudShadows;surface.material.customProgramCacheKey=()=> 'coastal-ground-cloud-shadows-v1';}

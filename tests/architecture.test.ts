@@ -383,3 +383,51 @@ test('cliff core is closed, reefs are submerged into seabed and assemblies are d
  assert.deepEqual(a.children.map(c=>c.children.map(m=>m.position.toArray())),b.children.map(c=>c.children.map(m=>m.position.toArray())));
  for(const value of geometry.attributes.position.array)assert.ok(Number.isFinite(value));
 });
+
+test('cloud silhouettes are designed groups with deterministic density and fully faded box borders',async()=>{
+ const {cloudAssembly,cloudDensityAtlas}=await import('../src/cloudModel');
+ const shapes=[];
+ for(const kind of ['towering','broken','veil'] as const){
+  const lobes=cloudAssembly(kind,83017),atlas=cloudDensityAtlas(lobes,83017);shapes.push(JSON.stringify(lobes));
+  assert.ok(lobes.length>=4&&lobes.length<=8);assert.ok(lobes.some(l=>l.name.includes('base')||l.name==='flat-core'));
+  assert.deepEqual(lobes,cloudAssembly(kind,83017));assert.notDeepEqual(lobes,cloudAssembly(kind,83018));
+  const n=atlas.size;let peak=0,filled=0;
+  for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+   const value=atlas.data[(((z>>3)*n+y)*atlas.width+(z%8)*n+x)*4];peak=Math.max(peak,value);if(value>30)filled++;
+   if([x,y,z].some(v=>v===0||v===n-1))assert.equal(value,0,'no rectangular cut edge');
+  }
+  assert.ok(peak>130&&filled>n*n,'soft volume has a dense interior');assert.ok(filled<n*n*n*.5,'empty margin preserves cloud silhouette');
+ }
+ assert.equal(new Set(shapes).size,3);
+});
+
+test('cloud field varies height and scale, moves independently and pauses without shifting density',async()=>{
+ const {cloudStates,buildClouds,updateClouds}=await import('../src/clouds');buildClouds();
+ assert.equal(cloudStates.length,12);assert.equal(cloudStates.filter(c=>c.shadow).length,4);
+ assert.ok(new Set(cloudStates.map(c=>c.start.y.toFixed(1))).size>8);
+ assert.ok(new Set(cloudStates.map(c=>c.root.userData.width.toFixed(1))).size>8);
+ const before=cloudStates.map(c=>c.root.position.clone());updateClouds(0);assert.ok(cloudStates.every((c,i)=>c.root.position.equals(before[i])));
+ updateClouds(2);const displacements=cloudStates.map((c,i)=>c.root.position.clone().sub(before[i]));assert.ok(new Set(displacements.map(d=>d.x.toFixed(3)+':'+d.z.toFixed(3))).size>8);
+ const paused=cloudStates.map(c=>c.root.position.clone());world.userData.assetView=true;updateClouds(20);assert.ok(cloudStates.every((c,i)=>c.root.position.equals(paused[i])));world.userData.assetView=false;
+ for(const c of cloudStates){assert.ok(c.root.position.y-c.root.userData.height/2>140,'cloud envelope stays above buildings');}
+});
+
+test('cloud shadows project away from the sun, follow terrain height, fade at dusk and disappear in asset view',async()=>{
+ const {projectedCloudShadow}=await import('../src/cloudModel');const {cloudShadowUniforms}=await import('../src/cloudShadows');const {setCloudLighting,disableCloudShadows,updateClouds}=await import('../src/clouds');
+ const center=new THREE.Vector3(100,180,50),sun=new THREE.Vector3(.4,.8,.3).normalize();
+ const a=projectedCloudShadow(center,sun)!,b=projectedCloudShadow(center,sun,20)!;assert.ok(a.x<center.x&&a.y<center.z);assert.ok(b.x>a.x&&b.y>a.y);assert.equal(projectedCloudShadow(center,new THREE.Vector3(1,0,0)),null);
+ setCloudLighting(0,0,0xffffff,0xffaaaa,sun,1.5);updateClouds(0);assert.ok(cloudShadowUniforms.cloudShadowStrength.value>.9);assert.ok(cloudShadowUniforms.cloudShadowWeights.value.some(v=>v>0));
+ for(const lobe of cloudShadowUniforms.cloudShadowLobes.value)assert.ok(lobe.toArray().every(Number.isFinite));
+ disableCloudShadows();assert.equal(cloudShadowUniforms.cloudShadowStrength.value,0);
+ setCloudLighting(1,0,0xffffff,0xffaaaa,new THREE.Vector3(1,-.2,0).normalize(),0);assert.equal(cloudShadowUniforms.cloudShadowStrength.value,0);
+ setCloudLighting(0,0,0xffffff,0xffaaaa,sun,1.5);
+});
+
+test('cloud preview clones refresh camera-local rays without mutating original uniforms',async()=>{
+ const {createCloud,prepareCloudMaterial}=await import('../src/clouds');
+ const original=createCloud('towering',83017),copy=original.clone(true),mesh=copy.children[0] as THREE.Mesh;
+ mesh.material=prepareCloudMaterial((mesh.material as THREE.ShaderMaterial).clone());const m=mesh.material as THREE.ShaderMaterial;copy.position.set(0,0,0);copy.updateMatrixWorld(true);
+ const camera=new THREE.PerspectiveCamera();camera.position.set(0,20,100);camera.updateMatrixWorld();(m as any).onBeforeRender(null,null,camera,null,mesh);const first=m.uniforms.cameraLocal.value.clone();
+ camera.position.x=50;camera.updateMatrixWorld();(m as any).onBeforeRender(null,null,camera,null,mesh);assert.ok(m.uniforms.cameraLocal.value.distanceTo(first)>1);assert.equal(m.uniformsNeedUpdate,true);
+ assert.ok(((original.children[0] as THREE.Mesh).material as THREE.ShaderMaterial).uniforms.cameraLocal.value.equals(new THREE.Vector3()));
+});

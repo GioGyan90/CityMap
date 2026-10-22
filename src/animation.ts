@@ -1,3 +1,4 @@
+import {updateClouds} from './clouds';
 import {updateDayNight} from './night';
 import { updateFocus, renderFocusOutline } from './focus';
 import * as THREE from 'three';
@@ -50,6 +51,7 @@ export function animate() {
 
   /* 海浪 */
   updateWater(t);
+  updateClouds(dt);
 
   /* 帆船 */
   for (const b of boats) {

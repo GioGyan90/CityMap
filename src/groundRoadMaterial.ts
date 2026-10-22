@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {attachCloudShadows} from './cloudShadows';
 import {toon} from './materials';
 import {roadProfiles,promenadeCurve} from './roadNetwork';
 const bounds={x:-130,z:-220,w:470,d:470},resolution=3072;
@@ -31,6 +32,7 @@ export function createGroundMaterial(){
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
    vec3 road=texture2D(roadMask,roadUv).rgb;
    diffuseColor.rgb=diffuseColor.rgb*(1.-clamp(road.r+road.g+road.b,0.,1.))+asphaltColor*road.r+walkColor*road.g+lineColor*road.b;`);
+  attachCloudShadows(shader);
  };
  material.customProgramCacheKey=()=> 'shared-terrain-roads-v1';return material;
 }
