@@ -1,3 +1,4 @@
+import {createVehicle} from './vehicles';
 import * as THREE from 'three';
 import {world} from './scene';
 import {GROUND_Y} from './config';
@@ -64,9 +65,6 @@ export function referenceHospital(cx:number,cz:number){
  k.box(6.7,.32,3.5,C.blue,-3,4.2,5.5);for(let i=0;i<4;i++){k.box(1.6,.42,.25,C.blue,-5.5+i*1.65,3.9,7.15);k.box(.07,.06,3.5,C.white,-6.25+i*1.65,4.39,5.5);}
  for(let i=0;i<3;i++)k.box(6.8,.22,1.3,C.cream,-3,.7-i*.12,6.4+i*.9);
  garden(root,-9.7,4,2);garden(root,9.5,-7,1.7);palm(root,-10,-8);palm(root,10,2,6.5);
- const van=new THREE.Group();van.name='hospital-ambulance';van.position.set(5.2,.7,7.2);root.add(van);const v=kit(van);
- v.rounded(3.6,6.7,2.7,0,.65,0,C.white,.45);v.box(3.5,.7,2.4,C.white,0,.72,2.5);v.box(3,.95,.12,C.glass,0,2.5,3.38);v.box(3.5,.24,6.2,0xf1703c,0,1.3,0);v.box(3.5,.8,1.8,C.white,0,3.24,-1);v.box(1.3,.32,.55,0xf14425,0,3.85,-.8);
- for(const side of [-1,1]){v.box(.08,1.3,1.3,C.glass,side*1.84,2.5,1.9);v.box(.12,1.7,.56,0xe84424,side*1.85,2.6,-1.1);v.box(.13,.56,1.7,0xe84424,side*1.86,2.6,-1.1);for(const z of [-2,2]){const t=v.mesh(new THREE.CylinderGeometry(.68,.68,.32,14),0x394856,side*1.8,.65,z);t.rotation.z=Math.PI/2;const hub=v.mesh(new THREE.CylinderGeometry(.31,.31,.35,12),0xc0ccd1,side*1.84,.65,z);hub.rotation.z=Math.PI/2;}}
- v.box(1.5,.35,.16,0x52636c,0,1.1,3.8);for(const x of [-1.2,1.2])v.box(.65,.35,.18,0xffe8a5,x,1.25,3.8);
+ const van=createVehicle('ambulance',C.white,undefined,true);van.name='hospital-ambulance';van.position.set(5.2,.7,7.2);van.scale.set(1.6,1.4,1.4);root.add(van);
  return root;
 }

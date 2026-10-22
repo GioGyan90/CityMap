@@ -1,3 +1,4 @@
+import {createVehicle} from './vehicles';
 import {surfaceHeight} from './terrainSurface';
 import { motorwayCurve } from './transport';
 import * as THREE from 'three';
@@ -13,7 +14,7 @@ export function buildCars(){
  if(motorwayCurve)routes.push(makeTrafficRoute(motorwayCurve,routes.length,true));
  junctions=findJunctions(routes);
  for(let i=0;i<28;i++){
-  const bus=i%7===0,route=routes[i%routes.length],mesh=new THREE.Group();mesh.name=bus?'city-bus':'road-car';
+  const bus=i%7===0,route=routes[i%routes.length],mesh=createVehicle(bus?'bus':'sedan',[0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4],undefined,true);mesh.name=bus?'city-bus':'road-car';
   const car:typeof cars[number]={id:i,mesh,route,distance:0,length:bus?5.7:3.2,width:bus?2:1.6,desiredSpeed:route.elevated?10+(i%3):5+(i%4)*.6,speed:0,waiting:0,pose:poseAt(route,0)};
   // Allocate actual free space, including other roads at intersections, before spawning.
   let placed=false;
@@ -23,9 +24,6 @@ export function buildCars(){
    if(!cars.some(other=>vehiclesOverlap(car,other,3))){placed=true;break;}
   }
   if(!placed)continue;
-  const body=new THREE.Mesh(new THREE.BoxGeometry(car.width,bus?2.5:1.25,car.length),toon([0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4]));body.position.y=bus?1.5:1;mesh.add(body);
-  const window=new THREE.Mesh(new THREE.BoxGeometry(bus?2.03:1.5,bus?1:.7,bus?4.8:1.8),toon(0x355b73));window.position.y=bus?2.1:1.65;mesh.add(window);
-  for(const x of [-car.width*.5,car.width*.5])for(const z of [-car.length*.32,car.length*.32]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.18,8),toon(0x30353c));wheel.rotation.z=Math.PI/2;wheel.position.set(x,.32,z);mesh.add(wheel);}
   mesh.traverse(o=>{if(o instanceof THREE.Mesh)o.castShadow=true;});world.add(mesh);cars.push(car);
  }
  world.userData.traffic={version:'separated-lanes-reservations-v1',vehicles:cars,junctions};updateTraffic(0);

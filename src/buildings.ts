@@ -102,6 +102,7 @@ export interface BuildingOptions {
 }
 export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0, entrances: [] as {x:number;z:number;kind:string;height:number}[] };
 const buildingGroups: THREE.Group[] = [];
+export const ordinaryAssetSamples=new Map<string,THREE.Group>();
 const accentMaterials = new Map<number, THREE.MeshToonMaterial>();
 function accent(color: number) {
   if (!accentMaterials.has(color)) accentMaterials.set(color, toon(color));
@@ -222,6 +223,7 @@ export function makeBuilding(o: BuildingOptions) {
   addBuildingEntrance(g,wall,large,kind,0,style!=='arcade');
   g.userData.entranceWall=wall;
   buildingStats.entrances.push({x:x+wall.x*Math.cos(ry)+wall.z*Math.sin(ry),z:z-wall.x*Math.sin(ry)+wall.z*Math.cos(ry),kind,height:wall.ceiling});
+  const sampleKey=style+'-'+plan;if(!ordinaryAssetSamples.has(sampleKey)){const sample=g.clone(true);sample.position.set(0,0,0);ordinaryAssetSamples.set(sampleKey,sample);}
   return g;
 }
 function rrHeight(h: number) { return h > 45 ? 4 : 2; }

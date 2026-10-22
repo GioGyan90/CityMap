@@ -1,3 +1,4 @@
+import {createVehicle} from './vehicles';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {world} from './scene';
@@ -47,10 +48,7 @@ export function buildParkingLots(offices:Office[],occupied:Rect[]){
      parked++;
      const normal=new THREE.Vector3(surfaceHeight(px-.5,pz)-surfaceHeight(px+.5,pz),1,surfaceHeight(px,pz-.5)-surfaceHeight(px,pz+.5)).normalize();
      const rotation=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),normal);
-     const part=(w:number,h:number,d:number,color:number,dx:number,dy:number,dz:number)=>{const p=new THREE.Vector3(dx,dy,dz).applyQuaternion(rotation);box(w,h,d,color,px+p.x,y+p.y,pz+p.z,rotation);};
-     part(1.65,.8,3.45,[0xdaaa51,0xf3eee0,0x4d91ab,0xc66e58][(i+lots.length)%4],0,.72,0);
-     part(1.45,.65,1.8,0x385d73,0,1.4,-.15);part(1.46,.10,1.7,0xd6e2e2,0,1.77,-.15);
-     for(const side of [-1,1])for(const end of [-1,1])part(.20,.45,.58,0x35404a,side*.78,.3,end*1.05);
+     const car=createVehicle('sedan',[0xdaaa51,0xf3eee0,0x4d91ab,0xc66e58][(i+lots.length)%4],{width:1.65,length:3.45},true);car.name='parked-car';car.position.set(px,y,pz);car.quaternion.copy(rotation);group.add(car);
     }
    }
    // Foot access stays separate from the parking aisle when it is clear of buildings.

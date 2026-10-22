@@ -8,6 +8,7 @@ async function boot() {
     await import('./focus');
     await import('./labels');
     await import('./camera');
+    const {initAssetTools}=await import('./assetTools');initAssetTools();
     await import('./animation');
     document.getElementById('loading')?.remove();
   } catch (error) {

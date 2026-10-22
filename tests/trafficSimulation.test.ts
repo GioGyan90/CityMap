@@ -135,3 +135,18 @@ test('whole trains stop before both terminal buffers',async()=>{
   assert.ok(distance>=8.9&&length-distance>=8.9,'train body stays within the usable track');
  }
 });
+
+test('map grid coordinates and saved placement validation round trip at cell boundaries',async()=>{
+ const {gridCell,MAP_GRID,columnLabel,validatePositions}=await import('../src/mapCoordinates');
+ assert.equal(gridCell(MAP_GRID.originX,MAP_GRID.originZ).id,'A01');
+ assert.equal(gridCell(MAP_GRID.originX+19.999,MAP_GRID.originZ+19.999).id,'A01');
+ assert.equal(gridCell(MAP_GRID.originX+20,MAP_GRID.originZ+20).id,'B02');
+ assert.equal(columnLabel(26),'AA');assert.equal(gridCell(10000,0).id,'OUT');
+ const p=[{id:'market',x:-18,y:1.06,z:15}];assert.deepEqual(validatePositions(JSON.parse(JSON.stringify(p)),new Set(['market'])),p);
+ for(const value of [[{id:'other',x:0,y:0,z:0}],[{id:'market',x:NaN,y:0,z:0}],[...p,...p]])assert.throws(()=>validatePositions(value,new Set(['market'])));
+});
+
+test('planning-grid samples remain finite at the collapsed coastal tip',()=>{
+ assert.ok(Number.isFinite(surfaceHeight(0,202)));
+ for(let x=-260;x<=340;x+=20)for(let z=-220;z<=240;z+=2)assert.ok(Number.isFinite(surfaceHeight(x,z)),`finite sample ${x},${z}`);
+});

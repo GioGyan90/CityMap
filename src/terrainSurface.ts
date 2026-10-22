@@ -13,6 +13,7 @@ export function surfaceHeight(x:number,z:number){
  const left0=terrainPositions[row*stride*3],left1=terrainPositions[(row+1)*stride*3],right0=terrainPositions[(row*stride+terrainCols)*3],right1=terrainPositions[((row+1)*stride+terrainCols)*3];
  const left=left0*(1-t)+left1*t,right=right0*(1-t)+right1*t;
  if(x<left||x>right)return terrainHeight(x,z);
+ if(Math.abs(right-left)<.000001)return terrainHeight(x,z);
  const col=Math.min(terrainCols-1,Math.max(0,Math.floor((x-left)/(right-left)*terrainCols))),a=(row*stride+col)*3,b=a+stride*3,c=a+3,d=b+3;
  const interpolate=(i:number,j:number,k:number)=>{
   const ax=terrainPositions[i],az=terrainPositions[i+2],bx=terrainPositions[j],bz=terrainPositions[j+2],cx=terrainPositions[k],cz=terrainPositions[k+2];

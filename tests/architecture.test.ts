@@ -153,3 +153,22 @@ test('hall rack sign sits on the roof and shop cue racks clear both small canopi
   for(const canopy of canopies)assert.equal(bounds.intersectsBox(new THREE.Box3().setFromObject(canopy)),false);
  }
 });
+
+test('vehicle shells retain wheel clearance, recessed glazing and a ground contact datum',async()=>{
+ const {createVehicle,VEHICLE_SIZES}=await import('../src/vehicles');
+ for(const kind of ['sedan','bus','ambulance'] as const){
+  const car=createVehicle(kind);car.updateMatrixWorld(true);const size=VEHICLE_SIZES[kind],bounds=new THREE.Box3().setFromObject(car),body=car.getObjectByName('carved-body')!;
+  assert.ok(Math.abs(bounds.min.y)<.001,`${kind}: tires touch the ground`);
+  assert.ok(bounds.max.x<=size.width/2+.035&&bounds.min.x>=-size.width/2-.035,`${kind}: body fits its traffic envelope`);
+  assert.ok(bounds.max.z<=size.length/2+.001&&bounds.min.z>=-size.length/2-.001,`${kind}: length fits traffic envelope`);
+  const radius=kind==='sedan'?.28:.36;
+  for(const z of [-size.length*.31,size.length*.31]){
+   const ray=new THREE.Raycaster(new THREE.Vector3(-3,radius,z),new THREE.Vector3(1,0,0));
+   assert.equal(ray.intersectObject(body).length,0,`${kind}: wheel arches are subtracted from the body`);
+  }
+  car.traverse(o=>{if(o instanceof THREE.Mesh){const pos=o.geometry.attributes.position;assert.equal(pos.itemSize,3);for(let i=0;i<pos.count;i++)assert.ok(Number.isFinite(pos.getX(i))&&Number.isFinite(pos.getY(i))&&Number.isFinite(pos.getZ(i)));}});
+  if(kind==='sedan')assert.ok(car.getObjectByName('sloped-windscreen-inset'));
+  else assert.ok(car.getObjectByName('passenger-door'));
+ }
+ const a=createVehicle(),b=createVehicle();assert.notEqual(a,b);assert.equal((a.getObjectByName('carved-body') as THREE.Mesh).geometry,(b.getObjectByName('carved-body') as THREE.Mesh).geometry,'fleet reuses geometry');
+});

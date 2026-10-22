@@ -23,7 +23,7 @@ export function animate() {
   requestAnimationFrame(animate);
 
   const frameDt = Math.min(clock.getDelta(), 0.05);
-  const dt = motionPaused ? 0 : frameDt;
+  const dt = motionPaused||world.userData.assetView ? 0 : frameDt;
   simulationTime += dt;
   const t = simulationTime;
 
@@ -66,10 +66,10 @@ export function animate() {
   if (beaconLight instanceof THREE.PointLight) beaconLight.intensity = 4 + Math.sin(t * 2.2) * 3;
 
   controls.update();
-  updateFocus(frameDt);
+  if(!world.userData.assetView)updateFocus(frameDt);
   renderer.render(scene, camera);
-  renderFocusOutline();
-  labelRenderer.render(scene, camera);
+  if(!world.userData.assetView)renderFocusOutline();
+  if(!world.userData.assetView)labelRenderer.render(scene, camera);
 }
 animate();
 
