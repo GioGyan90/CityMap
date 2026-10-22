@@ -9,11 +9,10 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: github-pages
+  group: citymap-vite-pages
   cancel-in-progress: true
 jobs:
   build:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,24 +35,44 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 20
     steps:
       - name: Wait for legacy branch publishing to finish
         uses: actions/github-script@v7
         with:
           script: |
-            // Branch-based Pages and this Vite workflow can run for the same push.
-            // Always publish the compiled app last, after the legacy run finishes.
-            for (let attempt = 0; attempt < 60; attempt++) {
-              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
-                owner: context.repo.owner, repo: context.repo.repo,
-                head_sha: context.sha, per_page: 30
-              });
-              const legacy = data.workflow_runs.find(run =>
-                run.name === 'pages build and deployment' && run.event === 'dynamic');
-              if (legacy?.status === 'completed' || (!legacy && attempt >= 3)) return;
+            // The legacy publisher must finish first, but must never share
+            // this workflow's concurrency group. Query individual runs:
+            // collection responses can retain an earlier queued status.
+            const headers = { 'cache-control': 'no-cache' };
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRunsForRepo,
+              { owner, repo, head_sha: context.sha, per_page: 100, headers }
+            );
+            const legacy = runs.filter(run =>
+              run.name === 'pages build and deployment' &&
+              run.event === 'dynamic' && run.head_sha === context.sha
+            );
+            core.info('Legacy publisher IDs: ' + legacy.map(run => run.id).join(', '));
+            if (!legacy.length) {
+              core.info('No legacy publisher for this commit; deploying compiled app.');
+              return;
+            }
+            for (let attempt = 0; attempt < 180; attempt++) {
+              const states = await Promise.all(legacy.map(async run => {
+                const { data } = await github.rest.actions.getWorkflowRun({
+                  owner, repo, run_id: run.id, headers
+                });
+                return data;
+              }));
+              core.info(states.map(run =>
+                run.id + ': ' + run.status + ' / ' + run.conclusion
+              ).join('; '));
+              if (states.every(run => run.status === 'completed')) return;
               await new Promise(resolve => setTimeout(resolve, 5000));
             }
-            throw new Error('Legacy Pages publishing did not finish within five minutes.');
+            throw new Error('Legacy publisher still active after 15 minutes; see run IDs above.');
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
