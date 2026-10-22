@@ -88,12 +88,13 @@ test('market arches are through openings and the carved table has six real pocke
  assert.equal(ray.intersectObject(facade).length,0,'door void must pass through the full wall thickness');
  ray.set(new THREE.Vector3(4,3,2),new THREE.Vector3(0,0,-1));
  assert.ok(ray.intersectObject(facade).length>0,'wall beside the doorway remains solid');
- const {outdoorTable}=await import('../src/billiardsArchitecture');
+ const {outdoorTable,TABLE_POCKETS}=await import('../src/billiardsArchitecture');
  const root=new THREE.Group();outdoorTable(root,0,0);root.updateMatrixWorld(true);
  const body=root.getObjectByName('carved-table-body')!,cloth=root.getObjectByName('six-pocket-cloth')!;
- for(const x of [-2.45,0,2.45])for(const z of [-1.2,1.2]){
+ for(const [x,z] of TABLE_POCKETS){
   ray.set(new THREE.Vector3(x,3,z),new THREE.Vector3(0,-1,0));
-  assert.equal(ray.intersectObjects([body,cloth]).length,0,'pockets cut through both cloth and wooden body');
+  assert.equal(ray.intersectObjects([body,cloth,root.getObjectByName('table-rail-ring')!]).length,0,`pocket ${x},${z}: ${ray.intersectObjects([body,cloth,root.getObjectByName('table-rail-ring')!]).map(h=>h.object.name)}`);
+  assert.ok(Math.abs(x)>2.76||Math.abs(z)>1.4,'pocket centres are outside the playing cloth');
  }
  ray.set(new THREE.Vector3(0,3,0),new THREE.Vector3(0,-1,0));
  assert.ok(ray.intersectObject(cloth).length>0,'cloth remains solid between pockets');
@@ -134,5 +135,21 @@ test('the actual outdoor table has unobstructed approaches from the front and bo
  ]){
   const a=new THREE.Vector3(...from),b=new THREE.Vector3(...to);ray.set(a,b.clone().sub(a).normalize());ray.far=a.distanceTo(b);
   assert.equal(ray.intersectObjects(obstacles).length,0,'no enclosing wall blocks a player approaching the table');
+ }
+});
+
+
+test('hall rack sign sits on the roof and shop cue racks clear both small canopies',async()=>{
+ const {buildSuppliesMarket,buildOutdoorHall}=await import('../src/billiardsArchitecture');
+ const market=buildSuppliesMarket(),hall=buildOutdoorHall();market.position.y=hall.position.y=0;market.updateMatrixWorld(true);hall.updateMatrixWorld(true);
+ const sign=hall.getObjectByName('rooftop-triangle-sign')!;assert.ok(sign);
+ const roof=new THREE.Box3().setFromObject(hall.getObjectByName('hall-inset-hip-roof')!);
+ assert.ok(new THREE.Box3().setFromObject(sign).min.y>=roof.max.y,'rack is above the hall roof');
+ const displays:THREE.Object3D[]=[],canopies:THREE.Object3D[]=[];
+ market.traverse(o=>{if(o.name==='wall-cue-display')displays.push(o);if(o.name==='scalloped-canopy-edge')canopies.push(o);});
+ assert.equal(canopies.length,16,'only the two eight-panel shopfront canopies remain');
+ assert.equal(displays.length,2);
+ for(const display of displays){const bounds=new THREE.Box3().setFromObject(display);assert.ok(bounds.min.z>1.5&&bounds.max.z<4,'cue racks hug the front wall');
+  for(const canopy of canopies)assert.equal(bounds.intersectsBox(new THREE.Box3().setFromObject(canopy)),false);
  }
 });

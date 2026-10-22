@@ -28,17 +28,34 @@ function rack(root:THREE.Group,x:number,y:number,z:number,size=3.1){
   const r=size*.105;k.ball(r,[0xf3c447,0x2e99b0,0xdf654b,0xf8f1d0,0x74559b,0x5daa50][n++],x+(col-(2-row)/2)*r*2.05,y+size*.22+row*r*1.8,z+.23);
  }
 }
+export const TABLE_POCKETS:[number,number][]=[[-2.85,-1.5],[0,-1.6],[2.85,-1.5],[-2.85,1.5],[0,1.6],[2.85,1.5]];
+const POCKET_RADIUS=.3;
+/** The playing-field cutout and pocket circles form a single opening in the wooden rail. */
+function tableOpening(felt:boolean){
+ const shape=new THREE.Shape(),steps=720;
+ for(let i=0;i<steps;i++){
+  const a=i*Math.PI*2/steps,dx=Math.cos(a),dz=Math.sin(a),edge=Math.min(2.76/Math.max(1e-9,Math.abs(dx)),1.4/Math.max(1e-9,Math.abs(dz)));
+  let radius=edge;
+  for(const [x,z] of TABLE_POCKETS){
+   const along=x*dx+z*dz,disc=POCKET_RADIUS**2-(x*x+z*z-along*along);
+   if(disc<0)continue;const near=along-Math.sqrt(disc),far=along+Math.sqrt(disc);
+   if(near<=edge&&far>=edge)radius=felt?Math.min(radius,near):Math.max(radius,far);
+  }
+  if(i)shape.lineTo(dx*radius,dz*radius);else shape.moveTo(dx*radius,dz*radius);
+ }
+ shape.closePath();return shape;
+}
 export function outdoorTable(root:THREE.Group,x:number,z:number){
- const k=kit(root),shape=roundPlan(6.3,3.65,.4);
- for(const px of [-2.45,0,2.45])for(const pz of [-1.2,1.2]){const hole=new THREE.Path();hole.absarc(px,pz,.22,0,Math.PI*2,true);shape.holes.push(hole);}
- k.mesh(extrudedPlan(shape,.48),wood,x,1.05,z).name='carved-table-body';
- k.mesh(insetRing(6.5,3.85,.45,.38,.22),gold,x,1.5,z).name='table-rail-ring';
- const felt=roundPlan(5.75,3.1,.2);
- for(const px of [-2.45,0,2.45])for(const pz of [-1.2,1.2]){const hole=new THREE.Path();hole.absarc(px,pz,.22,0,Math.PI*2,true);felt.holes.push(hole);}
- const bed=k.mesh(extrudedPlan(felt,.14),0x3b9b4c,x,1.53,z);bed.name='six-pocket-cloth';
- for(const px of [-2.45,0,2.45])for(const pz of [-1.2,1.2]){
-  k.mesh(new THREE.CylinderGeometry(.215,.15,.57,12,1,true),0x223e31,x+px,1.385,z-pz);
-  k.mesh(new THREE.CylinderGeometry(.15,.15,.035,12),0x223e31,x+px,1.1,z-pz);
+ const k=kit(root),body=roundPlan(6.5,3.85,.45);
+ for(const [px,pz] of TABLE_POCKETS){const hole=new THREE.Path();hole.absarc(px,pz,POCKET_RADIUS,0,Math.PI*2,true);body.holes.push(hole);}
+ k.mesh(extrudedPlan(body,.48),wood,x,1.05,z).name='carved-table-body';
+ const rim=roundPlan(6.5,3.85,.45);rim.holes.push(new THREE.Path(tableOpening(false).getPoints()));
+ k.mesh(extrudedPlan(rim,.22),gold,x,1.5,z).name='table-rail-ring';
+ k.mesh(extrudedPlan(tableOpening(true),.14),0x3b9b4c,x,1.53,z).name='six-pocket-cloth';
+ for(const [px,pz] of TABLE_POCKETS){
+  const lining=k.mesh(new THREE.CylinderGeometry(.29,.18,.62,16,1,true),0x223e31,x+px,1.42,z+pz);lining.material.side=THREE.DoubleSide;
+  k.mesh(new THREE.CylinderGeometry(.18,.18,.035,16),0x223e31,x+px,1.11,z+pz);
+  const lip=k.mesh(new THREE.TorusGeometry(.3,.025,6,24),0x554332,x+px,1.725,z+pz);lip.rotation.x=Math.PI/2;lip.name='rail-pocket-mouth';
  }
  for(const px of [-2.45,2.45])for(const pz of [-1.15,1.15]){
   const points=[new THREE.Vector2(.28,0),new THREE.Vector2(.18,.22),new THREE.Vector2(.23,.65),new THREE.Vector2(.32,1)];
@@ -88,14 +105,12 @@ export function buildSuppliesMarket(){
  for(const x of [-5.5,-2.5,.5])k.box(1.65,2.3,.12,C.glass,x,8.4,-.9);
  k.mesh(insetLoft(UPPER_PLAN,.24,.35),0x2f788c,0,10.35,0).name='market-upper-roof';
  for(const x of [6.3,8]){k.mesh(extrudedPlan(roundPlan(1.2,2.8,.2),.5),C.stone,x,6.75,-4);k.ball(.65,0x669b45,x,7.5,-4);}
- canopy(root,0,3.6,18,true,5.65);
- for(const x of [-8.4,8.4]){
-  k.rod(new THREE.Vector3(x,.35,5.1),new THREE.Vector3(x,5.45,5.1),.12,wood);
-  k.rod(new THREE.Vector3(x,4.6,5.1),new THREE.Vector3(x,5.65,3.8),.09,wood);
+ for(const x of [-5.4,5.4]){
+  const display=new THREE.Group();display.name='wall-cue-display';display.position.set(x,0,2.5);root.add(display);cueDisplay(display,0,0);
  }
  billiardEmblem(-2.5,10.85,-5,.65);
  for(const x of [-7,7]){
-  canopy(root,x,9.2,8,true);cueDisplay(root,x-2.25,9.5);rack(root,x+1.55,1.35,8.6,3.3);
+  canopy(root,x,9.2,8,true);rack(root,x+1.55,1.35,8.6,3.3);
   for(const dx of [-1,1]){
    k.mesh(extrudedPlan(roundPlan(1.5,1.25,.15),.7),dx<0?0x3b94a3:0xd78c42,x+dx*1.1,.45,11.2);
    k.ball(.2,[0xf2c852,0xe5604c][dx<0?0:1],x+dx*1.1,1.35,11.2);
@@ -111,9 +126,8 @@ export function buildOutdoorHall(){
  k.mesh(cutFacade(9.2,6.8,.5,[{x:0,y:.25,w:6,h:4.8}]),wood,0,.35,-1.5).name='hall-open-arch';
  k.mesh(insetLoft(HALL_PLAN,.65,.85),0x557e47,0,7.15,0).name='hall-inset-hip-roof';
  k.mesh(extrudedPlan(roundPlan(6.5,2,.18),.25),C.cream,0,.35,-.2);
- rack(root,0,2,-6.95,4.2);
- k.mesh(extrudedPlan(roundPlan(4.8,1,.18),.25),wood,0,1.75,-6.75);
- for(const x of [-2,2])k.rod(new THREE.Vector3(x,.35,-6.75),new THREE.Vector3(x,1.75,-6.75),.12,wood);
+ const sign=new THREE.Group();sign.name='rooftop-triangle-sign';sign.position.set(0,8.35,-4.5);root.add(sign);rack(sign,0,0,0,4.2);
+ for(const x of [-1.6,1.6])k.rod(new THREE.Vector3(x,8,-4.5),new THREE.Vector3(x,8.35,-4.5),.1,gold);
  canopy(root,0,.8,13.5,false,6.1);
  // Freestanding front posts hold the canopy; nothing encloses the outdoor table.
  for(const x of [-6.1,6.1]){
