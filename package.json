@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "polygon-clipping": "^0.15.7",
+    "suncalc": "2.1.1",
     "three": "0.160.0"
   },
   "devDependencies": {

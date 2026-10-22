@@ -13,5 +13,7 @@ try{
    build.onResolve({filter:/\/scene$/},()=>({path:'scene',namespace:'test'}));
    build.onLoad({filter:/.*/,namespace:'test'},()=>({contents:"import * as THREE from 'three';export const world=new THREE.Group();",resolveDir:process.cwd()}));
   }}]});
- const result=spawnSync(process.execPath,['--test',output,architecture],{stdio:'inherit'});process.exitCode=result.status??1;
+ const solar=join(directory,'solar.mjs');
+ await build({entryPoints:['tests/solarCycle.test.ts'],bundle:true,platform:'node',format:'esm',outfile:solar});
+ const result=spawnSync(process.execPath,['--test',output,architecture,solar],{stdio:'inherit'});process.exitCode=result.status??1;
 }finally{await rm(directory,{recursive:true,force:true});}

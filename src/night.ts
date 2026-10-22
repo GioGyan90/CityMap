@@ -1,19 +1,15 @@
+import * as THREE from 'three';
+import {scene,world,sky,hemi,sun,fill,camera} from './scene';
 import {surfaceHeight} from './terrainSurface';
 import {DAY_LIGHTING} from './visualStyle';
-import * as THREE from 'three';
-import { scene, world, sky, hemi, sun, fill, camera } from './scene';
-import { COAST, GROUND_Y } from './config';
-import { ROAD_PATHS,terrainHeight,ZONES } from './layout';
-import { setWaterNight } from './water';
-
+import {COAST} from './config';
+import {ROAD_PATHS,ZONES} from './layout';
+import {setWaterLighting} from './water';
+import {SolarClock,civilParts,formatTime,solarEvents,sampleSolar,smooth} from './solarCycle';
+import './timeControls.css';
 export let nightMode=false;
+export const solarClock=new SolarClock();
 const nightGroup=new THREE.Group();nightGroup.name='night-lighting';nightGroup.visible=false;world.add(nightGroup);
-const daySky=(sky.material as THREE.MeshBasicMaterial).map;
-const canvas=document.createElement('canvas');canvas.width=8;canvas.height=256;
-const ctx=canvas.getContext('2d')!;const gradient=ctx.createLinearGradient(0,0,0,256);
-gradient.addColorStop(0,'#020a23');gradient.addColorStop(.6,'#0b2149');gradient.addColorStop(1,'#294965');
-ctx.fillStyle=gradient;ctx.fillRect(0,0,8,256);
-const nightSky=new THREE.CanvasTexture(canvas);nightSky.colorSpace=THREE.SRGBColorSpace;
 const meshMaterials=new Set<THREE.Material>();
 world.traverse(object=>{if(object instanceof THREE.Mesh && object.name.indexOf('pick-')!==0){const ms=Array.isArray(object.material)?object.material:[object.material];ms.forEach(m=>meshMaterials.add(m));}});
 const litMaterials:THREE.MeshToonMaterial[]=[];
@@ -46,45 +42,65 @@ for(const road of ROAD_PATHS)for(let i=1;i<road.points.length;i++){
  for(let j=0;j<count;j++){const t=j/count;sites.push([a[0]+(b[0]-a[0])*t+road.width*.6,a[1]+(b[1]-a[1])*t]);}
 }
 const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.07,.11,3.5,5),new THREE.MeshToonMaterial({color:0x38495a}),sites.length);
-const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.38,6,5),new THREE.MeshBasicMaterial({color:0xffda87}),sites.length);
+const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.38,6,5),new THREE.MeshBasicMaterial({color:0xffda87,transparent:true,opacity:0,depthWrite:false}),sites.length);
 const pools=new THREE.InstancedMesh(new THREE.CircleGeometry(2.5,16),new THREE.MeshBasicMaterial({color:0xf5b95b,transparent:true,opacity:.14,depthWrite:false}),sites.length);
 const matrix=new THREE.Matrix4();const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2);
 sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,surfaceHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,surfaceHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,surfaceHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
 world.add(poles);nightGroup.add(lamps,pools);
-for(const id of ['park','hotel','market','hospital','port','restaurant','promenade']){
+for(const id of ['park','hotel','market','hospital','port','restaurant','promenade','hall2','fishmarket']){
  const zone=ZONES[id],x=zone.x,z=zone.z;
  const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,surfaceHeight(x,z)+8,z);nightGroup.add(light);
 }
-// A distant camera-relative backdrop stays visible above an isometric city view.
-const space=new THREE.Group();space.name='night-sky-backdrop';space.visible=false;camera.add(space);scene.add(camera);
-const starGeometry=new THREE.BufferGeometry();
-const starfield=new THREE.Points(starGeometry,new THREE.PointsMaterial({color:0xc8ddff,size:1.2,sizeAttenuation:false,fog:false}));space.add(starfield);
-const moon=new THREE.Mesh(new THREE.SphereGeometry(18,24,16),new THREE.MeshBasicMaterial({color:0xe3ecff,fog:false,depthTest:false,depthWrite:false}));moon.renderOrder=20;space.add(moon);
-function layoutBackdrop(){
-  let seed=1923;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
-  const halfHeight=1500*Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-  const halfWidth=halfHeight*innerWidth/innerHeight;const stars:number[]=[];
-  for(let i=0;i<260;i++)stars.push((random()*2-1)*halfWidth,(.55+random()*.45)*halfHeight,-1500);
-  starGeometry.setAttribute('position',new THREE.Float32BufferAttribute(stars,3));starGeometry.computeBoundingSphere();
-  moon.position.set(halfWidth*.65,halfHeight*.76,-1490);
-}
-layoutBackdrop();window.addEventListener('resize',layoutBackdrop);
 
-export function setNightMode(value:boolean) {
-  nightMode=value;nightGroup.visible=value;space.visible=value;
-  (sky.material as THREE.MeshBasicMaterial).map=value?nightSky:daySky;
-  hemi.color.set(value?0x9ebde9:DAY_LIGHTING.hemi.sky);hemi.groundColor.set(value?0x15213e:DAY_LIGHTING.hemi.ground);hemi.intensity=value?.38:DAY_LIGHTING.hemi.intensity;
-  sun.color.set(value?0xa5c4ff:DAY_LIGHTING.sun.color);sun.intensity=value?.25:DAY_LIGHTING.sun.intensity;
-  fill.color.set(value?0x5789cf:DAY_LIGHTING.fill.color);fill.intensity=value?.22:DAY_LIGHTING.fill.intensity;
-  (scene.fog as THREE.Fog).color.set(value?0x0a1732:DAY_LIGHTING.fog);
-  for(const material of litMaterials) {material.emissive.set(value?0xffca75:0x000000);material.emissiveIntensity=value?.85:0;}
-  for(const material of glazingMaterials){material.emissive.set(value?0x174a75:0x000000);material.emissiveIntensity=value?.4:0;}
-  for(const material of rideMaterials){material.emissive.copy(value?material.color:new THREE.Color(0));material.emissiveIntensity=value?.45:0;}
-  setWaterNight(value);document.body.dataset.time=value?'night':'day';
-  const button=document.getElementById('toggleNight');if(button){button.textContent=value?'切换白天':'夜间模式';button.setAttribute('aria-pressed',String(value));}
-  world.userData.nightMode=value;
-  try{localStorage.setItem('citymap-night',String(value))}catch{}
+const celestial=new THREE.Group();celestial.name='celestial-sky';scene.add(celestial);sky.renderOrder=-1000;
+let seed=4924;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+const stars:number[]=[];for(let i=0;i<600;i++){const y=.04+random()*.96,a=random()*Math.PI*2,r=Math.sqrt(1-y*y);stars.push(Math.cos(a)*r*1550,y*1550,Math.sin(a)*r*1550);}
+const starGeometry=new THREE.BufferGeometry();starGeometry.setAttribute('position',new THREE.Float32BufferAttribute(stars,3));
+const starMaterial=new THREE.PointsMaterial({color:0xc9ddff,size:1.5,sizeAttenuation:false,fog:false,transparent:true,opacity:0,depthWrite:false});
+const starfield=new THREE.Points(starGeometry,starMaterial);starfield.name='astronomical-star-backdrop';celestial.add(starfield);
+const moonMaterial=new THREE.ShaderMaterial({uniforms:{sunDirection:{value:new THREE.Vector3()},visibility:{value:1}},transparent:true,depthWrite:false,
+ vertexShader:`varying vec3 worldNormal;void main(){worldNormal=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+ fragmentShader:`uniform vec3 sunDirection;uniform float visibility;varying vec3 worldNormal;void main(){float lit=smoothstep(-.04,.1,dot(normalize(worldNormal),sunDirection));gl_FragColor=vec4(vec3(.66,.75,.88)*mix(.025,1.0,lit),visibility);#include <colorspace_fragment>}`.replace(';#include',';\n#include')});
+const moon=new THREE.Mesh(new THREE.SphereGeometry(7,32,20),moonMaterial);moon.name='astronomical-moon';celestial.add(moon);
+const moonLight=new THREE.DirectionalLight(0x9ab8ed,0);moonLight.name='moon-light';scene.add(moonLight,moonLight.target,sun.target);
+const center=new THREE.Vector3(70,0,10),sunDir=new THREE.Vector3(),moonDir=new THREE.Vector3();
+const panel=document.createElement('section');panel.className='time-panel';panel.setAttribute('aria-label','昼夜时间控制');
+panel.innerHTML=`<div class="time-heading"><strong>昼夜时间</strong><output id="time-clock">10:00</output><span id="time-phase"></span></div>
+<input id="time-slider" aria-label="一天中的时间" type="range" min="0" max="1439" step="1" value="600"><div class="time-ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+<div class="time-actions"><button id="time-play" aria-pressed="true">暂停</button><select id="time-speed" aria-label="时间流速"><option value="1">实时</option><option value="60">一天24分钟</option><option value="360" selected>一天4分钟</option><option value="1440">一天1分钟</option></select><input id="time-date" aria-label="模拟日期" type="date" min="2000-01-01" max="2100-12-31"></div>
+<div class="time-presets"><button data-solar-preset="sunrise">日出</button><button data-solar-preset="noon">正午</button><button data-solar-preset="sunset">日落</button><button data-solar-preset="midnight">午夜</button><output id="time-events"></output></div>`;
+document.body.appendChild(panel);document.body.dataset.cycle='true';
+const clockLabel=panel.querySelector<HTMLOutputElement>('#time-clock')!,slider=panel.querySelector<HTMLInputElement>('#time-slider')!,dateInput=panel.querySelector<HTMLInputElement>('#time-date')!,speedSelect=panel.querySelector<HTMLSelectElement>('#time-speed')!,playButton=panel.querySelector<HTMLButtonElement>('#time-play')!,phaseLabel=panel.querySelector('#time-phase')!,eventsLabel=panel.querySelector('#time-events')!;
+let eventsDate='',previousAsset=false,skipAdvance=false,displayKey='';
+function save(){try{localStorage.setItem('citymap-solar-v1',JSON.stringify({timestamp:solarClock.timestamp,speed:solarClock.speed,playing:solarClock.playing}));}catch{}}
+function syncUI(){const local=civilParts(solarClock.timestamp),key=formatTime(solarClock.timestamp)+' '+local.date+' '+solarClock.speed+' '+solarClock.playing;if(key===displayKey)return;displayKey=key;clockLabel.value=formatTime(solarClock.timestamp);slider.value=String(Math.floor(local.minutes));dateInput.value=local.date;speedSelect.value=String(solarClock.speed);playButton.textContent=solarClock.playing?'暂停':'播放';playButton.setAttribute('aria-pressed',String(solarClock.playing));if(eventsDate!==local.date){eventsDate=local.date;const events=solarEvents(solarClock.timestamp);eventsLabel.textContent=`日出 ${events.sunrise?formatTime(+events.sunrise):'—'} · 日落 ${events.sunset?formatTime(+events.sunset):'—'}`;}}
+export function refreshDayNight(){
+ const state=sampleSolar(solarClock.timestamp),{daylight,night,warm}=state;sunDir.fromArray(state.sunDirection);moonDir.fromArray(state.moonDirection);
+ sun.target.position.copy(center);sun.position.copy(center).addScaledVector(sunDir,550);sun.target.updateMatrixWorld();sun.color.set(0xfff1d8).lerp(new THREE.Color(0xff9b48),warm);sun.intensity=state.direct;sun.castShadow=state.direct>.015;
+ hemi.color.set(0x9ebde9).lerp(new THREE.Color(DAY_LIGHTING.hemi.sky),daylight);hemi.groundColor.set(0x15213e).lerp(new THREE.Color(DAY_LIGHTING.hemi.ground),daylight);hemi.intensity=.33+.43*daylight;
+ fill.color.set(0x6d8ac1).lerp(new THREE.Color(DAY_LIGHTING.fill.color),daylight);fill.intensity=.11+.14*daylight;
+ moonLight.target.position.copy(center);moonLight.target.updateMatrixWorld();moonLight.position.copy(center).addScaledVector(moonDir,550);moonLight.intensity=night*state.moonVisibility*(.035+.09*state.moonFraction);
+ const fogColor=new THREE.Color(0x09162c).lerp(new THREE.Color(DAY_LIGHTING.fog),daylight).lerp(new THREE.Color(0xe9a66e),warm*.5);if(scene.fog)(scene.fog as THREE.Fog).color.copy(fogColor);
+ const sm=sky.material as THREE.ShaderMaterial;sm.uniforms.sunPosition.value.copy(sunDir);sm.uniforms.nightBlend.value=night;sm.uniforms.horizonColor.value.copy(fogColor);sm.uniforms.daylight.value=daylight;sky.position.copy(camera.position);
+ celestial.visible=true;celestial.position.copy(camera.position);starMaterial.opacity=Math.pow(night,1.7)*.85;starfield.rotation.y=(civilParts(solarClock.timestamp).minutes/1440)*Math.PI*2;
+ moon.position.copy(moonDir).multiplyScalar(1450);moon.visible=state.moon.altitude>-.4;moonMaterial.uniforms.sunDirection.value.copy(sunDir);moonMaterial.uniforms.visibility.value=(.25+.75*night)*state.moonVisibility;
+ nightGroup.visible=night>.001;(lamps.material as THREE.MeshBasicMaterial).opacity=night;(pools.material as THREE.MeshBasicMaterial).opacity=.14*night;nightGroup.children.forEach(o=>{if(o instanceof THREE.PointLight)o.intensity=30*night;});
+ for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
+ for(const material of glazingMaterials){material.emissive.set(0x174a75);material.emissiveIntensity=.4*night;}
+ for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}
+ setWaterLighting(night,warm,state.direct,night*state.moonVisibility,sunDir,moonDir,fogColor);
+ nightMode=night>.55;document.body.dataset.time=nightMode?'night':'day';const button=document.getElementById('toggleNight');if(button){button.textContent=nightMode?'切到白天':'切到夜晚';button.setAttribute('aria-pressed',String(nightMode));}
+ phaseLabel.textContent=state.phase;world.userData.nightMode=nightMode;world.userData.solar={timestamp:solarClock.timestamp,clock:formatTime(solarClock.timestamp),speed:solarClock.speed,playing:solarClock.playing,altitude:state.sun.altitude,azimuth:state.sun.azimuth,sunDirection:state.sunDirection,night,direct:state.direct};syncUI();
 }
+export function enterAssetDaylight(){celestial.visible=false;hemi.color.set(DAY_LIGHTING.hemi.sky);hemi.groundColor.set(DAY_LIGHTING.hemi.ground);hemi.intensity=DAY_LIGHTING.hemi.intensity;sun.color.set(DAY_LIGHTING.sun.color);sun.intensity=DAY_LIGHTING.sun.intensity;sun.castShadow=true;fill.color.set(DAY_LIGHTING.fill.color);fill.intensity=DAY_LIGHTING.fill.intensity;moonLight.intensity=0;}
+export function updateDayNight(seconds:number){const asset=!!world.userData.assetView;if(asset){if(!previousAsset)enterAssetDaylight();previousAsset=true;return;}if(previousAsset){previousAsset=false;skipAdvance=true;}if(!document.hidden&&!skipAdvance)solarClock.advance(Math.min(Math.max(seconds,0),1));skipAdvance=false;refreshDayNight();}
+export function setNightMode(value:boolean){solarClock.seek(civilParts(solarClock.timestamp).date,value?1320:720);solarClock.playing=false;refreshDayNight();save();}
 document.getElementById('toggleNight')!.addEventListener('click',()=>setNightMode(!nightMode));
-let saved=false;try{saved=localStorage.getItem('citymap-night')==='true'}catch{}
-setNightMode(saved);
+playButton.onclick=()=>{solarClock.playing=!solarClock.playing;syncUI();save();};speedSelect.onchange=()=>{solarClock.setSpeed(Number(speedSelect.value));syncUI();save();};
+slider.oninput=()=>{solarClock.seek(civilParts(solarClock.timestamp).date,Number(slider.value));solarClock.playing=false;refreshDayNight();save();};
+dateInput.onchange=()=>{try{solarClock.seek(dateInput.value,civilParts(solarClock.timestamp).minutes);refreshDayNight();save();}catch{dateInput.value=civilParts(solarClock.timestamp).date;}};
+panel.querySelectorAll<HTMLButtonElement>('[data-solar-preset]').forEach(b=>b.onclick=()=>{const preset=b.dataset.solarPreset,events=solarEvents(solarClock.timestamp),date=civilParts(solarClock.timestamp).date;if(preset==='midnight')solarClock.seek(date,0);else{const event=preset==='noon'?events.solarNoon:preset==='sunrise'?events.sunrise:events.sunset;if(event)solarClock.timestamp=+event;}solarClock.playing=false;refreshDayNight();save();});
+try{const stored=JSON.parse(localStorage.getItem('citymap-solar-v1')??'null');if(stored&&Number.isFinite(stored.timestamp)&&stored.timestamp>=Date.parse('2000-01-01')&&stored.timestamp<=Date.parse('2101-01-01')){solarClock.timestamp=stored.timestamp;try{solarClock.setSpeed(stored.speed);}catch{}solarClock.playing=typeof stored.playing==='boolean'?stored.playing:true;}else if(localStorage.getItem('citymap-night')==='true'){solarClock.seek(civilParts(solarClock.timestamp).date,1320);solarClock.playing=false;}}catch{}
+const query=new URLSearchParams(location.search),hour=Number(query.get('time'));if(query.has('time')&&Number.isFinite(hour)&&hour>=0&&hour<24){solarClock.seek(civilParts(solarClock.timestamp).date,hour*60);solarClock.playing=false;}
+if(query.has('speed'))try{solarClock.setSpeed(Number(query.get('speed')));}catch{}if(query.get('play')==='1')solarClock.playing=true;
+document.addEventListener('visibilitychange',()=>{skipAdvance=true;});window.addEventListener('pagehide',save);refreshDayNight();

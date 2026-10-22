@@ -1,3 +1,4 @@
+import {updateDayNight} from './night';
 import { updateFocus, renderFocusOutline } from './focus';
 import * as THREE from 'three';
 import { renderer, scene, camera, controls, world } from "./scene";
@@ -22,7 +23,9 @@ export const clock = new THREE.Clock();
 export function animate() {
   requestAnimationFrame(animate);
 
-  const frameDt = Math.min(clock.getDelta(), 0.05);
+  const rawDt=clock.getDelta();
+  const frameDt = Math.min(rawDt, 0.05);
+  updateDayNight(rawDt);
   const dt = motionPaused||world.userData.assetView ? 0 : frameDt;
   simulationTime += dt;
   const t = simulationTime;

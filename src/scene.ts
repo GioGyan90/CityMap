@@ -1,3 +1,4 @@
+import { Sky } from 'three/addons/objects/Sky.js';
 import {DAY_LIGHTING} from './visualStyle';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -50,24 +51,18 @@ export const fill = new THREE.DirectionalLight(DAY_LIGHTING.fill.color, DAY_LIGH
 fill.position.set(120, 90, -120);
 scene.add(fill);
 
-/* 天空球（渐变贴图） */
-export function skyTexture() {
-  const c = document.createElement('canvas');
-  c.width = 8; c.height = 256;
-  const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0.00, '#1583db');
-  grad.addColorStop(0.34, '#51b7ef');
-  grad.addColorStop(0.62, '#a3def9');
-  grad.addColorStop(0.86, '#ddf4ff');
-  grad.addColorStop(1.00, '#fff2d8');
-  g.fillStyle = grad; g.fillRect(0, 0, 8, 256);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-export const sky = new THREE.Mesh(
-  new THREE.SphereGeometry(1700, 24, 16),
-  new THREE.MeshBasicMaterial({ map: skyTexture(), side: THREE.BackSide, depthWrite: false, fog: false })
-);
+/* Preetham analytical sky, supplied by the pinned Three.js r160 addon. */
+export const sky=new Sky();sky.name='solar-atmosphere';sky.scale.setScalar(3000);
+const skyMaterial=sky.material as THREE.ShaderMaterial;
+skyMaterial.uniforms.nightBlend={value:0};skyMaterial.uniforms.horizonColor={value:new THREE.Color(DAY_LIGHTING.fog)};skyMaterial.uniforms.daylight={value:1};
+skyMaterial.uniforms.turbidity.value=3.5;skyMaterial.uniforms.rayleigh.value=1.8;skyMaterial.uniforms.mieCoefficient.value=.003;skyMaterial.uniforms.mieDirectionalG.value=.78;
+skyMaterial.fragmentShader='uniform float nightBlend;uniform float daylight;uniform vec3 horizonColor;\n'+skyMaterial.fragmentShader;
+skyMaterial.fragmentShader=skyMaterial.fragmentShader.replace('gl_FragColor = vec4( retColor, 1.0 );',`float elevation=max(direction.y,0.0);
+ vec3 nightColor=mix(horizonColor,vec3(.0006,.0018,.006),smoothstep(0.0,.75,elevation));
+ vec3 boundedSky=retColor/(retColor+vec3(.7));
+ vec3 illustratedDay=mix(horizonColor,vec3(.008,.22,.55),smoothstep(0.0,.65,elevation));
+ boundedSky=mix(boundedSky,illustratedDay,daylight*.4);
+ vec3 skyColor=mix(boundedSky,nightColor,nightBlend);
+ skyColor=mix(skyColor,horizonColor,exp(-elevation*14.0)*.96);
+ gl_FragColor=vec4(skyColor,1.0);`);
 scene.add(sky);
