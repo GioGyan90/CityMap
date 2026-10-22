@@ -1,7 +1,7 @@
 import { rnd, rr, pick } from './random';
 import { makeBuilding, type BuildingStyle } from './buildings';
 
-export const RES_BASES = ['#fff1cf', '#ffe6b0', '#e1f3fa', '#ffd6b8', '#e9f3cb', '#f5e4de', '#ffe3a1', '#dceff6', '#ffe0d1'];
+export const RES_BASES = ['#fff9ed', '#fff1d9', '#e9f7ff', '#ffe0d2', '#edf5df', '#f9e8ee', '#fff0ce', '#e0f3fa', '#ffe8dc'];
 export const RES_WINS = ['#4a7ea8', '#3f6f96', '#5a86ad', '#456b8d', '#557f9e'];
 export const ROOF_COLS = [0xd5794d, 0x237fae, 0x298da5, 0xc77249, 0x286c96, 0xdf904b, 0x598d79];
 
@@ -12,7 +12,7 @@ export function fillBlock(bx: number, bz: number) {
     const signature = bx === 36 && bz === -108;
     const style: BuildingStyle = signature ? 'artdeco' : pick(['glass','stepped','round','artdeco'] as const);
     makeBuilding({ x:bx-2,z:bz-2,w:rr(10,14),d:rr(10,13),h:signature?82:rr(bx>70?24:35,bx>70?45:68),
-      style,base:pick(['#d9e6e9','#f1e2c3','#c1d7de']),win:'#3d7e9e',roof:0x315e84 });
+      style,base:pick(['#edf5f8','#fff3de','#d4e8f2']),win:'#3d7e9e',roof:0x315e84 });
     makeBuilding({ x:bx+7,z:bz+7,w:5,d:5,h:rr(9,17),style:'arcade',base:'#ede1cc',roof:0x355c7b });
     return;
   }

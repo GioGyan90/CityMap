@@ -24,7 +24,7 @@ export function createGroundMaterial(){
  const material=toon(0xffffff,{vertexColors:true});
  material.onBeforeCompile=shader=>{
   shader.uniforms.roadMask={value:texture};shader.uniforms.roadBounds={value:new THREE.Vector4(bounds.x,bounds.z,bounds.w,bounds.d)};
-  shader.uniforms.asphaltColor={value:new THREE.Color(0x758c9d)};shader.uniforms.walkColor={value:new THREE.Color(0xf0dbac)};shader.uniforms.lineColor={value:new THREE.Color(0xffefc7)};
+  shader.uniforms.asphaltColor={value:new THREE.Color(0x526d87)};shader.uniforms.walkColor={value:new THREE.Color(0xf3e7cc)};shader.uniforms.lineColor={value:new THREE.Color(0xffefc7)};
   shader.vertexShader='varying vec2 roadUv;uniform vec4 roadBounds;\n'+shader.vertexShader;
   shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nroadUv=vec2((position.x-roadBounds.x)/roadBounds.z,1.-(position.z-roadBounds.y)/roadBounds.w);');
   shader.fragmentShader='varying vec2 roadUv;uniform sampler2D roadMask;uniform vec3 asphaltColor;uniform vec3 walkColor;uniform vec3 lineColor;\n'+shader.fragmentShader;

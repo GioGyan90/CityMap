@@ -12,6 +12,6 @@ export function kit(root:THREE.Group){
  const rounded=(w:number,d:number,h:number,x:number,y:number,z:number,c:number,r=.8)=>{const s=new THREE.Shape(),a=w/2,b=d/2;r=Math.min(r,a,b);s.moveTo(-a+r,-b);s.lineTo(a-r,-b);s.quadraticCurveTo(a,-b,a,-b+r);s.lineTo(a,b-r);s.quadraticCurveTo(a,b,a-r,b);s.lineTo(-a+r,b);s.quadraticCurveTo(-a,b,-a,b-r);s.lineTo(-a,-b+r);s.quadraticCurveTo(-a,-b,-a+r,-b);const m=mesh(new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:false,curveSegments:6}),c,x,y,z);m.rotation.x=-Math.PI/2;return m;};
  return {mesh,box,ball,rod,slab,rounded};
 }
-export const C={cream:0xffe6b0,stone:0xe8d0a1,white:0xfffbef,blue:0x1684c0,glass:0x3987aa,gold:0xefb43b,green:0x589b36};
+export const C={cream:0xfff2d9,stone:0xe9dcc4,white:0xfffdf8,blue:0x1684c0,glass:0x3987aa,gold:0xefb43b,green:0x589b36};
 export function palm(root:THREE.Group,x:number,z:number,h=7){const tree=landmarkPalm(Math.round(x*7+z*11),h);tree.position.set(x,.45,z);root.add(tree);}
 export function garden(root:THREE.Group,x:number,z:number,r=2){const bed=renderPlant(createPlanter(Math.abs(Math.round(x*31+z*13)),r));bed.position.set(x,.48,z);root.add(bed);}

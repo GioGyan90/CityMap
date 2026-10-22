@@ -16,7 +16,7 @@ for(let row=0;row<=rows;row++){
   const index=(row*(cols+1)+col)*3,x=terrainPositions[index],y=terrainPositions[index+1];positions.push(x,y,z);
   const coastDistance=Math.min(x-left,right-x),patch=(Math.sin(x*.043+z*.017)+Math.cos(z*.071-x*.025))*.25+.5;
   const color=new THREE.Color(coastDistance<12?palette.sand:y>49?palette.ridge:y>23?palette.hill:palette.grass);
-  if(coastDistance>=12)color.lerp(new THREE.Color(y>23?0xb3b95f:0x76b14d),patch*.27);
+  if(coastDistance>=12)color.lerp(new THREE.Color(y>23?0x90bd78:0x70b950),patch*.27);
   color.multiplyScalar(1+.045*Math.sin(x*.23+z*.17));colors.push(color.r,color.g,color.b);
  }
 }
