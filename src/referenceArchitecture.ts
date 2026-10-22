@@ -1,3 +1,4 @@
+import {landmarkPalm,renderPlant,createPlanter} from './plantAssets';
 import * as THREE from 'three';
 import {toon} from './materials';
 /** Compact code-built details shared by the reference landmarks and ship. */
@@ -12,5 +13,5 @@ export function kit(root:THREE.Group){
  return {mesh,box,ball,rod,slab,rounded};
 }
 export const C={cream:0xffe6b0,stone:0xe8d0a1,white:0xfffbef,blue:0x1684c0,glass:0x3987aa,gold:0xefb43b,green:0x589b36};
-export function palm(root:THREE.Group,x:number,z:number,h=7){const k=kit(root);k.rod(new THREE.Vector3(x,.6,z),new THREE.Vector3(x+.4,h,z),.22,0xa57c45);for(let i=0;i<7;i++){const a=i*Math.PI*2/7,m=k.mesh(new THREE.SphereGeometry(1,10,6),0x64a72e,x+Math.cos(a)*1.4,h-.1,z+Math.sin(a)*1.4);m.scale.set(2.2,.28,.65);m.rotation.y=-a;m.rotation.z=.22;}}
-export function garden(root:THREE.Group,x:number,z:number,r=2){const k=kit(root);k.mesh(new THREE.CylinderGeometry(r,r,.35,20),C.stone,x,.65,z);const bush=k.ball(r*.85,C.green,x,1.15,z);bush.scale.y=.65;for(let i=0;i<7;i++){const a=i*2.4;k.ball(.22,i%2?0xffbd3d:0xee807c,x+Math.cos(a)*r*.65,1.75,z+Math.sin(a)*r*.65);}}
+export function palm(root:THREE.Group,x:number,z:number,h=7){const tree=landmarkPalm(Math.round(x*7+z*11),h);tree.position.set(x,.45,z);root.add(tree);}
+export function garden(root:THREE.Group,x:number,z:number,r=2){const bed=renderPlant(createPlanter(Math.abs(Math.round(x*31+z*13)),r));bed.position.set(x,.48,z);root.add(bed);}

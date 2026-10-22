@@ -1,3 +1,4 @@
+import {renderPlant,createPlanter} from './plantAssets';
 import * as THREE from 'three';
 import {world} from './scene';
 import {westCoast} from './layout';
@@ -24,7 +25,7 @@ export function buildCoastalRealm(){
   for(const dx of [-1.7,1.7])for(const dz of [-2,2])k.box(.16,3,.16,0xf8e6bf,x+dx,y+1.5,z+dz);
   for(let i=0;i<7;i++)k.box(3.9,.14,.14,0xd7b27b,x,y+3.1,z-2.1+i*.7);
   for(const dz of [-5,5]){
-   const px=edge+5,pz=z+dz,py=surfaceHeight(px,pz);k.box(1.3,.6,1.3,0xe7ce9d,px,py+.3,pz);k.ball(.65,0x68a044,px,py+.85,pz);
+   const px=edge+5,pz=z+dz,py=surfaceHeight(px,pz);const bed=renderPlant(createPlanter(53+z,.65));bed.position.set(px,py,pz);root.add(bed);
   }
   // Short stair flights bridge the sand edge; actual sand height matches environment.ts.
   const end=edge-Math.min(3,beachExtension(z)*.65),start=edge+2,n=8;

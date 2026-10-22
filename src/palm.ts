@@ -63,7 +63,7 @@ export function createPalm(options:PalmOptions={}){
 /** Bake vertex colors once per variant; every placed palm then shares this geometry. */
 export function bakePalm(tree:THREE.Group){
  const parts:THREE.BufferGeometry[]=[];tree.updateWorldMatrix(true,true);const inverse=tree.matrixWorld.clone().invert();
- tree.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(inverse.clone().multiply(o.matrixWorld));const color=(o.material as THREE.MeshToonMaterial).color,colors=new Float32Array(g.attributes.position.count*3);for(let i=0;i<colors.length;i+=3){colors[i]=color.r;colors[i+1]=color.g;colors[i+2]=color.b;}g.setAttribute('color',new THREE.BufferAttribute(colors,3));g.deleteAttribute('uv');parts.push(g);});
+ tree.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(inverse.clone().multiply(o.matrixWorld));const color=(o.material as THREE.MeshToonMaterial).color,colors=new Float32Array(g.attributes.position.count*3);for(let i=0;i<colors.length;i+=3){const existing=g.attributes.color,vertex=(o.material as THREE.MeshToonMaterial).vertexColors&&existing;colors[i]=color.r*(vertex?existing.getX(i/3):1);colors[i+1]=color.g*(vertex?existing.getY(i/3):1);colors[i+2]=color.b*(vertex?existing.getZ(i/3):1);}g.setAttribute('color',new THREE.BufferAttribute(colors,3));g.deleteAttribute('uv');parts.push(g);});
  const result=mergeGeometries(parts,false)!;parts.forEach(g=>g.dispose());result.computeBoundingBox();result.computeBoundingSphere();return result;
 }
 /** Three separately editable trees on a shared sand mound. */

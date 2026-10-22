@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {createPalm,createPalmCluster,bakePalm,palmPath} from '../src/palm';
 import {sweepProfile,circularProfile,leafRibbon,seededRandom,radialPlacements} from '../src/proceduralGeometry';
+import {createTree,treeSamples,createGardenCluster,renderPlant} from '../src/plantAssets';
 // Canvas drawing is irrelevant to geometry, but facade textures retain their real identity.
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:()=>{}});
 (globalThis as any).document={createElement:()=>({width:128,height:128,getContext:()=>ctx})};
@@ -52,6 +53,17 @@ test('three-palm landscape has distinct trees, grounded roots and descending bar
  assert.ok(trees[0].userData.height>trees[1].userData.height&&trees[1].userData.height>trees[2].userData.height);
  for(const tree of trees){assert.equal(tree.position.y,.85);const trunk=tree.getObjectByName('palm-trunk')!;const r=trunk.children.map(o=>o.userData.radius);assert.ok(r.every((v,i)=>i===0||v<r[i-1]));const root=trunk.children[0] as THREE.Mesh;root.geometry.computeBoundingBox();assert.ok(Math.abs(root.geometry.boundingBox!.min.y)<1e-5);}
  for(let seed=0;seed<12;seed++){const trunk=createPalm({seed}).getObjectByName('palm-trunk')!;const sizes=trunk.children.map(o=>o.userData.radius*1.2);assert.ok(sizes.every((r,i)=>i===0||r<sizes[i-1]),'all sampled seeds taper');}
+});
+test('new planting prototypes keep editable parts, grounded trunks and vertex colors when batched',()=>{
+ const samples=treeSamples();assert.equal(samples.size,12);const sizes=[];
+ for(const [id,tree] of samples){const trunk=tree.getObjectByName('tree-trunk')!,crown=tree.getObjectByName('tree-crown')!;assert.ok(trunk&&crown,id);const baked=renderPlant(tree).geometry;
+  baked.computeBoundingBox();const box=baked.boundingBox!;assert.ok(Math.abs(box.min.y)<1e-4,'trunk datum is ground within numerical tolerance');sizes.push(box.getSize(new THREE.Vector3()).toArray().map(n=>n.toFixed(2)).join(','));
+  const color=baked.attributes.color;let varied=false;for(let i=1;i<color.count;i++)if(Math.abs(color.getY(i)-color.getY(i-1))>.001)varied=true;assert.ok(varied,'foliage gradients survive baking');
+  for(const a of Object.values(baked.attributes))for(const n of a.array)assert.ok(Number.isFinite(n));
+ }
+ assert.ok(new Set(sizes).size>=8,'variants have distinct shapes');
+ const a=renderPlant(createTree('shade',51)).geometry.attributes.position,b=renderPlant(createTree('shade',51)).geometry.attributes.position;assert.deepEqual(Array.from(a.array),Array.from(b.array));
+ const garden=createGardenCluster();assert.ok(garden.children.some(o=>o.name==='shrub')&&garden.children.some(o=>o.name==='grass-clump')&&garden.children.some(o=>o.name==='five-petal-flower'));
 });
 test('upward faces of ordinary building boxes never use window facade textures',()=>{
  for(const style of ['flat','stepped','artdeco','apartment','villa','arcade'] as const){
@@ -217,4 +229,12 @@ test('vehicle shells retain wheel clearance, recessed glazing and a ground conta
   else assert.ok(car.getObjectByName('passenger-door'));
  }
  const a=createVehicle(),b=createVehicle();assert.notEqual(a,b);assert.equal((a.getObjectByName('carved-body') as THREE.Mesh).geometry,(b.getObjectByName('carved-body') as THREE.Mesh).geometry,'fleet reuses geometry');
+});
+
+test('city planting batches stay off roads, parking access and buildings and sample ground without floating',async()=>{
+ const {blocked}=await import('../src/vegetation'),{surfaceHeight}=await import('../src/terrainSurface');
+ const plants=world.getObjectByName('city-vegetation')!;assert.ok(plants);const positions=plants.userData.placements;
+ assert.ok(positions.length>500);const kinds=new Set(positions.map(p=>p.kind));for(const type of ['shade','slender','flowering','pine','shrub','grass'])assert.ok([...kinds].some((k:string)=>k.startsWith(type)),type);
+ for(const p of positions){assert.equal(blocked(p.x,p.z,p.kind==='shrub'||p.kind==='grass'?.55:p.kind.startsWith('palm')?1:1.4),false);assert.ok(p.y<=surfaceHeight(p.x,p.z)+.001);assert.ok(surfaceHeight(p.x,p.z)-p.y<.65,'root neck is close to local ground');}
+ for(const batch of plants.children){assert.ok(batch instanceof THREE.InstancedMesh);assert.ok((batch as THREE.InstancedMesh).count>0);}
 });

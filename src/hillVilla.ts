@@ -1,3 +1,4 @@
+import {renderPlant,shrubSample,createPlanter} from './plantAssets';
 import * as THREE from 'three';
 import {makeBuilding} from './buildings';
 import {world} from './scene';
@@ -19,8 +20,8 @@ export function buildHillVilla(){
  for(let i=0;i<3;i++)box(3,.16,1.5,0xd8c7a5,-1,.12+i*.15,11-i*.6);
  for(const x of [-8.5,8.5]){
   box(.4,1,20,0xe5d6b3,x,.8,-1);
-  for(const z of [-8,-3,2,7])box(1.2,.7,2.5,0x548e5c,x,.95,z);
+  for(const z of [-8,-3,2,7]){const shrub=renderPlant(shrubSample);shrub.position.set(x,.45,z);shrub.scale.set(.6,.7,1.1);root.add(shrub);}
  }
  box(3,.6,3,0xe7d7b7,5.5,.7,7);
- box(2.6,.55,2.6,0x68a45c,5.5,1.25,7);
+ const bed=renderPlant(createPlanter(41,1.15));bed.position.set(5.5,1,7);root.add(bed);
 }

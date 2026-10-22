@@ -1,3 +1,4 @@
+import {renderPlant,createPlanter,createGrassClump,createFlower} from './plantAssets';
 import * as THREE from 'three';
 import {world} from './scene';
 import {GROUND_Y} from './config';
@@ -38,11 +39,11 @@ export function buildReferenceCafe(cx:number,cz:number){
   for(let y=7.1;y<10;y+=.4)k.box(1.17,.06,.12,0x448db3,x,y,1.61);
  }
  k.box(6.2,.75,1.2,0xb17b3f,-4,6.95,1.75);
- for(let i=0;i<12;i++){
-  const x=-6.6+i*.48;
-  k.ball(.3,0x699c35,x,7.45,1.85);
-  for(const side of [-1,1])k.ball(.16,[0xf4ad48,0xe66f8d,0xffd16b][i%3],x+side*.12,7.7,1.87+side*.17);
+ for(let i=0;i<8;i++){
+  const x=-6.5+i*.7,grass=renderPlant(createGrassClump(71+i));grass.scale.set(.45,.6,.45);grass.position.set(x,7.33,1.85);root.add(grass);
+  const flower=renderPlant(createFlower(31+i));flower.position.set(x,7.4,1.95);root.add(flower);
  }
+
  // Blue canvas slopes down from the wall; a scalloped valance closes its front edge.
  for(let i=0;i<8;i++){
   const x=-9.25+i*1.5,panel=k.box(1.48,.15,3.8,i%2?0x297ca8:blue,x,5.55,3.05);panel.rotation.x=.16;
@@ -57,8 +58,7 @@ export function buildReferenceCafe(cx:number,cz:number){
  k.mesh(new THREE.TorusGeometry(.22,.07,6,12),C.white,3.58,5.07,2);
  // Street lamp and terracotta planting frame the frontage, leaving the door clear.
  for(const [x,z] of [[-11,2.8],[3.2,1.5]]){
-  k.mesh(new THREE.CylinderGeometry(.9,.65,1.2,14),0xc5873e,x,.8,z);
-  for(let i=0;i<5;i++){const leaf=k.ball(.65,0x639c35,x+Math.cos(i*1.25)*.45,1.8+i*.18,z+Math.sin(i*1.25)*.4);leaf.scale.set(.65,1.3,.65);}
+  const planter=renderPlant(createPlanter(Math.round(x*11+z*19),.85));planter.position.set(x,.2,z);root.add(planter);
  }
  k.mesh(new THREE.CylinderGeometry(.16,.25,6,10),0x35474a,3.5,3.25,4.2);
  k.box(.85,1.35,.85,0xffce70,3.5,6.6,4.2);

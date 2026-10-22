@@ -1,3 +1,4 @@
+import {treeSamples,shrubSample,grassSample,flowerSample,planterSample,createGardenCluster} from './plantAssets';
 import {palmSamples,createPalmFrond,createPalmCluster} from './palm';
 import {updateFocus} from './focus';
 import * as THREE from 'three';
@@ -26,7 +27,15 @@ export function initAssetTools(){
  {id:'palm-part-frond',title:'椰树原件 · 单片切口宽叶',source:createPalmFrond()},
  {id:'palm-part-crown',title:'椰树原件 · 分层树冠',source:palms[0].getObjectByName('palm-crown')!},
  {id:'palm-part-fruit',title:'椰树原件 · 成簇椰子',source:palms[0].getObjectByName('palm-coconuts')!});
- for(let i=0;i<3;i++){const o=world.getObjectByName('vegetation-round-'+i) as THREE.InstancedMesh;if(o){const m=new THREE.Mesh(o.geometry,o.material);items.push({id:'tree-'+(i+1),title:'绿化 · 阔叶树样式 '+(i+1),source:m});}}
+ const treeNames={shade:'展开阔叶树',slender:'挺拔行道树',flowering:'粉花景观树',pine:'坡地常绿树'};let treeId=1;
+ for(const [kind,title] of Object.entries(treeNames)){const source=treeSamples().get(kind+'-0')!;items.push({id:'tree-'+treeId++,title:'绿化 · '+title,source});}
+ const shade=treeSamples().get('shade-0')!;
+ items.push({id:'plant-part-trunk',title:'绿植原件 · 树干与根颈',source:shade.getObjectByName('tree-trunk')!},
+ {id:'plant-part-branches',title:'绿植原件 · 分枝',source:shade.getObjectByName('tree-branches')!},
+ {id:'plant-part-crown',title:'绿植原件 · 不规则连续树冠',source:shade.getObjectByName('tree-crown')!},
+ {id:'plant-shrub',title:'绿植 · 灌木丛',source:shrubSample},{id:'plant-grass',title:'绿植 · 弯叶草簇',source:grassSample},
+ {id:'plant-flower',title:'绿植 · 五瓣花',source:flowerSample},{id:'plant-planter',title:'绿植 · 花钵组合',source:planterSample},
+ {id:'garden-cluster',title:'景观组合 · 乔木灌木花草',source:createGardenCluster()});
  const panel=document.createElement('section');panel.className='asset-panel';panel.hidden=true;
  panel.innerHTML=`<div class="asset-heading"><strong>资产与地图规划</strong><button id="asset-close" aria-label="关闭面板">×</button></div>
  <label>搜索资产<input id="asset-search" placeholder="建筑、车辆、树木…"></label><select id="asset-select" aria-label="选择资产"></select>

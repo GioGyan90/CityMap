@@ -1,114 +1,49 @@
 import {bakePalm,palmSamples} from './palm';
+import {treeSamples,createTree,renderPlant,plantBatchMaterial,shrubSample,grassSample} from './plantAssets';
 import {coastalPublicSpace,groveDensity} from './urbanDesign';
 import {parkingAccessBlocked} from './parking';
 import {surfaceHeight} from './terrainSurface';
-import { isLand,terrainHeight,roadDistance,reserved,railCorridor } from './layout';
+import {isLand,roadDistance,reserved,railCorridor} from './layout';
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { rnd, rr, TAU } from "./random";
-import { toon } from "./materials";
-import { GROUND_Y, Z0, COAST, BEACH_W, Z1, buildingFootprints } from "./config";
-import { world } from "./scene";
-import { ROAD_X, ROAD_Z } from "./roads";
+import {seededRandom} from './proceduralGeometry';
+import {Z0,COAST,BEACH_W,Z1,buildingFootprints} from './config';
+import {world} from './scene';
 
-export function nm(g) { return g.index ? g.toNonIndexed() : g; }
-
-export function colorize(geo, hex) {
-  const c = new THREE.Color(hex);
-  const n = geo.attributes.position.count;
-  const arr = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    arr[i * 3] = c.r;
-    arr[i * 3 + 1] = c.g;
-    arr[i * 3 + 2] = c.b;
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
-  return geo;
+export function palmGeometry(){return bakePalm(palmSamples()[0]);}
+export function roundTreeGeometry(leafColor:number){return bakePalm(createTree(leafColor===0x9cc752?'slender':'shade',leafColor));}
+export const treeMat=plantBatchMaterial;
+export function blocked(x:number,z:number,radius=0){
+ if(coastalPublicSpace(x,z,2+radius)||parkingAccessBlocked(x,z))return true;
+ if(buildingFootprints.some(b=>Math.abs(x-b.x)<b.w/2+1.5+radius&&Math.abs(z-b.z)<b.d/2+1.5+radius))return true;
+ if(roadDistance(x,z)<3+radius||reserved(x,z,2+radius*2,2+radius*2))return true;
+ return [[0,0],[-radius,0],[radius,0],[0,-radius],[0,radius]].some(([dx,dz])=>railCorridor(x+dx,z+dz)||parkingAccessBlocked(x+dx,z+dz));
 }
-
-export function palmGeometry() { return bakePalm(palmSamples()[0]); }
-
-export function roundTreeGeometry(leafColor) {
-  const parts = [];
-
-  const trunk = nm(new THREE.CylinderGeometry(0.28, 0.42, 3.0, 6, 1));
-  trunk.translate(0, 1.5, 0);
-  parts.push(colorize(trunk, 0x8a6440));
-
-  const blobs = [
-    [0, 4.1, 0, 2.2],
-    [1.3, 3.4, 0.5, 1.5],
-    [-1.2, 3.6, -0.6, 1.5],
-    [0.2, 5.3, -0.3, 1.4]
-  ];
-  for (const [bx, by, bz, br] of blobs) {
-    const b = nm(new THREE.IcosahedronGeometry(br, 0));
-    b.translate(bx, by, bz);
-    parts.push(colorize(b, leafColor));
-  }
-
-  return mergeGeometries(parts, false);
+export const ZONE_CENTERS=[[-20,-24],[8,4],[36,-24],[-20,32],[8,32],[36,32],[-20,60],[-70,86],[-56,100]];
+type Placement={x:number;z:number;scale:number;angle:number;kind:string;y?:number};
+export function plantTrees(){
+ const random=seededRandom(20261022),range=(a:number,b:number)=>a+random()*(b-a),root=new THREE.Group();root.name='city-vegetation';world.add(root);
+ const placements:Placement[]=[],trees:Placement[]=[],low:Placement[]=[];
+ for(let z=Z0+4;z<Z1-4;z+=7){const x=COAST(z)+range(2.5,10.5);if(!blocked(x,z,1)&&Math.abs(x-COAST(z)-8)>3.4)placements.push({x,z,scale:range(.75,1.05),angle:range(0,Math.PI*2),kind:'palm-'+Math.floor(random()*3)});}
+ // Forest patches use several silhouettes; open town ground favours slender and flowering trees.
+ for(let tries=0;trees.length<420&&tries<11000;tries++){
+  const x=range(-50,274),z=range(Z0+6,Z1-6),scale=range(.72,1.22);
+  if(!isLand(x,z)||x<COAST(z)+BEACH_W+1||blocked(x,z,1.4)||random()>groveDensity(x,z))continue;
+  if(trees.some(t=>Math.hypot(t.x-x,t.z-z)<2.4*(t.scale+scale)))continue;
+  const heights=[[-.5,0],[.5,0],[0,-.5],[0,.5]].map(([dx,dz])=>surfaceHeight(x+dx,z+dz));if(Math.max(...heights)-Math.min(...heights)>1.15)continue;
+  const style=x>150?(random()<.52?'pine':'shade'):random()<.32?'flowering':random()<.55?'slender':'shade';
+  const tree={x,z,scale,angle:range(0,Math.PI*2),kind:style+'-'+Math.floor(random()*3)};trees.push(tree);placements.push(tree);
+ }
+ // Understorey follows loose tree groups, leaving road edges and building approaches clear.
+ for(const [i,tree] of trees.entries())if(i%2===0)for(let j=0;j<2;j++){
+  const a=range(0,Math.PI*2),distance=range(2.3,3.7),x=tree.x+Math.cos(a)*distance,z=tree.z+Math.sin(a)*distance;
+  if(!isLand(x,z)||blocked(x,z,.55)||low.some(t=>Math.hypot(t.x-x,t.z-z)<1.25))continue;
+  const p={x,z,scale:range(.65,1.1),angle:range(0,Math.PI*2),kind:j?'grass':'shrub'};low.push(p);placements.push(p);
+ }
+ // Reject cliff seams rather than burying the plant or leaving half its base suspended.
+ for(let i=placements.length-1;i>=0;i--){const p=placements[i],d=p.kind==='grass'?.12:.4,heights=[[0,0],[d,0],[-d,0],[0,d],[0,-d]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz));if(Math.max(...heights)-Math.min(...heights)>.55)placements.splice(i,1);}
+ const sources=new Map<string,THREE.Group>(treeSamples());palmSamples().forEach((tree,i)=>sources.set('palm-'+i,tree));sources.set('shrub',shrubSample);sources.set('grass',grassSample);
+ for(const [kind,source] of sources){const list=placements.filter(p=>p.kind===kind);if(!list.length)continue;const proto=renderPlant(source),batch=new THREE.InstancedMesh(proto.geometry,plantBatchMaterial,list.length);batch.name='vegetation-'+kind;
+  const dummy=new THREE.Object3D();list.forEach((p,i)=>{const spread=kind==='grass'?.12:.4,ground=Math.min(surfaceHeight(p.x,p.z),...[[spread,0],[-spread,0],[0,spread],[0,-spread]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz)));p.y=ground-.035;dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);});batch.instanceMatrix.needsUpdate=true;batch.castShadow=batch.receiveShadow=true;root.add(batch);
+ }
+ root.userData.placements=placements;world.userData.greening={trees:placements.filter(p=>!['shrub','grass'].includes(p.kind)&&!p.kind.startsWith('palm')).length,palms:placements.filter(p=>p.kind.startsWith('palm')).length,shrubs:placements.filter(p=>p.kind==='shrub').length,grass:placements.filter(p=>p.kind==='grass').length,batches:root.children.length};
 }
-
-export const treeMat = toon(0xffffff, { vertexColors: true });
-
-export function blocked(x, z) {
-  if(coastalPublicSpace(x,z,2)||parkingAccessBlocked(x,z))return true;
-  for (const b of buildingFootprints) if (Math.abs(x-b.x) < b.w/2+1.5 && Math.abs(z-b.z) < b.d/2+1.5) return true;
-  if(roadDistance(x,z)<3||reserved(x,z,2,2)||railCorridor(x,z))return true;
-  return false;
-}
-
-export const ZONE_CENTERS = [
-  [-20, -24], [8, 4], [36, -24], [-20, 32], [8, 32], [36, 32], [-20, 60], [-70, 86], [-56, 100]
-];
-
-export function plantTrees() {
-  /* --- 棕榈：沿海滩 --- */
-  const palms = [];
-  for (let z = Z0 + 4; z < Z1 - 4; z += 5.5) {
-    const cx = COAST(z) + rr(2.5, 10.5);
-    if(!blocked(cx,z)&&Math.abs(cx-COAST(z)-8)>3.4)palms.push([cx, z, rr(0.8, 1.1)]);
-  }
-  for (let z = Z0 + 6; z < Z1 - 6; z += 9) {
-    const x=COAST(z)+rr(25,29);if(rnd()<.4&&!blocked(x,z))palms.push([x,z,rr(.8,1.1)]);
-  }
-  /* --- 内陆树 --- */
-  const trees = [];
-  let tries = 0;
-  while (trees.length < 480 && tries < 7500) {
-    tries++;
-    const x = rr(-50, 274);
-    const z = rr(Z0 + 6, Z1 - 6);
-    if (!isLand(x,z) || x < COAST(z) + BEACH_W + 1) continue;
-    if (blocked(x, z)||rnd()>groveDensity(x,z)) continue;
-    trees.push([x, z, rr(0.75, 1.35)]);
-  }
-
-  const mkInstanced = (geo, list, material=treeMat, name='') => {
-    const mesh = new THREE.InstancedMesh(geo, material, list.length);
-    mesh.name=name;
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const v = new THREE.Vector3();
-    const s = new THREE.Vector3();
-    list.forEach((p, i) => {
-      v.set(p[0], surfaceHeight(p[0],p[1]), p[1]);
-      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * TAU);
-      s.setScalar(p[2]);
-      m.compose(v, q, s);
-      mesh.setMatrixAt(i, m);
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    world.add(mesh);
-  };
-
-  const palmMaterial=toon(0xffffff,{vertexColors:true,side:THREE.DoubleSide});
-  palmSamples().forEach((sample,i)=>mkInstanced(bakePalm(sample),palms.filter((_,index)=>index%3===i),palmMaterial,`vegetation-palm-${i}`));
-  mkInstanced(roundTreeGeometry(0x77ad42), trees.slice(0, 70),treeMat,'vegetation-round-0');
-  mkInstanced(roundTreeGeometry(0x9cc752), trees.slice(70, 135),treeMat,'vegetation-round-1');
-  mkInstanced(roundTreeGeometry(0x508d43), trees.slice(135),treeMat,'vegetation-round-2');
-}
-

@@ -1,3 +1,5 @@
+import {renderPlant,treeSamples} from './plantAssets';
+import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
 import { GROUND_Y } from './config';
 import { world } from './scene';
@@ -17,9 +19,7 @@ export function buildUrbanDetails() {
     const water=new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,.08,16),toon(0x63c6e5));
     water.position.set(x,GROUND_Y+.69,z);world.add(water);
     for (const dx of [-6,6]) for (const dz of [-6,6]) {
-      const tree=new THREE.Mesh(new THREE.IcosahedronGeometry(2.2,1),toon(0x5b9c66));
-      tree.position.set(x+dx,GROUND_Y+3.3,z+dz);world.add(tree);
-      box(.4,2,.4,0x8a6848,x+dx,GROUND_Y+1,z+dz,{outline:false});
+      const tree=renderPlant(treeSamples().get('shade-0')!);tree.scale.setScalar(.72);tree.position.set(x+dx,surfaceHeight(x+dx,z+dz),z+dz);world.add(tree);
     }
   }
 }

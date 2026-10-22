@@ -1,3 +1,4 @@
+import {renderPlant,createPlanter,treeSamples} from './plantAssets';
 import * as THREE from 'three';
 import { toon } from './materials';
 import { ZONES,terrainHeight } from './layout';
@@ -12,9 +13,9 @@ export function buildSiteDetails(){
   // Perimeter gardens make facility boundaries legible without forcing square city blocks.
   for(const side of [-1,1])for(let i=0;i<5;i++){
    const x=zone.x+side*(zone.w/2-1.8),z=zone.z-zone.d*.38+i*zone.d*.19;
-   add(new THREE.Mesh(new THREE.BoxGeometry(1.4,.55,2),toon(0xc8bda2)),x,base+.3,z);
-   const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.1,1),toon(entry.id==='hospital'?0xe5b8ce:0x5a9a65));crown.scale.set(.8,1.3,.85);add(crown,x,base+2.3,z);
-   add(new THREE.Mesh(new THREE.CylinderGeometry(.1,.14,1.6,5),toon(0x90714c)),x,base+1,z);
+   const planter=renderPlant(createPlanter(Math.abs(Math.round(x*19+z*11)),.7));add(planter,x,base,z);
+   if(i%2===0){const tree=renderPlant(treeSamples().get((entry.id==='hospital'?'flowering':'slender')+'-'+(i%3))!);tree.scale.setScalar(.32);add(tree,x,base+.37,z);}
+
   }
   if(entry.id==='park'||entry.id==='market'){
    const z=entry.id==='park'?zone.z+20:zone.z+26;

@@ -1,3 +1,4 @@
+import {renderPlant,createShrub,createFlower} from './plantAssets';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { world } from './scene';
@@ -82,9 +83,9 @@ export function buildPromenadeRestaurant(){
  // Flower-filled wooden boxes: green foliage and five-petal pink blooms.
  for(const [x,z] of [[-6.8,-3.5],[-6.8,3.5],[-3.5,-6.4],[3.6,6.5],[4.8,-6.3]]){
   box(x,.9,z,1.9,.8,1,wood);box(x,1.32,z,1.7,.06,.8,soil);
-  for(let i=0;i<5;i++){
-   const px=x+(i%3-1)*.55,pz=z+(i%2-.5)*.5,y=1.6+(i%2)*.45;ball(px,y-.05,pz,.42,green);
-   for(let j=0;j<5;j++){const a=j*Math.PI*2/5;ball(px+Math.cos(a)*.24,y+.24,pz+Math.sin(a)*.24,.18,i%2?pink:pinkLight);}ball(px,y+.3,pz,.1,gold);
+  for(let i=0;i<3;i++){
+   const shrub=renderPlant(createShrub(i+61));shrub.geometry=shrub.geometry.clone();shrub.scale.set(.43,.55,.4);shrub.position.set(x+(i-1)*.53,1.34,z);root.add(shrub);
+   const bloom=renderPlant(createFlower(i+17));bloom.geometry=bloom.geometry.clone();bloom.position.set(x+(i-1)*.52,1.72,z+.15);root.add(bloom);
   }
  }
  const lx=-5.6,lz=5.1;
