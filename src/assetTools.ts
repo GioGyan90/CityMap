@@ -27,7 +27,7 @@ export function initAssetTools(){
  {id:'palm-part-frond',title:'椰树原件 · 单片切口宽叶',source:createPalmFrond()},
  {id:'palm-part-crown',title:'椰树原件 · 分层树冠',source:palms[0].getObjectByName('palm-crown')!},
  {id:'palm-part-fruit',title:'椰树原件 · 成簇椰子',source:palms[0].getObjectByName('palm-coconuts')!});
- const treeNames={shade:'展开阔叶树',slender:'挺拔行道树',flowering:'粉花景观树',pine:'坡地常绿树'};let treeId=1;
+ const treeNames={shade:'展开阔叶树',slender:'挺拔行道树',flowering:'浅绿景观树',pine:'坡地常绿树'};let treeId=1;
  for(const [kind,title] of Object.entries(treeNames)){const source=treeSamples().get(kind+'-0')!;items.push({id:'tree-'+treeId++,title:'绿化 · '+title,source});}
  const shade=treeSamples().get('shade-0')!;
  items.push({id:'plant-part-trunk',title:'绿植原件 · 树干与根颈',source:shade.getObjectByName('tree-trunk')!},

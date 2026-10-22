@@ -1,3 +1,5 @@
+import {roadEdgeDistance} from './roadNetwork';
+import {plantingBoxClear} from './plantPlacement';
 import {bakePalm,palmSamples} from './palm';
 import {treeSamples,createTree,renderPlant,plantBatchMaterial,shrubSample,grassSample} from './plantAssets';
 import {coastalPublicSpace,groveDensity} from './urbanDesign';
@@ -15,7 +17,7 @@ export const treeMat=plantBatchMaterial;
 export function blocked(x:number,z:number,radius=0){
  if(coastalPublicSpace(x,z,2+radius)||parkingAccessBlocked(x,z))return true;
  if(buildingFootprints.some(b=>Math.abs(x-b.x)<b.w/2+1.5+radius&&Math.abs(z-b.z)<b.d/2+1.5+radius))return true;
- if(roadDistance(x,z)<3+radius||reserved(x,z,2+radius*2,2+radius*2))return true;
+ if(roadEdgeDistance(x,z)<3+radius||reserved(x,z,2+radius*2,2+radius*2))return true;
  return [[0,0],[-radius,0],[radius,0],[0,-radius],[0,radius]].some(([dx,dz])=>railCorridor(x+dx,z+dz)||parkingAccessBlocked(x+dx,z+dz));
 }
 export const ZONE_CENTERS=[[-20,-24],[8,4],[36,-24],[-20,32],[8,32],[36,32],[-20,60],[-70,86],[-56,100]];
@@ -42,8 +44,12 @@ export function plantTrees(){
  // Reject cliff seams rather than burying the plant or leaving half its base suspended.
  for(let i=placements.length-1;i>=0;i--){const p=placements[i],d=p.kind==='grass'?.12:.4,heights=[[0,0],[d,0],[-d,0],[0,d],[0,-d]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz));if(Math.max(...heights)-Math.min(...heights)>.55)placements.splice(i,1);}
  const sources=new Map<string,THREE.Group>(treeSamples());palmSamples().forEach((tree,i)=>sources.set('palm-'+i,tree));sources.set('shrub',shrubSample);sources.set('grass',grassSample);
- for(const [kind,source] of sources){const list=placements.filter(p=>p.kind===kind);if(!list.length)continue;const proto=renderPlant(source),batch=new THREE.InstancedMesh(proto.geometry,plantBatchMaterial,list.length);batch.name='vegetation-'+kind;
-  const dummy=new THREE.Object3D();list.forEach((p,i)=>{const spread=kind==='grass'?.12:.4,ground=Math.min(surfaceHeight(p.x,p.z),...[[spread,0],[-spread,0],[0,spread],[0,-spread]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz)));p.y=ground-.035;dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);});batch.instanceMatrix.needsUpdate=true;batch.castShadow=batch.receiveShadow=true;root.add(batch);
+ const retained:Placement[]=[];
+ for(const [kind,source] of sources){const proto=renderPlant(source);proto.geometry.computeBoundingBox();const bounds=proto.geometry.boundingBox!,dummy=new THREE.Object3D();
+  const list=placements.filter(p=>p.kind===kind).filter(p=>{dummy.position.set(p.x,0,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();return plantingBoxClear(bounds.clone().applyMatrix4(dummy.matrix));});if(!list.length)continue;
+  const batch=new THREE.InstancedMesh(proto.geometry,plantBatchMaterial,list.length);batch.name='vegetation-'+kind;
+  list.forEach((p,i)=>{const spread=kind==='grass'?.12:.4,ground=Math.min(surfaceHeight(p.x,p.z),...[[spread,0],[-spread,0],[0,spread],[0,-spread]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz)));p.y=ground-.035;dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);});batch.instanceMatrix.needsUpdate=true;batch.castShadow=batch.receiveShadow=true;root.add(batch);retained.push(...list);
  }
+ placements.splice(0,placements.length,...retained);
  root.userData.placements=placements;world.userData.greening={trees:placements.filter(p=>!['shrub','grass'].includes(p.kind)&&!p.kind.startsWith('palm')).length,palms:placements.filter(p=>p.kind.startsWith('palm')).length,shrubs:placements.filter(p=>p.kind==='shrub').length,grass:placements.filter(p=>p.kind==='grass').length,batches:root.children.length};
 }

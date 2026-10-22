@@ -41,11 +41,11 @@ export function createTree(style:TreeStyle='shade',seed=51){
  }
  const specs=style==='slender'?[[0,0,1.35,3.0,4.4]]:style==='flowering'?[[-.95,.15,1.65,2.75,2.65],[1,.3,1.55,3.05,2.75],[.05,-.9,1.7,3.0,2.7]]:[[-1.05,.3,1.8,3.1,2.9],[1.1,.35,1.65,3.3,3.25],[.05,-1.0,1.9,3.35,3.45]];
  for(const [i,[x,z,r,y,h]] of specs.entries()){
-  const color=style==='flowering'?[0xe9b1bf,0xe3a0b4,0xf0bfd0][i%3]:style==='slender'?0xa6bf46:[0x86b94b,0x9bc34e,0x73a746][i%3];
+  const color=style==='flowering'?[0x72ad49,0x91bb50,0x5e9c48][i%3]:style==='slender'?0xa6bf46:[0x86b94b,0x9bc34e,0x73a746][i%3];
   const crown=part(crownGeometry(seed+31+i*73,r,h,color),foliage,'sculpted-crown-cluster');crown.position.set(x+tip.x*.6,y,z+tip.z*.6);canopy.add(crown);
   branch(fork,new THREE.Vector3(tip.x*.65,stem*.76,tip.z*.65),new THREE.Vector3(crown.position.x,y+h*.38,crown.position.z),.14-i*.015);
   if(style==='slender')for(const side of [-1,1])branch(fork,tip.clone().multiplyScalar(.85),new THREE.Vector3(side*.65,4.2,.3),.085);
-  if(style==='flowering')for(let j=0;j<3;j++){const flower=createFlower(seed+i*7+j),pos=crown.geometry.attributes.position,index=6*14+((j*5+i*2)%14);flower.scale.setScalar(.6);flower.position.fromBufferAttribute(pos,index).add(crown.position).add(new THREE.Vector3(0,-.25,0));canopy.add(flower);}
+
  }
  return root;
 }
@@ -56,7 +56,13 @@ export function createGrassClump(seed=15){const root=new THREE.Group();root.name
 export function createFlower(seed=11){const root=new THREE.Group();root.name='five-petal-flower';const r=seededRandom(seed),h=.35+r()*.3;
  branch(root,new THREE.Vector3(),new THREE.Vector3(.03,h,0),.018,'flower-stem');(root.children[0] as THREE.Mesh).material=grassMaterial;
  for(const side of [-1,1]){const leaf=new THREE.QuadraticBezierCurve3(new THREE.Vector3(0,h*.35,0),new THREE.Vector3(side*.1,h*.65,0),new THREE.Vector3(side*.18,h*.56,.03));root.add(part(leafRibbon(leaf,.035,2),grassMaterial,'flower-leaf'));}
- for(let i=0;i<5;i++){const a=i/5*Math.PI*2,path=new THREE.QuadraticBezierCurve3(new THREE.Vector3(.03,h,0),new THREE.Vector3(.03+Math.cos(a)*.12,h+.07,Math.sin(a)*.12),new THREE.Vector3(.03+Math.cos(a)*.23,h+.035,Math.sin(a)*.23));root.add(part(leafRibbon(path,.075,3),pink,'flower-petal'));}
+ const weights=Array.from({length:5},()=>.7+r()*.6),sum=weights.reduce((a,b)=>a+b,0);let angle=r()*Math.PI*2;
+ for(let i=0;i<5;i++){
+  angle+=weights[i]/sum*Math.PI*2;const length=.18+r()*.13,width=.055+r()*.05,curl=.035+r()*.1,drop=(r()-.5)*.09,sideBend=(r()-.5)*.06;
+  const direction=new THREE.Vector3(Math.cos(angle),0,Math.sin(angle)),side=new THREE.Vector3(-direction.z,0,direction.x),base=new THREE.Vector3(.03,h,0);
+  const control=base.clone().addScaledVector(direction,length*.5).addScaledVector(side,sideBend).add(new THREE.Vector3(0,curl,0)),tip=base.clone().addScaledVector(direction,length).addScaledVector(side,sideBend*.5).add(new THREE.Vector3(0,drop,0));
+  const petal=part(leafRibbon(new THREE.QuadraticBezierCurve3(base,control,tip),width,5),pink,'flower-petal');petal.userData={length,width,angle,curl,drop};root.add(petal);
+ }
  const center=part(new THREE.IcosahedronGeometry(.07,0),gold,'flower-center');center.position.set(.03,h+.025,0);root.add(center);return root;}
 export function createPlanter(seed=71,radius=1){
  const root=new THREE.Group();root.name='planted-stone-bowl';const profile=[[.72,0],[.92,.12],[1,.49],[.88,.51],[.78,.18],[0,.18]].map(([r,y])=>new THREE.Vector2(r*radius,y));

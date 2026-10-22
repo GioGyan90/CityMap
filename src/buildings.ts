@@ -109,6 +109,12 @@ function accent(color: number) {
   return accentMaterials.get(color)!;
 }
 
+/** Preserve only the material group's vertices, including non-indexed massing meshes. */
+export function extractGeometryPart(source:THREE.BufferGeometry,start:number,count:number){
+ if(source.index){const copy=source.clone();copy.clearGroups();copy.setIndex(Array.from(source.index.array.slice(start,start+count)));return copy;}
+ const part=new THREE.BufferGeometry();for(const [name,attribute] of Object.entries(source.attributes)){const array=attribute.array.slice(start*attribute.itemSize,(start+count)*attribute.itemSize);part.setAttribute(name,new THREE.BufferAttribute(array,attribute.itemSize,attribute.normalized));}return part;
+}
+
 export function makeBuilding(o: BuildingOptions) {
   const { x, z, w = 8, d = 8, h = 10, ry = 0, base = '#f3ebdd', win = '#2183b3',
     roof = 0x267ca4, lit = 0.25, style = 'flat', plan = 'rect', detail = true, elevation = GROUND_Y } = o;
@@ -123,6 +129,7 @@ export function makeBuilding(o: BuildingOptions) {
   g.rotation.y = ry;
   world.add(g);
   buildingGroups.push(g);
+  const roofGroup=new THREE.Group();roofGroup.name='building-roof';roofGroup.userData.style=style;g.add(roofGroup);
   const roofMat = accent(roof), trim = accent(0xf4e8ce), blue = accent(0x3987aa);
   const floors = clamp(Math.round(h / 3), 2, 22);
   const sideMat = facadeMaterial(getFacadeTex(base, win, floors, clamp(Math.round(w / 2.5), 2, 8), lit));
@@ -137,47 +144,61 @@ export function makeBuilding(o: BuildingOptions) {
     solid(new THREE.BoxGeometry(bw, bh, bd),
       material===sideMat?[sideMat,sideMat,roofMat,trim,sideMat,sideMat]:material,px,py,pz);
 
+  const roofSolid=(geo:THREE.BufferGeometry,material:THREE.Material,px:number,py:number,pz:number)=>{const m=solid(geo,material,px,py,pz);roofGroup.add(m);return m;};
+  const roofBox=(bw:number,bh:number,bd:number,py:number,material:THREE.Material=roofMat,px=0,pz=0)=>roofSolid(new THREE.BoxGeometry(bw,bh,bd),material,px,py,pz);
+  const flatRoof=(bw:number,bd:number,top:number,px=0,pz=0,services=true)=>{
+   roofBox(bw+.15,.18,bd+.15,top+.09,roofMat,px,pz);
+   for(const side of [-1,1]){roofBox(bw+.3,.42,.16,top+.38,trim,px,pz+side*bd/2);roofBox(.16,.42,bd,.38+top,trim,px+side*bw/2,pz);}
+   if(services&&Math.min(bw,bd)>5){
+    roofBox(bw*.23,1.1,bd*.22,top+.73,trim,px-bw*.18,pz-bd*.15);roofBox(bw*.26,.16,bd*.25,top+1.36,roofMat,px-bw*.18,pz-bd*.15);
+    roofBox(.4,.7,.04,top+.55,accent(0x667f80),px-bw*.18,pz-bd*.04+.025);
+    const unit=roofBox(.8,.55,.9,top+.46,accent(0xd1d7cd),px+bw*.22,pz-bd*.18);unit.name='roof-ventilation-unit';
+    const fan=roofSolid(new THREE.CylinderGeometry(.25,.25,.045,12),accent(0x6b7f7d),px+bw*.22,top+.76,pz-bd*.18);fan.name='roof-ventilation-fan';
+   }
+  };
+
   if(plan!=='rect'){
     const wings=createMassing(plan,x*37.1+z*19.7);
     buildingStats.samples.push({plan,x,z,w,d,h,wings});
     g.userData.massing=wings;
     const {geometry,rims}=massingGeometry(wings,w,d,h);
     const wingFacade=style==='glass'?facadeMaterial(getFacadeTex('#598ea5','#254f6c',floors,clamp(Math.round(w/2.5),2,8),lit)):sideMat;
-    solid(geometry,[wingFacade,roofMat],0,0,0);
+    const walls=geometry.groups[0],tops=geometry.groups[1];solid(extractGeometryPart(geometry,walls.start,walls.count),wingFacade,0,0,0);roofSolid(extractGeometryPart(geometry,tops.start,tops.count),roofMat,0,0,0);geometry.dispose();
     for(const {a,b,height} of rims){
-      const edge=block(Math.hypot(b[0]-a[0],b[1]-a[1])+.08,.28,.17,height+.14,trim,(a[0]+b[0])/2,(a[1]+b[1])/2);
+      const edge=roofBox(Math.hypot(b[0]-a[0],b[1]-a[1])+.08,.28,.17,height+.14,trim,(a[0]+b[0])/2,(a[1]+b[1])/2);
       edge.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);
     }
     for(const wing of wings){
       const cx=(wing.x0+wing.x1)*w/2,cz=(wing.z0+wing.z1)*d/2,ww=(wing.x1-wing.x0)*w,dd=(wing.z1-wing.z0)*d,y=wing.height*h;
       if(wing.role==='link'){
         // Low connectors become occupied terraces instead of an equally tall letter stroke.
-        block(ww*.7,.15,dd*.52,y+.12,accent(0xb8a385),cx,cz);
+        roofBox(ww*.7,.15,dd*.52,y+.12,accent(0xb8a385),cx,cz);
         for(const side of [-1,1]){
           block(.55,.5,.55,y+.4,trim,cx+side*ww*.27,cz);
           solid(new THREE.IcosahedronGeometry(.43,1),accent(0x568263),cx+side*ww*.27,y+.9,cz);
         }
       }else if(wing.role==='main'&&Math.min(ww,dd)>2.4){
-        block(ww*.42,.8,Math.min(dd*.3,2.5),y+.4,trim,cx,cz);
-        block(ww*.46,.14,Math.min(dd*.34,2.8),y+.88,blue,cx,cz);
+        roofBox(ww*.42,.8,Math.min(dd*.3,2.5),y+.4,trim,cx,cz);
+        roofBox(ww*.46,.14,Math.min(dd*.34,2.8),y+.88,roofMat,cx,cz);
+        roofSolid(new THREE.CylinderGeometry(.28,.28,.08,12),accent(0x6b7f7d),cx,y+.99,cz);
       }
     }
   } else if (style === 'round') {
     // A distinct cylindrical tower with blue glazing, horizontal rings and a tapered crown.
     solid(new THREE.CylinderGeometry(w*.48, w*.48, h, 16), blue, 0, h/2, 0);
     for (let y=3; y<h; y+=5) solid(new THREE.CylinderGeometry(w*.50,w*.50,.45,16),trim,0,y,0);
-    solid(new THREE.ConeGeometry(w*.5, 5, 16), roofMat, 0, h+2.5, 0);
+    roofSolid(new THREE.ConeGeometry(w*.5, 5, 16), roofMat, 0, h+2.5, 0);
     block(w*1.2, 3, d*1.2, 1.5, trim);
   } else if (style === 'stepped' || style === 'artdeco') {
     // True setbacks alter the skyline instead of just adding roof ornaments to identical cubes.
     block(w, h*.52, d, h*.26);
     block(w*.78, h*.30, d*.78, h*.67);
     block(w*.53, h*.18, d*.53, h*.91);
-    for (const [scale, y] of [[1.05,h*.52],[.83,h*.82],[.57,h]]) block(w*scale,.7,d*scale,y,trim);
+    for (const [scale, y] of [[1.0,h*.52],[.78,h*.82],[.53,h]]) flatRoof(w*scale,d*scale,y,0,0,scale===.53&&style!=='artdeco');
     if (style === 'artdeco') {
       for (const xx of [-w*.35,w*.35]) block(.55,h*.5,.6,h*.26,trim,xx,d*.5+.2);
-      solid(new THREE.SphereGeometry(w*.27,12,8,0,Math.PI*2,0,Math.PI/2), roofMat, 0,h,0);
-      solid(new THREE.CylinderGeometry(.12,.23,7,6),accent(0xe8be59),0,h+w*.27+3.5,0);
+      roofSolid(new THREE.SphereGeometry(w*.27,12,8,0,Math.PI*2,0,Math.PI/2), roofMat, 0,h,0);
+      roofSolid(new THREE.CylinderGeometry(.12,.23,7,6),accent(0xe8be59),0,h+w*.27+3.5,0);
     }
   } else {
     const glass = style === 'glass';
@@ -186,15 +207,15 @@ export function makeBuilding(o: BuildingOptions) {
     if (glass) {
       for (let y=3; y<h; y+=4) block(w+.25,.45,d+.25,y,trim);
       for (const xx of [-w*.45,0,w*.45]) block(.36,h,.38,h/2,trim,xx,d/2+.12);
-      block(w*1.1,1.3,d*1.1,h+.65,trim);
-      block(w*.5,rrHeight(h),d*.5,h+rrHeight(h)/2,roofMat);
+      flatRoof(w,d,h);
+
     } else if (style === 'pitched' || style === 'villa' || style === 'warehouse') {
       const rh = Math.min(w,d) * (style === 'warehouse' ? .28 : .48);
-      const rm = solid(new THREE.ConeGeometry(.7072,1,4),roofMat,0,h+rh/2,0);
+      const rm = roofSolid(new THREE.ConeGeometry(.7072,1,4),roofMat,0,h+rh/2,0);
       rm.scale.set(w*1.1,rh,d*1.1);rm.rotation.y=Math.PI/4;
       if (style === 'villa') {
         block(w*.38,h*.6,d*.3,h*.3,trim,w*.53,d*.20);
-        const turret=solid(new THREE.ConeGeometry(w*.27,3.2,4),roofMat,w*.53,h*.6+1.6,d*.20);
+        const turret=roofSolid(new THREE.ConeGeometry(w*.27,3.2,4),roofMat,w*.53,h*.6+1.6,d*.20);
         turret.rotation.y=Math.PI/4;
         block(w*.52,.4,2.4,h*.45,trim,0,d*.5+1);
       }
@@ -203,17 +224,16 @@ export function makeBuilding(o: BuildingOptions) {
         block(w*.86,.28,1.1,y,trim,0,d/2+.4);
         block(w*.86,.65,.12,y+.4,blue,0,d/2+.9);
       }
-      block(w*1.08,.7,d*1.08,h+.35,trim);
+      flatRoof(w,d,h);
     } else if (style === 'arcade') {
-      block(w+1,.65,d+.6,h,trim);
+      flatRoof(w,d,h);
       block(w+1,.5,d+.6,h*.64,trim);
       for (const xx of [-w*.37,w*.37]) block(.55,h*.32,.65,h*.16,trim,xx,d/2+.5);
       const awning=solid(new THREE.BoxGeometry(w*.9,.35,2.3),accent(roof),0,h*.35,d/2+.9);
       awning.rotation.x=.15;
       block(w*.7,.9,.2,h*.48,accent(0xe8be59),0,d/2+.13);
-    } else if (detail) {
-      block(w*.84,.8,d*.84,h+.4,roofMat);
-      block(w*.25,1.2,d*.24,h+1.3,trim,w*.16);
+    } else {
+      flatRoof(w,d,h,0,0,detail);
     }
   }
   const target=o.frontage?{x:(o.frontage[0]-x)*Math.cos(ry)-(o.frontage[1]-z)*Math.sin(ry),z:(o.frontage[0]-x)*Math.sin(ry)+(o.frontage[1]-z)*Math.cos(ry)}:undefined;
@@ -241,10 +261,8 @@ export function batchBuildings() {
       const groups = Array.isArray(obj.material) ? obj.geometry.groups : [{start:0,count:obj.geometry.index?.count ?? obj.geometry.attributes.position.count,materialIndex:0}];
       for (const group of groups) {
         const material = materials[group.materialIndex || 0];
-        const geo = obj.geometry.clone();
-        if (geo.index) geo.setIndex(Array.from(geo.index.array.slice(group.start,group.start+group.count)) as number[]);
-        let part = geo.index ? geo.toNonIndexed() : geo;
-        if (part !== geo) geo.dispose();
+        const geo=extractGeometryPart(obj.geometry,group.start,group.count);
+        let part=geo.index?geo.toNonIndexed():geo;if(part!==geo)geo.dispose();
         part.applyMatrix4(obj.matrixWorld);
         if (!buckets.has(material)) buckets.set(material,[]);
         buckets.get(material)!.push(part);

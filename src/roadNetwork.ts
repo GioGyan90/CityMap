@@ -25,6 +25,8 @@ export function nearestRoad(x:number,z:number){
  let best={distance:Infinity,x,z,y:terrainHeight(x,z),width:7,road:0};
  roadProfiles.forEach((road,id)=>{for(const p of road.curve.getSpacedPoints(80)){const distance=Math.hypot(p.x-x,p.z-z);if(distance<best.distance)best={distance,x:p.x,z:p.z,y:p.y-.2,width:road.width,road:id};}});return best;
 }
+/** Distance to the actual curved road edge, rather than the control-point polyline. */
+export function roadEdgeDistance(x:number,z:number){return Math.min(Infinity,...nearby(x,z).map(r=>r.distance-r.width/2));}
 export function gradedTerrainHeight(x:number,z:number){
  const base=terrainHeight(x,z);let total=0,weighted=0,coverage=0;
  for(const road of nearby(x,z)){

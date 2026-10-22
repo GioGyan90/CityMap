@@ -1,3 +1,4 @@
+import {auditPlacedPlants} from './plantPlacement';
 import {buildSuppliesMarket,buildOutdoorHall} from './billiardsArchitecture';
 import {buildBilliardsAccess} from './billiardsAccess';
 import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
@@ -80,6 +81,7 @@ buildCoastalRealm();
 buildSiteDetails();
 buildParcels();
 plantTrees();buildTransport();buildCars();buildStreetFurniture();buildClouds();
+auditPlacedPlants(world);
 batchBuildings();finalizeOutlines();collectBackgroundBuildings();
 world.userData.layoutVersion='peninsula-terrain-v2';
 

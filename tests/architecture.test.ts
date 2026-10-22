@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {createPalm,createPalmCluster,bakePalm,palmPath} from '../src/palm';
 import {sweepProfile,circularProfile,leafRibbon,seededRandom,radialPlacements} from '../src/proceduralGeometry';
-import {createTree,treeSamples,createGardenCluster,renderPlant} from '../src/plantAssets';
+import {createTree,treeSamples,createGardenCluster,renderPlant,createFlower} from '../src/plantAssets';
 // Canvas drawing is irrelevant to geometry, but facade textures retain their real identity.
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:()=>{}});
 (globalThis as any).document={createElement:()=>({width:128,height:128,getContext:()=>ctx})};
@@ -237,4 +237,24 @@ test('city planting batches stay off roads, parking access and buildings and sam
  assert.ok(positions.length>500);const kinds=new Set(positions.map(p=>p.kind));for(const type of ['shade','slender','flowering','pine','shrub','grass'])assert.ok([...kinds].some((k:string)=>k.startsWith(type)),type);
  for(const p of positions){assert.equal(blocked(p.x,p.z,p.kind==='shrub'||p.kind==='grass'?.55:p.kind.startsWith('palm')?1:1.4),false);assert.ok(p.y<=surfaceHeight(p.x,p.z)+.001);assert.ok(surfaceHeight(p.x,p.z)-p.y<.65,'root neck is close to local ground');}
  for(const batch of plants.children){assert.ok(batch instanceof THREE.InstancedMesh);assert.ok((batch as THREE.InstancedMesh).count>0);}
+});
+
+
+test('all tree crowns stay green and flower petals vary in size, angle and curl',()=>{
+ for(const tree of treeSamples().values())tree.getObjectByName('tree-crown')!.traverse(o=>{if(o instanceof THREE.Mesh){const color=o.geometry.attributes.color;assert.ok(color,'crown has vertex colors');for(let i=0;i<color.count;i++){assert.ok(color.getY(i)>color.getX(i)&&color.getY(i)>color.getZ(i),'crown remains in the green range');}}});
+ const flower=createFlower(11),petals=flower.children.filter(o=>o.name==='flower-petal');assert.equal(petals.length,5);
+ const lengths=petals.map(o=>o.userData.length),widths=petals.map(o=>o.userData.width),curls=petals.map(o=>o.userData.curl);assert.ok(Math.max(...lengths)/Math.min(...lengths)>1.1);assert.ok(Math.max(...widths)/Math.min(...widths)>1.1);assert.ok(Math.max(...curls)-Math.min(...curls)>.025);
+ const angles=petals.map(o=>o.userData.angle),gaps=angles.slice(1).map((a,i)=>a-angles[i]);assert.ok(Math.max(...gaps)/Math.min(...gaps)>1.1);
+});
+test('batched facade textures never cover upward roof faces and roof samples have independent groups',async()=>{
+ const {ordinaryAssetSamples}=await import('../src/buildings');let checked=0;
+ world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const mats=Array.isArray(o.material)?o.material:[o.material],groups=Array.isArray(o.material)?o.geometry.groups:[{start:0,count:o.geometry.index?.count??o.geometry.attributes.position.count,materialIndex:0}];
+  for(const group of groups){const material=mats[group.materialIndex??0];if(!material.map||![...facadeCache.values()].includes(material.map))continue;const normals=o.geometry.attributes.normal;for(let i=group.start;i<group.start+group.count;i++){const at=o.geometry.index?o.geometry.index.getX(i):i;assert.ok(normals.getY(at)<.05,'facade batch has no roof triangles');checked++;}}
+ });assert.ok(checked>1000);
+ for(const sample of ordinaryAssetSamples.values()){const roof=sample.getObjectByName('building-roof');assert.ok(roof&&roof.children.length,'roof is independently modelled');roof.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])assert.ok(!m.map||![...facadeCache.values()].includes(m.map));});}
+});
+test('all planted footprints clear the real curved road edge after placement',async()=>{
+ const {plantingBoxClear}=await import('../src/plantPlacement');world.updateMatrixWorld(true);let count=0;
+ const names=new Set(['palm-tree','tree-shade','tree-slender','tree-flowering','tree-pine','shrub','grass-clump','five-petal-flower','planted-stone-bowl']);
+ world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;if(o instanceof THREE.InstancedMesh&&o.name.startsWith('vegetation-')){o.geometry.computeBoundingBox();for(let i=0;i<o.count;i++){const matrix=new THREE.Matrix4();o.getMatrixAt(i,matrix);assert.ok(plantingBoxClear(o.geometry.boundingBox!.clone().applyMatrix4(o.matrixWorld.clone().multiply(matrix))));count++;}}else if(names.has(o.name)){assert.ok(plantingBoxClear(new THREE.Box3().setFromObject(o)));count++;}});assert.ok(count>400);
 });
