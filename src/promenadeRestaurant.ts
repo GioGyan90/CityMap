@@ -85,7 +85,7 @@ export function buildPromenadeRestaurant(){
   box(x,.9,z,1.9,.8,1,wood);box(x,1.32,z,1.7,.06,.8,soil);
   for(let i=0;i<3;i++){
    const shrub=renderPlant(createShrub(i+61));shrub.geometry=shrub.geometry.clone();shrub.scale.set(.43,.55,.4);shrub.position.set(x+(i-1)*.53,1.34,z);root.add(shrub);
-   const bloom=renderPlant(createFlower(i+17));bloom.geometry=bloom.geometry.clone();bloom.position.set(x+(i-1)*.52,1.72,z+.15);root.add(bloom);
+   const bloom=renderPlant(createFlower(i+17,1.5));bloom.geometry=bloom.geometry.clone();bloom.position.set(x+(i-1)*.52,1.34,z+.15);root.add(bloom);
   }
  }
  const lx=-5.6,lz=5.1;

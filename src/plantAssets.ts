@@ -53,7 +53,7 @@ export function createShrub(seed=17){const root=new THREE.Group();root.name='shr
  for(let i=0;i<3;i++){const a=i*2.4,x=Math.cos(a)*.3,z=Math.sin(a)*.3,h=.75+r()*.45;branch(root,new THREE.Vector3(x,0,z),new THREE.Vector3(x,h*.6,z),.045,'shrub-stem');const crown=part(crownGeometry(seed+i*13,.55+r()*.25,h,0x77a63f),foliage,'shrub-foliage');crown.position.set(x,.15,z);root.add(crown);}return root;}
 export function createGrassClump(seed=15){const root=new THREE.Group();root.name='grass-clump';const r=seededRandom(seed);
  for(let i=0;i<7;i++){const a=i*2.399+r()*.4,h=.4+r()*.75,reach=.25+r()*.4,path=new THREE.QuadraticBezierCurve3(new THREE.Vector3(),new THREE.Vector3(Math.cos(a)*reach*.4,h,Math.sin(a)*reach*.4),new THREE.Vector3(Math.cos(a)*reach,h*.6,Math.sin(a)*reach));root.add(part(leafRibbon(path,.06+r()*.055,4),grassMaterial,'curved-grass-blade'));}return root;}
-export function createFlower(seed=11){const root=new THREE.Group();root.name='five-petal-flower';const r=seededRandom(seed),h=.35+r()*.3;
+export function createFlower(seed=11,heightScale=1){const root=new THREE.Group();root.name='five-petal-flower';const r=seededRandom(seed),h=(.35+r()*.3)*heightScale;
  branch(root,new THREE.Vector3(),new THREE.Vector3(.03,h,0),.018,'flower-stem');(root.children[0] as THREE.Mesh).material=grassMaterial;
  for(const side of [-1,1]){const leaf=new THREE.QuadraticBezierCurve3(new THREE.Vector3(0,h*.35,0),new THREE.Vector3(side*.1,h*.65,0),new THREE.Vector3(side*.18,h*.56,.03));root.add(part(leafRibbon(leaf,.035,2),grassMaterial,'flower-leaf'));}
  const weights=Array.from({length:5},()=>.7+r()*.6),sum=weights.reduce((a,b)=>a+b,0);let angle=r()*Math.PI*2;
@@ -65,10 +65,11 @@ export function createFlower(seed=11){const root=new THREE.Group();root.name='fi
  }
  const center=part(new THREE.IcosahedronGeometry(.07,0),gold,'flower-center');center.position.set(.03,h+.025,0);root.add(center);return root;}
 export function createPlanter(seed=71,radius=1){
- const root=new THREE.Group();root.name='planted-stone-bowl';const profile=[[.72,0],[.92,.12],[1,.49],[.88,.51],[.78,.18],[0,.18]].map(([r,y])=>new THREE.Vector2(r*radius,y));
- root.add(part(new THREE.LatheGeometry(profile,16),stone,'hollow-planter-rim'));const earth=part(new THREE.CylinderGeometry(radius*.83,radius*.83,.07,16),soil,'planter-soil');earth.position.y=.35;root.add(earth);
- const shrub=createShrub(seed);shrub.scale.set(radius*.7,.7,radius*.7);shrub.position.y=.37;root.add(shrub);
- const r=seededRandom(seed);for(let i=0;i<6;i++){const a=i*2.399,flower=createFlower(seed+i);flower.position.set(Math.cos(a)*radius*.6,.56+r()*.25,Math.sin(a)*radius*.6);root.add(flower);}return root;
+ const root=new THREE.Group();root.name='planted-stone-bowl';const profile=[[0,0],[.72,0],[.92,.12],[1,.49],[.88,.51],[.78,.18],[0,.18]].map(([r,y])=>new THREE.Vector2(r*radius,y));
+ const soilFloor=.18,soilTop=.385,rootY=soilTop-.015;
+ root.add(part(new THREE.LatheGeometry(profile,16),stone,'hollow-planter-rim'));const earth=part(new THREE.CylinderGeometry(radius*.84,radius*.78,soilTop-soilFloor,16),soil,'planter-soil');earth.position.y=(soilTop+soilFloor)/2;root.add(earth);
+ const shrub=createShrub(seed);shrub.scale.set(radius*.7,.7,radius*.7);shrub.position.y=rootY;root.add(shrub);
+ const r=seededRandom(seed);for(let i=0;i<6;i++){const a=i*2.399,flower=createFlower(seed+i,1.5+r()*.7);flower.position.set(Math.cos(a)*radius*.6,rootY,Math.sin(a)*radius*.6);root.add(flower);}return root;
 }
 const baked=new WeakMap<THREE.Group,THREE.BufferGeometry>();
 export function renderPlant(root:THREE.Group){if(!baked.has(root))baked.set(root,bakePalm(root));return part(baked.get(root)!,plantBatchMaterial,root.name);}

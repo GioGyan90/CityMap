@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {createPalm,createPalmCluster,bakePalm,palmPath} from '../src/palm';
 import {sweepProfile,circularProfile,leafRibbon,seededRandom,radialPlacements} from '../src/proceduralGeometry';
-import {createTree,treeSamples,createGardenCluster,renderPlant,createFlower} from '../src/plantAssets';
+import {createTree,treeSamples,createGardenCluster,renderPlant,createFlower,createPlanter} from '../src/plantAssets';
 // Canvas drawing is irrelevant to geometry, but facade textures retain their real identity.
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:()=>{}});
 (globalThis as any).document={createElement:()=>({width:128,height:128,getContext:()=>ctx})};
@@ -257,4 +257,13 @@ test('all planted footprints clear the real curved road edge after placement',as
  const {plantingBoxClear}=await import('../src/plantPlacement');world.updateMatrixWorld(true);let count=0;
  const names=new Set(['palm-tree','tree-shade','tree-slender','tree-flowering','tree-pine','shrub','grass-clump','five-petal-flower','planted-stone-bowl']);
  world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;if(o instanceof THREE.InstancedMesh&&o.name.startsWith('vegetation-')){o.geometry.computeBoundingBox();for(let i=0;i<o.count;i++){const matrix=new THREE.Matrix4();o.getMatrixAt(i,matrix);assert.ok(plantingBoxClear(o.geometry.boundingBox!.clone().applyMatrix4(o.matrixWorld.clone().multiply(matrix))));count++;}}else if(names.has(o.name)){assert.ok(plantingBoxClear(new THREE.Box3().setFromObject(o)));count++;}});assert.ok(count>400);
+});
+
+
+test('all planter flower roots enter the soil while flower heights vary above it',()=>{
+ for(const radius of [.65,1,2.5])for(const seed of [11,71,137]){
+  const planter=createPlanter(seed,radius);planter.updateMatrixWorld(true);const soil=planter.getObjectByName('planter-soil')!,soilBox=new THREE.Box3().setFromObject(soil),flowers=planter.children.filter(o=>o.name==='five-petal-flower');assert.equal(flowers.length,6);
+  const heights=[];for(const flower of flowers){const stem=flower.getObjectByName('flower-stem')!,stemBox=new THREE.Box3().setFromObject(stem);assert.ok(stemBox.min.y<=soilBox.max.y&&stemBox.min.y>soilBox.min.y,'stem root is embedded in soil');assert.ok(Math.hypot(flower.position.x,flower.position.z)<radius*.78,'root is inside the soil footprint');heights.push(stemBox.max.y);}
+  assert.ok(Math.max(...heights)-Math.min(...heights)>.05,'heights vary through stem length');
+ }
 });

@@ -41,7 +41,7 @@ export function buildReferenceCafe(cx:number,cz:number){
  k.box(6.2,.75,1.2,0xb17b3f,-4,6.95,1.75);
  for(let i=0;i<8;i++){
   const x=-6.5+i*.7,grass=renderPlant(createGrassClump(71+i));grass.scale.set(.45,.6,.45);grass.position.set(x,7.33,1.85);root.add(grass);
-  const flower=renderPlant(createFlower(31+i));flower.position.set(x,7.4,1.95);root.add(flower);
+  const flower=renderPlant(createFlower(31+i,1.2));flower.position.set(x,7.315,1.95);root.add(flower);
  }
 
  // Blue canvas slopes down from the wall; a scalloped valance closes its front edge.
