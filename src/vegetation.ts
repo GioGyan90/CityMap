@@ -1,3 +1,4 @@
+import {bakePalm,palmSamples} from './palm';
 import {coastalPublicSpace,groveDensity} from './urbanDesign';
 import {parkingAccessBlocked} from './parking';
 import {surfaceHeight} from './terrainSurface';
@@ -25,34 +26,7 @@ export function colorize(geo, hex) {
   return geo;
 }
 
-export function palmGeometry() {
-  const parts = [];
-
-  const trunk = nm(new THREE.CylinderGeometry(0.28, 0.55, 7, 6, 1));
-  trunk.translate(0, 3.5, 0);
-  parts.push(colorize(trunk, 0x9a7048));
-
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * TAU;
-    const f = nm(new THREE.ConeGeometry(0.85, 5.4, 4, 1));
-    f.scale(1, 1, 0.3);
-    f.translate(0, 2.7, 0);
-    f.rotateX(Math.PI / 2 + 0.34);
-    f.rotateY(a);
-    f.translate(0, 6.9, 0);
-    parts.push(colorize(f, i % 2 ? 0x669e35 : 0xa1c745));
-  }
-
-  /* 椰子 */
-  for (let i = 0; i < 3; i++) {
-    const a = (i / 3) * TAU;
-    const nut = nm(new THREE.IcosahedronGeometry(0.42, 0));
-    nut.translate(Math.cos(a) * 0.55, 6.7, Math.sin(a) * 0.55);
-    parts.push(colorize(nut, 0x6b4a2f));
-  }
-
-  return mergeGeometries(parts, false);
-}
+export function palmGeometry() { return bakePalm(palmSamples()[0]); }
 
 export function roundTreeGeometry(leafColor) {
   const parts = [];
@@ -111,8 +85,9 @@ export function plantTrees() {
     trees.push([x, z, rr(0.75, 1.35)]);
   }
 
-  const mkInstanced = (geo, list) => {
-    const mesh = new THREE.InstancedMesh(geo, treeMat, list.length);
+  const mkInstanced = (geo, list, material=treeMat, name='') => {
+    const mesh = new THREE.InstancedMesh(geo, material, list.length);
+    mesh.name=name;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const v = new THREE.Vector3();
@@ -130,9 +105,10 @@ export function plantTrees() {
     world.add(mesh);
   };
 
-  mkInstanced(palmGeometry(), palms);
-  mkInstanced(roundTreeGeometry(0x77ad42), trees.slice(0, 70));
-  mkInstanced(roundTreeGeometry(0x9cc752), trees.slice(70, 135));
-  mkInstanced(roundTreeGeometry(0x508d43), trees.slice(135));
+  const palmMaterial=toon(0xffffff,{vertexColors:true,side:THREE.DoubleSide});
+  palmSamples().forEach((sample,i)=>mkInstanced(bakePalm(sample),palms.filter((_,index)=>index%3===i),palmMaterial,`vegetation-palm-${i}`));
+  mkInstanced(roundTreeGeometry(0x77ad42), trees.slice(0, 70),treeMat,'vegetation-round-0');
+  mkInstanced(roundTreeGeometry(0x9cc752), trees.slice(70, 135),treeMat,'vegetation-round-1');
+  mkInstanced(roundTreeGeometry(0x508d43), trees.slice(135),treeMat,'vegetation-round-2');
 }
 

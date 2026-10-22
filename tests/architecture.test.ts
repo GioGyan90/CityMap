@@ -1,12 +1,41 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {createPalm,bakePalm,palmPath} from '../src/palm';
+import {sweepProfile,circularProfile,leafRibbon,seededRandom,radialPlacements} from '../src/proceduralGeometry';
 // Canvas drawing is irrelevant to geometry, but facade textures retain their real identity.
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:()=>{}});
 (globalThis as any).document={createElement:()=>({width:128,height:128,getContext:()=>ctx})};
 const {makeBuilding,facadeCache}=await import('../src/buildings');
 const {buildGovernment}=await import('../src/landmarks');
 const {world}=await import('../src/scene');
+test('path sweeps bridge every section with outward faces and fixed-seed radial placement',()=>{
+ const path=new THREE.LineCurve3(new THREE.Vector3(),new THREE.Vector3(0,7,0)),geometry=sweepProfile(path,circularProfile(8),12,u=>.4-u*.2);
+ const position=geometry.attributes.position,normal=geometry.attributes.normal;
+ for(let i=8;i<12*8;i++)assert.ok(new THREE.Vector3(position.getX(i),0,position.getZ(i)).dot(new THREE.Vector3(normal.getX(i),0,normal.getZ(i)))>0,'trunk faces point outward');
+ const edgeCounts=new Map<string,number>(),index=geometry.index!;
+ for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const a=index.getX(i+j),b=index.getX(i+(j+1)%3),key=[a,b].sort((x,y)=>x-y).join(':');edgeCounts.set(key,(edgeCounts.get(key)??0)+1);}
+ assert.ok([...edgeCounts.values()].every(n=>n===2),'swept trunk including caps is closed');
+ assert.deepEqual(radialPlacements(12,seededRandom(41)),radialPlacements(12,seededRandom(41)));
+ const ribbon=leafRibbon(new THREE.LineCurve3(new THREE.Vector3(),new THREE.Vector3(2,0,0)),.2);assert.ok(ribbon.attributes.normal.getY(4)>0,'upper leaf normals point up');
+});
+test('palm assemblies keep attachments when height, bend and frond count change',()=>{
+ for(const [height,bend,fronds] of [[5,0,6],[7,1,12],[9,2,18]]){
+  const tree=createPalm({seed:41,height,bend,fronds}),crown=tree.getObjectByName('palm-crown')!,trunk=tree.getObjectByName('palm-trunk')!;
+  assert.ok(trunk&&tree.getObjectByName('palm-coconuts'));
+  const heading=seededRandom(41)()*Math.PI*2,path=palmPath(height,bend,heading);
+  assert.ok(crown.position.distanceTo(path.getPointAt(1))<1e-6);
+  assert.ok(new THREE.Vector3(0,1,0).applyQuaternion(crown.quaternion).distanceTo(path.getTangentAt(1))<1e-6);
+  let leaves=0;tree.traverse(o=>{if(o.name==='palm-frond'){leaves++;assert.ok(o.position.length()<.3,'leaf bases stay in crown');assert.equal(o.getObjectByName('paired-leaflets')!.children.length,24);}});assert.equal(leaves,fronds);
+  tree.updateMatrixWorld(true);const sourceBox=new THREE.Box3().setFromObject(tree,true),baked=bakePalm(tree);assert.ok(baked.boundingBox!.min.distanceTo(sourceBox.min)<1e-5);assert.ok(baked.boundingBox!.max.distanceTo(sourceBox.max)<1e-5);
+  for(const a of Object.values(baked.attributes))for(const n of a.array)assert.ok(Number.isFinite(n));
+  assert.ok(baked.attributes.position.count/3<10000,'variant has a bounded triangle budget');
+  assert.ok((crown.getObjectByName('palm-coconuts')!.children).every(o=>o.position.y<0),'fruit hangs below the crown');
+ }
+ assert.deepEqual(Array.from(bakePalm(createPalm({seed:41})).attributes.position.array),Array.from(bakePalm(createPalm({seed:41})).attributes.position.array));
+ const relocated=createPalm({seed:41});relocated.position.set(100,4,-20);relocated.rotation.y=.8;const local=bakePalm(relocated).attributes.position,reference=bakePalm(createPalm({seed:41})).attributes.position;
+ for(let i=0;i<local.count;i++)assert.ok(new THREE.Vector3().fromBufferAttribute(local,i).distanceTo(new THREE.Vector3().fromBufferAttribute(reference,i))<1e-5,'baking excludes the tree placement transform');
+});
 test('upward faces of ordinary building boxes never use window facade textures',()=>{
  for(const style of ['flat','stepped','artdeco','apartment','villa','arcade'] as const){
   const root=makeBuilding({x:0,z:0,w:12,d:10,h:24,style});
