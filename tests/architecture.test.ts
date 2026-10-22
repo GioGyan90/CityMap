@@ -267,3 +267,24 @@ test('all planter flower roots enter the soil while flower heights vary above it
   assert.ok(Math.max(...heights)-Math.min(...heights)>.05,'heights vary through stem length');
  }
 });
+
+
+test('five themed halls are independent plots with clear carved doors, grounded tables and distinct roofs',async()=>{
+ const {specialBuildings}=await import('../src/specialBuildings');const {createThemedHall,HALL_THEMES}=await import('../src/themedHalls');const {roadEdgeDistance}=await import('../src/roadNetwork');
+ const roofs=new Set<string>();
+ for(const spec of HALL_THEMES){
+  const entry=specialBuildings.find(s=>s.id===spec.id)!;assert.ok(entry);assert.equal(entry.group.parent,world);assert.equal(entry.group.userData.theme,spec.theme);
+  const hall=createThemedHall(spec.theme);hall.updateMatrixWorld(true);
+  for(const name of ['base','shell','entrance','roof','emblem','furniture'])assert.ok(hall.getObjectByName('hall-'+name),name);
+  const front=hall.getObjectByName(spec.theme==='elegance'?'hall-open-arch':'hall-pierced-front')!;
+  const ray=new THREE.Raycaster(new THREE.Vector3(0,2.4,3),new THREE.Vector3(0,0,-1));assert.equal(ray.intersectObject(front).length,0,'door is a through opening');
+  if(spec.theme==='science'){const curb=new THREE.Box3().setFromObject(hall.getObjectByName('science-vault-support-curb')!),vault=new THREE.Box3().setFromObject(hall.getObjectByName('science-vault-roof')!);assert.ok(curb.max.y>=vault.min.y-1e-5&&curb.min.y<=7.15,'vault curb bridges the wall and vault');assert.ok(curb.min.x<=vault.min.x+1e-5&&curb.max.x>=vault.max.x-1e-5,'curb supports the full vault length');}
+  const cloth=hall.getObjectByName('six-pocket-cloth')!;assert.ok(cloth);
+  let feet=0;hall.traverse(o=>{if(o instanceof THREE.Mesh&&o.geometry.type==='LatheGeometry'){const b=new THREE.Box3().setFromObject(o);assert.ok(b.min.y<=.351&&b.min.y>=.09,'table legs touch or enter the slab');feet++;}});assert.equal(feet,4);
+  const roof=hall.getObjectByName('hall-roof')!;const b=new THREE.Box3().setFromObject(roof);roofs.add([b.min.x,b.max.x,b.min.y,b.max.y,roof.children.length].map(v=>v.toFixed(2)).join(','));
+  const footprint=new THREE.Box3().setFromObject(entry.group);for(let x=footprint.min.x;x<=footprint.max.x;x+=.8)for(let z=footprint.min.z;z<=footprint.max.z;z+=.8)assert.ok(roadEdgeDistance(x,z)>.4,'hall footprint clears actual roads');
+ }
+ assert.equal(roofs.size,5,'all five roofs have distinct geometry');
+ for(const id of ['park','hospital','commercial','port']){let old=0;specialBuildings.find(s=>s.id===id)!.group.traverse(o=>{if(/BILLIARDS/.test(o.userData.signText??''))old++;});assert.equal(old,0,'old hall removed from '+id);}
+ const hall1=new THREE.Box3().setFromObject(specialBuildings.find(s=>s.id==='hall1')!.group),park=new THREE.Box3().setFromObject(specialBuildings.find(s=>s.id==='park')!.group);assert.equal(hall1.intersectsBox(park),false);
+});

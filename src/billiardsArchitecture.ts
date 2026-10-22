@@ -5,7 +5,7 @@ import {kit,C} from './referenceArchitecture';
 import {cutFacade,roundPlan,extrudedPlan,insetRing,rackGeometry,polygonPlan,openPlanShell,polygonRing,insetLoft,type PlanPoint,archHole} from './carvedGeometry';
 import {billiardEmblem} from './marketEmblem';
 const wood=0x93602f,gold=0xe3b75e,green=0x397f3b;
-function start(name:string){const root=new THREE.Group();root.name=name;root.position.y=GROUND_Y;world.add(root);return {root,k:kit(root)};}
+function start(name:string,attach=true){const root=new THREE.Group();root.name=name;root.position.y=attach?GROUND_Y:0;if(attach)world.add(root);return {root,k:kit(root)};}
 function canopy(root:THREE.Group,x:number,z:number,w:number,blue:boolean,y=4.3){
  const k=kit(root),n=8;
  for(let i=0;i<n;i++){
@@ -119,8 +119,8 @@ export function buildSuppliesMarket(){
  }
  return root;
 }
-export function buildOutdoorHall(){
- const {root,k}=start('independent-outdoor-billiards-hall');root.userData.hallNumber=2;
+export function buildOutdoorHall(attach=true){
+ const {root,k}=start('independent-outdoor-billiards-hall',attach);root.userData.hallNumber=2;
  k.mesh(extrudedPlan(roundPlan(17,21,1.5),.3),C.stone,0,.05,0);
  windowedShell(root,HALL_PLAN,6.8,.5,'hall-rear-shell',.35,0xb1814d);
  k.mesh(cutFacade(9.2,6.8,.5,[{x:0,y:.25,w:6,h:4.8}]),wood,0,.35,-1.5).name='hall-open-arch';

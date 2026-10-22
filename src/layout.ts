@@ -7,11 +7,13 @@ function shore(z:number,values:number[]){for(let i=0;i<SHORE_Z.length-1;i++)if(z
 export const westCoast=(z:number)=>shore(z,WEST_X);
 export const eastCoast=(z:number)=>shore(z,EAST_X);
 export function isLand(x:number,z:number){return z>=-200&&z<=202&&x>=westCoast(z)&&x<=eastCoast(z)||x>=120&&x<=190&&z>=145&&z<=181;}
-export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;level?:number}
+export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;level?:number;ry?:number}
 export const ZONES:Record<string,Zone>={
  cargo:{...HARBOR_SITES.cargo,sx:1,sz:1,level:1.06},passenger:{...HARBOR_SITES.passenger,sx:1,sz:1,level:1.06},
  villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
- park:{x:-20,z:-65,w:42,d:87,sx:1.65,sz:1.6},market:{x:-18,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-18,z:57,w:24,d:28,sx:1.25,sz:1.25},
+ park:{x:-20,z:-87.4,w:48,d:48,sx:1.65,sz:1.6,level:3.5974665423},market:{x:-18,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-18,z:57,w:24,d:28,sx:1.25,sz:1.25},
+ hall1:{x:-20,z:-20,w:24,d:24,sx:1,sz:1},hall3:{x:41,z:-130,w:20,d:24,sx:1,sz:1},
+ hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
  cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:137,w:35,d:36,sx:1.3,sz:1.3},

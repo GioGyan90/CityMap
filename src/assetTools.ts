@@ -1,8 +1,9 @@
+import {hallSamples,createHallTable,createHallEntrance,createHallEmblem,HALL_THEMES} from './themedHalls';
 import {treeSamples,shrubSample,grassSample,flowerSample,planterSample,createGardenCluster} from './plantAssets';
 import {palmSamples,createPalmFrond,createPalmCluster} from './palm';
 import {updateFocus} from './focus';
 import * as THREE from 'three';
-import {scene,world,camera,controls,renderer,sky} from './scene';
+import {scene,world,camera,controls,renderer,sky,sun} from './scene';
 import {specialBuildings} from './specialBuildings';
 import {ordinaryAssetSamples} from './buildings';
 import {createVehicle} from './vehicles';
@@ -36,6 +37,8 @@ export function initAssetTools(){
  {id:'plant-shrub',title:'绿植 · 灌木丛',source:shrubSample},{id:'plant-grass',title:'绿植 · 弯叶草簇',source:grassSample},
  {id:'plant-flower',title:'绿植 · 五瓣花',source:flowerSample},{id:'plant-planter',title:'绿植 · 花钵组合',source:planterSample},
  {id:'garden-cluster',title:'景观组合 · 乔木灌木花草',source:createGardenCluster()});
+ for(const theme of HALL_THEMES){const sample=hallSamples().get(theme.theme)!;for(const [part,title] of [['hall-shell','主体'],['hall-roof','屋顶'],['hall-emblem','招牌']] as const){const source=sample.getObjectByName(part);if(source)items.push({id:`hall-part-${theme.theme}-${part}`,title:`球馆原件 · ${theme.name} · ${title}`,source});}}
+ items.push({id:'hall-part-table',title:'球馆原件 · 六袋球桌',source:createHallTable()},{id:'hall-part-entrance',title:'球馆原件 · 挖空门框与玻璃门',source:createHallEntrance()},{id:'hall-part-emblem',title:'球馆原件 · 三角球架与八号球',source:createHallEmblem('order')});
  const panel=document.createElement('section');panel.className='asset-panel';panel.hidden=true;
  panel.innerHTML=`<div class="asset-heading"><strong>资产与地图规划</strong><button id="asset-close" aria-label="关闭面板">×</button></div>
  <label>搜索资产<input id="asset-search" placeholder="建筑、车辆、树木…"></label><select id="asset-select" aria-label="选择资产"></select>
@@ -55,6 +58,8 @@ export function initAssetTools(){
  const selected=()=>items.find(a=>a.id===select.value)??items[0];
  let preview:THREE.Group|null=null,copy:THREE.Object3D|null=null,isolated=false,savedCamera=camera.position.clone(),savedTarget=controls.target.clone();
  const savedScene={fog:scene.fog,background:scene.background,sky:sky.visible};
+ const shadowCamera=sun.shadow.camera,savedShadow={position:sun.position.clone(),target:sun.target.position.clone(),left:shadowCamera.left,right:shadowCamera.right,top:shadowCamera.top,bottom:shadowCamera.bottom,near:shadowCamera.near,far:shadowCamera.far,bias:sun.shadow.bias,normalBias:sun.shadow.normalBias};
+ function restoreShadow(){sun.position.copy(savedShadow.position);sun.target.position.copy(savedShadow.target);sun.target.updateMatrixWorld();for(const k of ['left','right','top','bottom','near','far'] as const)shadowCamera[k]=savedShadow[k];sun.shadow.bias=savedShadow.bias;sun.shadow.normalBias=savedShadow.normalBias;shadowCamera.updateProjectionMatrix();}
  const mapGrid=new THREE.Group();mapGrid.name='planning-grid';mapGrid.visible=false;world.add(mapGrid);
  let picked:THREE.Vector3|null=null,notes:{x:number;y:number;z:number;text:string}[]=[];
  const noteGroup=new THREE.Group();noteGroup.name='planning-notes';world.add(noteGroup);
@@ -71,13 +76,14 @@ export function initAssetTools(){
  function isolate(){
   if(!isolated){savedCamera=camera.position.clone();savedTarget=controls.target.clone();savedScene.fog=scene.fog;savedScene.background=scene.background;savedScene.sky=sky.visible;}
   controls.dispatchEvent({type:'start'});updateFocus(2);isolated=true;world.userData.assetView=true;world.visible=false;sky.visible=false;scene.fog=null;scene.background=new THREE.Color(0xdce9ed);labelRenderer.domElement.style.display='none';document.body.dataset.assetView='true';controls.minDistance=.4;controls.maxDistance=1000;camera.near=.02;camera.updateProjectionMatrix();
-  disposePreview();preview=new THREE.Group();preview.name='isolated-asset';scene.add(preview);copy=selected().source.clone(true);copy.position.set(0,0,0);
+  disposePreview();preview=new THREE.Group();preview.name='isolated-asset';scene.add(preview);copy=selected().source.clone(true);copy.position.set(0,0,0);if(selected().placement)copy.rotation.set(0,0,0);
   let triangles=0,meshes=0;copy.traverse(o=>{if(o instanceof THREE.Mesh){meshes++;triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();o.userData.previewMaterial=true;for(const m of Array.isArray(o.material)?o.material:[o.material])if('wireframe' in m)m.wireframe=el<HTMLInputElement>('wire').checked;}});preview.add(copy);copy.updateMatrixWorld(true);
   const b=new THREE.Box3().setFromObject(copy),size=b.getSize(new THREE.Vector3()),span=Math.max(size.x,size.z,2)*1.4;
+  const center=b.getCenter(new THREE.Vector3()),lightDistance=span*4+40;sun.position.copy(savedShadow.position.clone().sub(savedShadow.target).normalize().multiplyScalar(lightDistance).add(center));sun.target.position.copy(center);sun.target.updateMatrixWorld();shadowCamera.left=shadowCamera.bottom=-span;shadowCamera.right=shadowCamera.top=span;shadowCamera.near=1;shadowCamera.far=lightDistance+span*3;sun.shadow.bias=-.0003;sun.shadow.normalBias=.04;shadowCamera.updateProjectionMatrix();
   const grid=new THREE.GridHelper(span,20,0x759396,0xb8cdd0);grid.position.set((b.min.x+b.max.x)/2,b.min.y-.025,(b.min.z+b.max.z)/2);grid.userData.previewHelper=true;preview.add(grid);
   el('stats').textContent=`${meshes} 个网格 · ${Math.round(triangles).toLocaleString()} 三角面\n尺寸 ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`;fit();
  }
- function exit(){if(!isolated)return;disposePreview();isolated=false;world.userData.assetView=false;world.visible=true;scene.fog=savedScene.fog;scene.background=savedScene.background;sky.visible=savedScene.sky;labelRenderer.domElement.style.display='';delete document.body.dataset.assetView;controls.autoRotate=false;el<HTMLInputElement>('spin').checked=false;controls.minDistance=40;controls.maxDistance=950;camera.near=.5;camera.clearViewOffset();camera.up.set(0,1,0);camera.updateProjectionMatrix();camera.position.copy(savedCamera);controls.target.copy(savedTarget);controls.update();fillPosition();}
+ function exit(){if(!isolated)return;restoreShadow();disposePreview();isolated=false;world.userData.assetView=false;world.visible=true;scene.fog=savedScene.fog;scene.background=savedScene.background;sky.visible=savedScene.sky;labelRenderer.domElement.style.display='';delete document.body.dataset.assetView;controls.autoRotate=false;el<HTMLInputElement>('spin').checked=false;controls.minDistance=40;controls.maxDistance=950;camera.near=.5;camera.clearViewOffset();camera.up.set(0,1,0);camera.updateProjectionMatrix();camera.position.copy(savedCamera);controls.target.copy(savedTarget);controls.update();fillPosition();}
  function move(p:PositionDraft){const a=specialBuildings.find(s=>s.id===p.id)!;const delta=new THREE.Vector3(p.x,p.y,p.z).sub(a.group.position);a.group.position.set(p.x,p.y,p.z);a.pick.position.add(delta);a.group.updateMatrixWorld(true);for(const l of labelObjs)if(l.element.dataset.special===p.id)l.position.add(delta);}
  function positions(){return specialBuildings.map(s=>({id:s.id,x:s.group.position.x,y:s.group.position.y,z:s.group.position.z}));}
  function save(){try{localStorage.setItem(STORE,JSON.stringify(positions()));}catch{tell('当前浏览器无法保存草稿，请导出 JSON。');}}

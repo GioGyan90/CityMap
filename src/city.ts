@@ -1,5 +1,6 @@
+import {HALL_THEMES,createThemedHall} from './themedHalls';
 import {auditPlacedPlants} from './plantPlacement';
-import {buildSuppliesMarket,buildOutdoorHall} from './billiardsArchitecture';
+import {buildSuppliesMarket} from './billiardsArchitecture';
 import {buildBilliardsAccess} from './billiardsAccess';
 import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
 import {buildCruiseShip} from './cruiseShip';
@@ -30,26 +31,26 @@ import { buildUrbanDetails, buildCampus } from "./urbanDetails";
 import { buildClouds } from "./clouds";
 
 /* Each landmark is an independent ground-pivoted root for focus animation. */
-registerSpecial('park','海滨游乐场 · 1 号球馆','摩天轮、过山车、旋转木马与海滨球馆',[-20,-10],[25,28,54],()=>{
-  buildAmusement(-20,-24);billiardsHall(-20,4,1);
+registerSpecial('park','海滨游乐场','摩天轮、过山车与旋转木马',[-20,-24],[25,28,28],()=>{
+  buildAmusement(-20,-24);
 });
 registerSpecial('civic','政府广场','蓝色穹顶、柱廊与中央喷泉',[8,4],[27,27,27],()=>buildGovernment(8,4));
-registerSpecial('hospital','医院学院区 · 4 号球馆','蓝白医院、屋顶停机坪与街角球馆',[36,-10],[27,25,54],()=>{
-  referenceHospital(36,-24);billiardsHall(36,4,4);
+registerSpecial('hospital','医院学院区','蓝白医院与屋顶停机坪',[36,-10],[27,25,54],()=>{
+  referenceHospital(36,-24);
 });
 registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
   referenceHotel(-20,32);
 });
 registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
-registerSpecial('hall2','街角台球厅 · 2 号球馆','独立木质拱门、绿色遮棚与室外球桌',[0,0],[18,13,22],buildOutdoorHall);
+for(const t of HALL_THEMES){const hall=createThemedHall(t.theme);world.add(hall);registerGroup(t.id,t.name,t.description,hall,[0,0],[18,14,22]);}
 registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
   buildCafe(36,32);
 });
 registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
   buildRestaurant(-20,60);restaurantDetails(-20,60);
 });
-registerSpecial('port','码头市场 · 5 号球馆','渔船栈桥、鲜鱼摊位与港口球馆',[0,0],[50,25,38],()=>{
-  buildPort();billiardsHall(15,-5,5);
+registerSpecial('port','码头市场','渔船栈桥与鲜鱼摊位',[0,0],[50,25,38],()=>{
+  buildPort();
 });
 registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入户台阶',[0,0],[20,18,24],buildHillVilla);
 registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
@@ -58,7 +59,7 @@ registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与
 const ship=buildCruiseShip();
 world.attach(ship);
 registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
-registerSpecial('commercial','市中心商业区 · 3 号球馆','蓝金穹顶高楼、玻璃裙楼与精品球馆',[36,-108],[27,100,27],()=>commercialDistrict(36,-108));
+registerSpecial('commercial','市中心商业区','蓝金穹顶高楼与玻璃裙楼',[36,-108],[27,100,27],()=>commercialDistrict(36,-108));
 registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
 registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);
 buildMountains();
@@ -69,7 +70,7 @@ for(const entry of specialBuildings){
  const source=entry.group.position.clone();entry.group.userData.sourceCenter=source.toArray();
  const base=zone.level??terrainHeight(zone.x,zone.z);
  entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
- entry.group.scale.set(zone.sx,sy,zone.sz);
+ entry.group.scale.set(zone.sx,sy,zone.sz);entry.group.rotation.y=zone.ry??0;
  entry.pick.geometry.dispose();entry.group.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(entry.group);
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
