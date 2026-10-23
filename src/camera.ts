@@ -1,3 +1,4 @@
+import {STATION_ORIGIN} from './coastalStationPlan';
 import {terrainHeight} from './layout';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
@@ -14,6 +15,7 @@ const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sor
 export const VIEWS = {
  station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
  parking:parkingView,
+ coaststation:{pos:[STATION_ORIGIN.x-30,STATION_ORIGIN.y+24,STATION_ORIGIN.z+36],target:[STATION_ORIGIN.x+7,STATION_ORIGIN.y+3,STATION_ORIGIN.z-2]},
  housing:housingView,busStop:busStopView,
  traffic:{pos:[65,53,86],target:[22,4,40]},
  crossing:{pos:[-92,24,80],target:[-58,2,57]},

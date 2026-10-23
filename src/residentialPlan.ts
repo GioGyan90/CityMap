@@ -1,3 +1,4 @@
+import {STATION_RESERVATION} from './coastalStationPlan';
 import polygonClipping from 'polygon-clipping';
 import * as THREE from 'three';
 import {roadProfiles,roadEdgeDistance} from './roadNetwork';
@@ -22,7 +23,7 @@ function roadConnection(gate:Point,ring:Point[],occupied:Poly[]){let best:{road:
  }}return best?.road;
 }
 export function planResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
- const obstacles:Poly[]=[...roadProfiles.map(r=>strip(r.curve,r.width+4.8)),...Object.values(ZONES).map(s=>rectangle(s.x,s.z,s.w+6,s.d+6)),...occupied.map(s=>rectangle(s.x,s.z,s.w+3,s.d+3))];
+ const obstacles:Poly[]=[rectangle(STATION_RESERVATION.x,STATION_RESERVATION.z,STATION_RESERVATION.w,STATION_RESERVATION.d),...roadProfiles.map(r=>strip(r.curve,r.width+4.8)),...Object.values(ZONES).map(s=>rectangle(s.x,s.z,s.w+6,s.d+6)),...occupied.map(s=>rectangle(s.x,s.z,s.w+3,s.d+3))];
  const tram=new THREE.CatmullRomCurve3(Array.from({length:17},(_,i)=>{const z=-150+i*14;return new THREE.Vector3(westCoast(z)+20,0,z);}),false,'catmullrom',.12);obstacles.push(strip(tram,9));
  for(const path of parkingAccessPaths){const [a,b]=path.points;obstacles.push(strip(new THREE.LineCurve3(new THREE.Vector3(a[0],0,a[1]),new THREE.Vector3(b[0],0,b[1])),path.width+3));}
  for(const [x,z] of [[42,-82],[89,-92],[42,70],[105,101]])obstacles.push(rectangle(x,z,14,5));

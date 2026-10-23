@@ -1,5 +1,6 @@
+import {buildCoastalStation} from './coastalStation';
 import {buildBusStops} from './busStops';
-import {COMMUTER_POINTS,trainProgress} from './transitDesign';
+import {COMMUTER_POINTS,trainProgress,advanceTrainPhase} from './transitDesign';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
 import { world } from './scene';
@@ -8,7 +9,7 @@ import { roadRibbon,roadMat,walkMat } from './roads';
 import { toon } from './materials';
 import { sign } from './conceptDetails';
 export let motorwayCurve:THREE.CatmullRomCurve3|null=null;
-export const transit:{mesh:THREE.Group;curve:THREE.CatmullRomCurve3;offset:number;speed:number}[]=[];
+export const transit:{mesh:THREE.Group;curve:THREE.CatmullRomCurve3;offset:number;speed:number;terminalDwell:number;dwellRemaining:number}[]=[];
 function box(w:number,h:number,d:number,c:number,x:number,y:number,z:number,parent:THREE.Object3D=world){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),toon(c));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
 function route(points:[number,number][],lift:number){return new THREE.CatmullRomCurve3(points.map(([x,z])=>new THREE.Vector3(x,surfaceHeight(x,z)+lift,z)),false,'catmullrom',.12);}
 function railway(curve:THREE.CatmullRomCurve3,elevated:boolean){
@@ -21,10 +22,10 @@ function railway(curve:THREE.CatmullRomCurve3,elevated:boolean){
  for(let i=0;i<count;i++){const p=curve.getPointAt(i/count),t=curve.getTangentAt(i/count);const sleeper=box(2.6,.16,.3,0x806a55,p.x,p.y+.03,p.z);sleeper.rotation.y=Math.atan2(t.x,t.z);}
  if(elevated)for(let i=0;i<18;i++){const p=curve.getPointAt(i/17),base=surfaceHeight(p.x,p.z);box(1.6,p.y-base,1.8,0xa6ada6,p.x,(p.y+base)/2,p.z);}
 }
-function train(curve:THREE.CatmullRomCurve3,color:number,offset:number){
+function train(curve:THREE.CatmullRomCurve3,color:number,offset:number,dwell=0){
  const g=new THREE.Group();g.name='moving-train';world.add(g);
  for(const z of [-4,4]){box(2.4,2.5,6.8,color,0,1.5,z,g);box(2.46,.85,5.6,0x254d65,0,1.95,z,g);box(2.5,.32,6.8,0xe9e6d7,0,2.85,z,g);for(const side of [-1,1])box(.16,.25,5.7,0xf3e2ab,side*1.22,.85,z,g);}
- transit.push({mesh:g,curve,offset,speed:.025});
+ transit.push({mesh:g,curve,offset,speed:.025,terminalDwell:dwell,dwellRemaining:0});
 }
 
 function buildRailTerminus(curve:THREE.CatmullRomCurve3,end:number){
@@ -51,7 +52,8 @@ function buildRailTerminus(curve:THREE.CatmullRomCurve3,end:number){
 }
 
 export function buildTransport(){
- const coast=route(Array.from({length:17},(_,i)=>{const z=-150+i*14;return [westCoast(z)+20,z] as [number,number]}),.4);railway(coast,false);train(coast,0xe9b753,.25);
+ const coast=route(Array.from({length:17},(_,i)=>{const z=-150+i*14;return [westCoast(z)+20,z] as [number,number]}),.4);railway(coast,false);train(coast,0xe9b753,.25,4);
+ buildCoastalStation(coast);
  const stop=coast.getPointAt(.6),direction=coast.getTangentAt(.6);
  const tramStop=new THREE.Group();tramStop.name='coastal-tram-stop';tramStop.position.copy(stop);tramStop.rotation.y=Math.atan2(direction.x,direction.z);world.add(tramStop);
  box(3,.55,16,0xd6c7a6,3.6,.5,0,tramStop);box(3.6,.25,17,0x347e98,3.6,3.6,0,tramStop);
@@ -86,9 +88,9 @@ export function buildTransport(){
    box(2,.2,3,0xdedacc,side*5.9,.45,7,station);
   }
  }
- world.userData.transport={tram:true,elevatedRail:true,elevatedHighway:true,stations:3};
+ world.userData.transport={tram:true,elevatedRail:true,elevatedHighway:true,stations:4};
 }
-export function updateTransport(dt:number){for(const vehicle of transit){vehicle.offset=(vehicle.offset+dt*vehicle.speed)%1;const t=trainProgress(vehicle.curve,vehicle.offset);const p=vehicle.curve.getPointAt(Math.min(.999,Math.max(.001,t))),tangent=vehicle.curve.getTangentAt(t);vehicle.mesh.position.copy(p);vehicle.mesh.rotation.y=Math.atan2(tangent.x,tangent.z)+(vehicle.offset>.5?Math.PI:0);vehicle.mesh.rotation.x=-Math.atan2(tangent.y,Math.hypot(tangent.x,tangent.z));}}
+export function updateTransport(dt:number){for(const vehicle of transit){const state=advanceTrainPhase(vehicle.offset,vehicle.dwellRemaining,dt,vehicle.speed,vehicle.terminalDwell);vehicle.offset=state.offset;vehicle.dwellRemaining=state.remaining;const t=trainProgress(vehicle.curve,vehicle.offset);const p=vehicle.curve.getPointAt(Math.min(.999,Math.max(.001,t))),tangent=vehicle.curve.getTangentAt(t);vehicle.mesh.position.copy(p);vehicle.mesh.rotation.y=Math.atan2(tangent.x,tangent.z)+(vehicle.offset>.5?Math.PI:0);vehicle.mesh.rotation.x=-Math.atan2(tangent.y,Math.hypot(tangent.x,tangent.z));}}
 export function buildStreetFurniture(){
  for(const [x,z,text,color] of [[42,-82,'LUCKY BREAK','#1e5579'],[89,-92,'CITY LEAGUE','#345c85'],[42,70,'CUE & BALL','#b74f51'],[105,101,'SEASIDE HOTEL','#247b93']] as const){
   const y=surfaceHeight(x,z);for(const dx of [-4,4])box(.28,8,.28,0x61717a,x+dx,y+4,z);

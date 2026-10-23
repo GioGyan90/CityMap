@@ -40,3 +40,7 @@ export function createGroundMaterial(){
 export function paintGroundPath(points:[number,number][],width:number,color:'asphalt'|'walk'|'line'){
  ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x,z);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap='butt';ctx.strokeStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.stroke();texture.needsUpdate=true;
 }
+
+export function paintGroundPolygon(points:[number,number][],color:'asphalt'|'walk'|'line'){
+ ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x,z);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.closePath();ctx.fillStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.fill();texture.needsUpdate=true;
+}

@@ -174,3 +174,9 @@ test('long buses reserve the full garden S-bend before entering opposite lanes',
  for(let frame=0;frame<12000;frame++){const before=cars.map(c=>c.distance);stepTraffic(cars,zones,.05);cars.forEach((c,i)=>travel[i]+=(c.distance-before[i]+route.length)%route.length);assert.equal(vehiclesOverlap(cars[0],cars[1],0),false);assert.ok(cars.every(c=>c.waiting<45),'no opposing bus deadlock at bend');}
  assert.ok(travel.every(d=>d>1000));
 });
+
+test('coastal train dwells at both terminals, pauses correctly and preserves elapsed time across frame sizes',async()=>{
+ const {advanceTrainPhase}=await import('../src/transitDesign');let s=advanceTrainPhase(.499,0,.1,.025,4);assert.equal(s.offset,.5);assert.ok(Math.abs(s.remaining-3.94)<1e-8);const paused=advanceTrainPhase(s.offset,s.remaining,0,.025,4);assert.deepEqual(paused,s);s=advanceTrainPhase(s.offset,s.remaining,2,.025,4);assert.equal(s.offset,.5);s=advanceTrainPhase(s.offset,s.remaining,2,.025,4);assert.ok(s.offset>.5);
+ const north=advanceTrainPhase(.999,0,.1,.025,4);assert.equal(north.offset,0);assert.ok(north.remaining>3.9);
+ let small={offset:.25,remaining:0};for(let i=0;i<10000;i++)small=advanceTrainPhase(small.offset,small.remaining,.05,.025,4);const large=advanceTrainPhase(.25,0,500,.025,4);assert.ok(Math.abs(small.offset-large.offset)<1e-8&&Math.abs(small.remaining-large.remaining)<1e-8);
+});

@@ -1,3 +1,5 @@
+import {coastalStationPreview} from './coastalStation';
+import {createStationHouse,createStationRoof,createStationClock,createBufferStop,createPlatformCanopyBay} from './coastalStationAssets';
 import {createHome,createBusShelter} from './residentialAssets';
 import {courtSample} from './residential';
 import {createStreetLamp,createSignalPost,createCrossingGate,createGuideFence} from './trafficAssets';
@@ -23,11 +25,12 @@ import './assetTools.css';
 type Item={id:string;title:string;source:THREE.Object3D;placement?:typeof specialBuildings[number]};
 const STORE='citymap-layout-draft-v1',NOTE_STORE='citymap-position-notes-v1';
 export function initAssetTools(){
- const items:Item[]=specialBuildings.map(s=>({id:s.id,title:s.name,source:s.group,placement:s}));
+ const items:Item[]=specialBuildings.map(s=>({id:s.id,title:s.name,source:s.id==='coaststation'&&coastalStationPreview?coastalStationPreview:s.group,placement:s}));
  for(const [kind,title] of [['sedan','轿车'],['bus','公交车'],['ambulance','救护车']] as const)items.push({id:'vehicle-'+kind,title:'车辆 · '+title,source:createVehicle(kind)});
  for(const [id,title,source] of [['street-lamp','交通 · 路侧灯组合',createStreetLamp()],['traffic-signal','交通 · 三色信号灯组合',createSignalPost()],['rail-gate','交通 · 电车道口栏杆组合',createCrossingGate()],['guide-fence','交通 · 道口导向栏杆',createGuideFence()]] as const)items.push({id,title,source});
  for(const style of ['balcony','bay','shutters'] as const)items.push({id:'courtyard-home-'+style,title:'小区住宅 · '+({balcony:'生活阳台',bay:'凹窗挑檐',shutters:'百叶坡顶'}[style]),source:createHome(style)});
  items.push({id:'curb-bus-shelter',title:'交通 · 路侧公交雨棚',source:createBusShelter()});if(courtSample)items.push({id:'residential-court',title:'住宅 · 围合花园小区',source:courtSample});
+ for(const [id,title,source]of [['station-house','总站 · 拱券站房',createStationHouse()],['station-roof','总站原件 · 坡顶与钟塔',createStationRoof()],['station-clock','总站原件 · 立体钟面',createStationClock()],['station-canopy','总站原件 · 雨棚支撑单元',createPlatformCanopyBay()],['buffer-stop','总站原件 · 轨道止冲器',createBufferStop()]] as const)items.push({id,title,source});
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const [name,title] of [['horizontal-sailboat-hull','帆船'],['moving-train','城际列车']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}

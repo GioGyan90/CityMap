@@ -501,3 +501,24 @@ test('residential entrance stairs meet the rendered terrain, previews include pa
  assert.ok(courtSample?.getObjectByName('clipped-preview-terrain'));assert.ok(courtSample?.getObjectByName('preview-garden-walk'));
  for(const plan of world.userData.residential.courts){const court=createResidentialCourt(plan,true);court.updateMatrixWorld(true);const steps=court.children.filter(o=>o.name==='entrance-terrain-step') as THREE.Mesh[];assert.equal(steps.length,plan.homes.length*3);for(let i=2;i<steps.length;i+=3){const step=steps[i],box=new THREE.Box3().setFromObject(step),ground=surfaceHeight(step.position.x,step.position.z);assert.ok(Math.abs(box.max.y-ground-.055)<1e-5,'last tread meets the path');assert.ok(box.min.y<ground,'step has a solid footing');}for(const h of plan.homes)assert.ok(blocked(h.x,h.z,1.4),'forest cannot spawn through the new buildings');}
 });
+
+test('coastal terminus matches the pictured tram end, clears the road and leaves the fish-market walk open',async()=>{
+ const {STATION_PLAN,STATION_ORIGIN}=await import('../src/coastalStationPlan');const {transit}=await import('../src/transport');const {coastalStation,coastalStationPreview}=await import('../src/coastalStation');const {roadEdgeDistance}=await import('../src/roadNetwork');const {gridCell}=await import('../src/mapCoordinates');
+ assert.ok(transit[0].curve.getPointAt(1).distanceTo(STATION_ORIGIN)<1e-8);assert.equal(STATION_PLAN.grid,'K15');assert.equal(gridCell(STATION_ORIGIN.x,STATION_ORIGIN.z).id,STATION_PLAN.grid);coastalStation!.updateMatrixWorld(true);let checked=0;
+ coastalStation!.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);assert.ok(roadEdgeDistance(v.x,v.z)>.6,'whole station footprint clears asphalt');assert.ok(v.z>=58.49,'no station part blocks the existing z=57 crossing approach');checked++;}});assert.ok(checked>10000);assert.ok(coastalStationPreview?.getObjectByName('preview-running-rail'));assert.ok(coastalStationPreview?.getObjectByName('preview-station-forecourt'));
+});
+
+test('terminal buffer stays beyond the stopped train and both car centres have boarding platform',async()=>{
+ const {transit}=await import('../src/transport');const {trainProgress}=await import('../src/transitDesign');const {STATION_ORIGIN,STATION_HEADING}=await import('../src/coastalStationPlan');const {createBufferStop}=await import('../src/coastalStationAssets');const curve=transit[0].curve,p=curve.getPointAt(trainProgress(curve,.5)),v=curve.getTangentAt(trainProgress(curve,.5));const local=p.clone().sub(STATION_ORIGIN).applyAxisAngle(new THREE.Vector3(0,1,0),-STATION_HEADING),angle=Math.atan2(v.x,v.z)-STATION_HEADING,nose=local.z+7.4*Math.cos(angle)+1.25*Math.abs(Math.sin(angle)),buffer=createBufferStop();buffer.position.z=.15;buffer.updateMatrixWorld(true);assert.ok(nose<new THREE.Box3().setFromObject(buffer).min.z-.8);
+ assert.ok(-local.z+4<16.4&&-local.z-4>0,'both passenger car centres stop beside the platform');assert.equal(transit[0].terminalDwell,4);
+});
+
+test('station ramp has a clear flat turn, grounded terminal stairs and a clock above the main roof',async()=>{
+ const {coastalStation}=await import('../src/coastalStation');const {createStationRoof}=await import('../src/coastalStationAssets');const {surfaceHeight}=await import('../src/terrainSurface');const root=coastalStation!;assert.ok(root.getObjectByName('flat-ramp-turn-landing'));assert.ok(world.userData.coastalStation.ramp.rise/world.userData.coastalStation.ramp.run<1/12+.001);
+ const steps=root.children.filter(o=>o.name==='station-entrance-stair');assert.equal(steps.length,5);const last=steps[4],p=new THREE.Vector3();last.getWorldPosition(p);const box=new THREE.Box3().setFromObject(last);assert.ok(Math.abs(box.max.y-surfaceHeight(p.x,p.z)-.055)<1e-5);
+ const roof=createStationRoof();roof.updateMatrixWorld(true);const clock=new THREE.Box3().setFromObject(roof.getObjectByName('station-clock')!),main=new THREE.Box3().setFromObject(roof.getObjectByName('blue-standing-seam-gable')!);assert.ok(clock.min.y>main.max.y+.04,'roof cannot hide the clock face');
+});
+
+test('both slopes of the continuous station canopy have outward upward normals after batching',async()=>{
+ const {coastalStation}=await import('../src/coastalStation');const canopy=coastalStation!.getObjectByName('curved-platform-canopy')!;let count=0;canopy.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const m=o.material as THREE.MeshToonMaterial;if(m.color.getHex()!==0x367f9b)return;const n=o.geometry.attributes.normal;for(let i=0;i<n.count;i++){assert.ok(n.getY(i)>.9,'neither roof slope faces down');count++;}});assert.ok(count>0);
+});

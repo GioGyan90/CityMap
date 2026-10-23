@@ -17,7 +17,7 @@ export function addLabel(text, x, y, z, cls = '') {
   const div = document.createElement('div');
   div.className = 'lbl ' + cls;
   div.textContent = text;
-  const ids: Record<string,string> = {'码头鱼市':'fishmarket','炽焰台球厅':'hall1','蓝序台球厅':'hall3','白弧台球厅':'hall4','黑铆台球厅':'hall5','街角台球厅':'hall2','集装箱货运码头':'cargo','邮轮客运码头':'passenger','游乐园':'park','政府大厅':'civic','医院':'hospital','高档酒店':'hotel','市场':'market','咖啡馆':'cafe','餐厅':'restaurant','海运码头':'port','灯塔':'lighthouse','山麓别墅':'villa','金融中心':'commercial','海岸学院':'campus','豪华邮轮':'cruise','台球用品市场':'market','海滨酒店':'hotel','码头市场':'port','海滨长廊餐厅':'promenade','市中心商业区':'commercial'};
+  const ids: Record<string,string> = {'海岸总站':'coaststation','码头鱼市':'fishmarket','炽焰台球厅':'hall1','蓝序台球厅':'hall3','白弧台球厅':'hall4','黑铆台球厅':'hall5','街角台球厅':'hall2','集装箱货运码头':'cargo','邮轮客运码头':'passenger','游乐园':'park','政府大厅':'civic','医院':'hospital','高档酒店':'hotel','市场':'market','咖啡馆':'cafe','餐厅':'restaurant','海运码头':'port','灯塔':'lighthouse','山麓别墅':'villa','金融中心':'commercial','海岸学院':'campus','豪华邮轮':'cruise','台球用品市场':'market','海滨酒店':'hotel','码头市场':'port','海滨长廊餐厅':'promenade','市中心商业区':'commercial'};
   if (ids[text]) {
     div.dataset.special=ids[text];div.tabIndex=0;div.setAttribute('role','button');div.setAttribute('aria-label',`聚焦${text}`);
     div.addEventListener('pointerenter',event=>{if(event.pointerType!=='touch')setLabelFocus(ids[text]);});
@@ -29,7 +29,7 @@ export function addLabel(text, x, y, z, cls = '') {
   }
   const obj = new CSS2DObject(div);
   const specialId=div.dataset.special;
-  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='commercial'?105:specialId==='hotel'?35:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:specialId==='fishmarket'?12:specialId.startsWith('hall')?16:31);}}
+  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='coaststation'?13:specialId==='commercial'?105:specialId==='hotel'?35:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:specialId==='fishmarket'?12:specialId.startsWith('hall')?16:31);}}
   else if(text==='山 脉'){x=205;z=-170;y=terrainHeight(x,z)+15;}
   else if(text==='山麓车站'){const station=world.children.filter(o=>o.name==='elevated-rail-station').sort((a,b)=>b.position.z-a.position.z)[0];if(station){x=station.position.x;z=station.position.z;y=station.position.y+8;}}
   else if(text==='城市花园'){x=72;z=75;y=terrainHeight(x,z)+8;}
@@ -68,3 +68,5 @@ addLabel('街角台球厅',-18,18,57);
 addLabel('炽焰台球厅',-20,15,-20);addLabel('蓝序台球厅',41,15,-130);addLabel('白弧台球厅',174,15,-32);addLabel('黑铆台球厅',112,15,167);
 
 addLabel('码头鱼市',-82,12,57);
+
+const coastStation=world.userData.coastalStation;if(coastStation)addLabel('海岸总站',coastStation.origin[0]+7,coastStation.origin[1]+12,coastStation.origin[2]);
