@@ -4,6 +4,9 @@ import * as THREE from 'three';
 import { camera, controls, world } from "./scene";
 import { labelObjs } from "./labels";
 
+const housing=world.userData.residential?.courts?.find(c=>c.homes.length===5),busStop=world.userData.busStops?.[0];
+const housingView=housing?{pos:[housing.garden[0]+42,surfaceHeight(housing.garden[0],housing.garden[1])+35,housing.garden[1]+48],target:[housing.garden[0],surfaceHeight(housing.garden[0],housing.garden[1])+3,housing.garden[1]]}:{pos:[90,55,25],target:[60,4,-20]};
+const busStopView=busStop?{pos:[busStop.x+Math.sin(busStop.heading)*17,busStop.y+10,busStop.z+Math.cos(busStop.heading)*17],target:[busStop.x,busStop.y+1.5,busStop.z]}:housingView;
 const parkingLots=world.userData.streetLife?.parkingLots??[];
 const lot=parkingLots.find(p=>p.z>40)??parkingLots[0];
 const parkingView=(()=>{if(!lot)return {pos:[-64,140,-3],target:[70,42,-126]};const dx=lot.x-lot.serves[0],dz=lot.z-lot.serves[1],length=Math.hypot(dx,dz),y=surfaceHeight(lot.x,lot.z);return {pos:[lot.x+dx/length*33,y+28,lot.z+dz/length*33],target:[lot.x,y+2,lot.z]};})();
@@ -11,6 +14,7 @@ const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sor
 export const VIEWS = {
  station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
  parking:parkingView,
+ housing:housingView,busStop:busStopView,
  traffic:{pos:[65,53,86],target:[22,4,40]},
  crossing:{pos:[-92,24,80],target:[-58,2,57]},
  hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},

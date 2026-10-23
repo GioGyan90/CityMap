@@ -1,3 +1,4 @@
+import {buildResidentialCourts} from './residential';
 import {buildParcelTerrace} from './parcelTerraces';
 import {coastalPublicSpace,landmarkSetback,skylineHeight} from './urbanDesign';
 import {nearestRoad} from './roadNetwork';
@@ -17,10 +18,6 @@ const officeSites:{x:number;z:number;w:number;d:number;entrance:{x:number;z:numb
 export function buildParcels(){
  const districts=[
   {name:'skyline',x:[3,123],z:[-150,-88],count:21},
-  {name:'oldtown',x:[5,104],z:[-94,-24],count:31},
-  {name:'civic',x:[8,125],z:[39,109],count:22},
-  {name:'hills',x:[109,226],z:[-132,108],count:40},
-  {name:'resort',x:[16,112],z:[112,183],count:20},
   {name:'harbor',x:[192,220],z:[123,146],count:13}
  ];
  for(const district of districts){let made=0;for(let tries=0;tries<1500&&made<district.count;tries++){
@@ -55,5 +52,6 @@ export function buildParcels(){
  }}
  const buildingCount=occupied.length;
  buildParkingLots(officeSites,occupied);
+ buildResidentialCourts(occupied);
  world.userData.parcels={count:buildingCount,districts:districts.map(d=>d.name)};
 }

@@ -250,7 +250,7 @@ test('batched facade textures never cover upward roof faces and roof samples hav
  const {ordinaryAssetSamples}=await import('../src/buildings');let checked=0;
  world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const mats=Array.isArray(o.material)?o.material:[o.material],groups=Array.isArray(o.material)?o.geometry.groups:[{start:0,count:o.geometry.index?.count??o.geometry.attributes.position.count,materialIndex:0}];
   for(const group of groups){const material=mats[group.materialIndex??0];if(!material.map||![...facadeCache.values()].includes(material.map))continue;const normals=o.geometry.attributes.normal;for(let i=group.start;i<group.start+group.count;i++){const at=o.geometry.index?o.geometry.index.getX(i):i;assert.ok(normals.getY(at)<.05,'facade batch has no roof triangles');checked++;}}
- });assert.ok(checked>1000);
+ });assert.ok(checked>0,'remaining textured office facades are actually inspected');
  for(const sample of ordinaryAssetSamples.values()){const roof=sample.getObjectByName('building-roof');assert.ok(roof&&roof.children.length,'roof is independently modelled');roof.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])assert.ok(!m.map||![...facadeCache.values()].includes(m.map));});}
 });
 test('all planted footprints clear the real curved road edge after placement',async()=>{
@@ -466,4 +466,38 @@ test('rail gate sweep stays clear of train envelope and gives sufficient closing
  for(const g of [createStreetLamp(),createSignalPost(),createCrossingGate()]){g.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(g);assert.ok(Math.abs(b.min.y)<1e-6,'assembly foundation rests on ground');}
  // Max tram speed is below 12 m/s; a 67 m warning closes in 1.6 s before its 7.4 m nose arrives.
  assert.ok(67-12*1.6>7.4+2);
+});
+
+test('small residential courts fit clipped land, keep all roof/balcony footprints off roads and retain grid IDs',async()=>{
+ const {inside,edgeDistance}=await import('../src/residentialPlan');const {roadEdgeDistance}=await import('../src/roadNetwork');const {gridCell}=await import('../src/mapCoordinates');const {createHome}=await import('../src/residentialAssets');
+ const courts=world.userData.residential.courts;assert.ok(courts.length>=8);let count=0;
+ for(const court of courts){assert.ok(court.homes.length>=3&&court.homes.length<=5);assert.ok(court.area>290);for(const h of court.homes){count++;assert.equal(h.grid,gridCell(h.x,h.z).id);assert.ok(h.w<=6.8&&h.d<=5.9&&h.floors<=3);const home=createHome((['balcony','bay','shutters'] as const)[h.seed%3],h.seed,h.w,h.d,h.floors);home.position.set(h.x,0,h.z);home.rotation.y=h.heading;home.updateMatrixWorld(true);
+  home.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);assert.ok(inside(court.ring,v.x,v.z),'complete house remains in clipped parcel');assert.ok(roadEdgeDistance(v.x,v.z)>2.1);}});
+ }}assert.equal(count,world.userData.residential.homes);
+});
+
+test('courtyard gates and front doors connect to gardens without cutting through another home',async()=>{
+ const {inside}=await import('../src/residentialPlan');
+ for(const court of world.userData.residential.courts){const walks=court.walks.flatMap(w=>w.points.slice(1).map((p,i)=>[w.points[i],p,court.homes.findIndex(h=>h.id===w.owner)]));
+  for(const [a,b,owner]of walks)for(let i=1;i<40;i++){const t=i/40,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;assert.ok(inside(court.ring,x,z),'walk remains in actual lot');for(let j=0;j<court.homes.length;j++){if(j===owner)continue;const h=court.homes[j],dx=x-h.x,dz=z-h.z,c=Math.cos(h.heading),s=Math.sin(h.heading);assert.ok(Math.abs(dx*c-dz*s)>h.w/2+.5||Math.abs(dx*s+dz*c)>h.d/2+.7,'no path through a neighbouring house');}}
+ }
+});
+
+test('residential windows are recessed openings, roofs stay independent and only selected glass emits',async()=>{
+ const {createHome,batchResidentialGeometry}=await import('../src/residentialAssets');
+ for(const style of ['balcony','bay','shutters'] as const){const home=createHome(style,23001,6.5,5.9,3);home.updateMatrixWorld(true);const front=home.getObjectByName('front-facade')!,wall=front.getObjectByName('perforated-wall') as THREE.Mesh,shape=(wall.geometry as THREE.ExtrudeGeometry).parameters.shapes as THREE.Shape;assert.equal(shape.holes.length,9);
+  let glass=0,lit=0;home.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const mat=o.material as THREE.MeshToonMaterial;assert.ok(!mat.map,'residential detail is real geometry');if(o.name==='recessed-glass'){glass++;if(mat.userData.inhabited)lit++;assert.ok(o.position.z<-.1);} });assert.ok(glass>20&&lit>0&&lit<glass);
+  const roof=home.getObjectByName('independent-residential-roof')!;assert.ok(new THREE.Box3().setFromObject(roof).min.y>8.6);batchResidentialGeometry(home);assert.ok(home.userData.draws<20);assert.ok(home.getObjectByName('residential-material-batches')!.children.length>3);
+ }
+});
+
+test('all four bus shelters keep their complete canopy and waiting footprint outside every driving lane',async()=>{
+ const {roadEdgeDistance}=await import('../src/roadNetwork');const {gridCell}=await import('../src/mapCoordinates');const stops=world.userData.busStops;assert.equal(stops.length,4);
+ for(const s of stops){assert.equal(s.grid,gridCell(s.x,s.z).id);for(const [x,z]of s.footprint)assert.ok(roadEdgeDistance(x,z)>=.6);const root=world.getObjectByName(s.id)!;root.updateMatrixWorld(true);const roof=root.getObjectByName('rain-canopy') as THREE.Mesh,p=roof.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(roof.matrixWorld);assert.ok(roadEdgeDistance(v.x,v.z)>.6,'not just posts: every canopy corner clears the lane');}}
+});
+
+test('residential entrance stairs meet the rendered terrain, previews include paths, and random forest stays outside courts',async()=>{
+ const {createResidentialCourt,courtSample}=await import('../src/residential');const {surfaceHeight}=await import('../src/terrainSurface');const {blocked}=await import('../src/vegetation');
+ assert.ok(courtSample?.getObjectByName('clipped-preview-terrain'));assert.ok(courtSample?.getObjectByName('preview-garden-walk'));
+ for(const plan of world.userData.residential.courts){const court=createResidentialCourt(plan,true);court.updateMatrixWorld(true);const steps=court.children.filter(o=>o.name==='entrance-terrain-step') as THREE.Mesh[];assert.equal(steps.length,plan.homes.length*3);for(let i=2;i<steps.length;i+=3){const step=steps[i],box=new THREE.Box3().setFromObject(step),ground=surfaceHeight(step.position.x,step.position.z);assert.ok(Math.abs(box.max.y-ground-.055)<1e-5,'last tread meets the path');assert.ok(box.min.y<ground,'step has a solid footing');}for(const h of plan.homes)assert.ok(blocked(h.x,h.z,1.4),'forest cannot spawn through the new buildings');}
 });

@@ -14,8 +14,9 @@ export const solarClock=new SolarClock();
 const nightGroup=new THREE.Group();nightGroup.name='night-lighting';nightGroup.visible=false;world.add(nightGroup);
 const meshMaterials=new Set<THREE.Material>();
 world.traverse(object=>{if(object instanceof THREE.Mesh && object.name.indexOf('pick-')!==0){const ms=Array.isArray(object.material)?object.material:[object.material];ms.forEach(m=>meshMaterials.add(m));}});
+const residentialGlazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial&&m.userData.lightingRole==='residential-glass'&&m.userData.inhabited);
 const litMaterials:THREE.MeshToonMaterial[]=[];
-const glazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial && m.color.getHex()===0x3987aa);
+const glazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial && m.color.getHex()===0x3987aa && m.userData.lightingRole!=='residential-glass');
 for(const material of meshMaterials) {
   if(!(material instanceof THREE.MeshToonMaterial))continue;
   material.userData.dayEmission=material.emissive.clone();
@@ -64,6 +65,7 @@ export function refreshDayNight(){
  moon.position.copy(moonDir).multiplyScalar(1450);moon.visible=state.moon.altitude>-.4;moonMaterial.uniforms.sunDirection.value.copy(sunDir);moonMaterial.uniforms.visibility.value=(.25+.75*night)*state.moonVisibility;
  nightGroup.visible=night>.001;setInfrastructureNight(night);nightGroup.children.forEach(o=>{if(o instanceof THREE.PointLight)o.intensity=30*night;});
  for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
+ for(const material of residentialGlazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of glazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}
  setCloudLighting(night,twilight.glow,twilight.cloud,twilight.rose,sunDir,state.direct);

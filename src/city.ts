@@ -86,7 +86,7 @@ buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
 buildSiteDetails();
 buildParcels();
-plantTrees();buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();buildClouds();
+buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();buildClouds();
 auditPlacedPlants(world);
 batchBuildings();finalizeOutlines();collectBackgroundBuildings();
 world.userData.layoutVersion='peninsula-terrain-v2';

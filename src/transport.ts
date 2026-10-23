@@ -1,3 +1,4 @@
+import {buildBusStops} from './busStops';
 import {COMMUTER_POINTS,trainProgress} from './transitDesign';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
@@ -93,8 +94,6 @@ export function buildStreetFurniture(){
   const y=surfaceHeight(x,z);for(const dx of [-4,4])box(.28,8,.28,0x61717a,x+dx,y+4,z);
   sign(text,x,y+8.3-1.06,z,11,3.5,color);box(12,.35,.6,0xe4c375,x,y+10.3,z);
  }
- for(const [x,z] of [[32,-45],[29,77],[185,-81],[179,118]]){
-  const y=surfaceHeight(x,z);box(6,.3,3,0x4589a3,x,y+3,z);for(const dx of [-2.6,2.6])box(.15,3,.15,0x5f7884,x+dx,y+1.5,z);box(4,.35,.9,0xcdb58d,x,y+.6,z+.6);
- }
+ buildBusStops();
  const quaySign=ZONES.port;sign('码头市场 · DOCK MARKET',quaySign.x,6,quaySign.z+7,17,3,'#245875');
 }
