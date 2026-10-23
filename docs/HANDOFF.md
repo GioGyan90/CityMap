@@ -1,3 +1,5 @@
+> **隧道第二轮复查已修正：** 新增 `src/tunnelAprons.ts`，车辆高度与实际接路板共用三角形；基础板不再穿出沥青；两个直洞口与弯曲衬砌之间增加实体过渡段。最新复查证据为 `docs/tunnel-review/contact-fix.jpg`，可用 `node scripts/review/tunnel-contact.mjs` 在 Mesa EGL 环境复现。详情见 `docs/road-tunnels.md` 的第二轮复查章节。
+
 > **2026-10-23 本轮已实施隧道：** 后续先读 [road-tunnels.md](road-tunnels.md) 和 `docs/tunnel-review/placements.json`。以下正文保留原交接背景，不再代表隧道未开始。最终中央洞口为 (-32,-165)，海滨洞口保留原位，两端由连续双向隧道连接；新增“货港隧道”镜头及四项资产查看器条目。已补齐洞口真实开孔、覆土、侧向收口、独立路面/路基和贯通车辆路径。浏览器 WebGL 仍不可用，实际几何离屏检查证据已存档。
 
 # 新窗口交接：货运码头附近的穿山公路

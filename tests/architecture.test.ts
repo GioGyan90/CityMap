@@ -589,7 +589,7 @@ test('joined-road buses and cars circulate through both mouths for ten minutes w
 });
 test('underground road and lining expose the correct driving-side faces',async()=>{
  const {createRoadTunnel}=await import('../src/roadTunnels');const {tunnelFrame}=await import('../src/tunnelPlan');const site=createRoadTunnel();site.updateMatrixWorld(true);
- for(const t of [.1,.3,.5,.7,.9]){const f=tunnelFrame(t),origin=f.p.clone().add(new THREE.Vector3(0,2,0));for(const direction of [new THREE.Vector3(0,1,0),f.right,f.right.clone().negate()]){const ray=new THREE.Raycaster(origin,direction);assert.ok(ray.intersectObject(site,true).some(h=>h.object.name==='swept-hollow-shell'),'inside-facing shell');}
+ for(const t of [.1,.3,.5,.7,.9]){const f=tunnelFrame(t),origin=f.p.clone().add(new THREE.Vector3(0,2,0));for(const direction of [new THREE.Vector3(0,1,0),f.right,f.right.clone().negate()]){const ray=new THREE.Raycaster(origin,direction);assert.ok(ray.intersectObject(site,true).some(h=>['swept-hollow-shell','portal-curved-lining-collar'].includes(h.object.name)),'inside-facing shell');}
  const down=new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0));assert.ok(down.intersectObject(site,true).some(h=>h.object.name==='independent-underground-road'&&h.distance<2.1),'road faces upward');}
 });
 test('coastal retaining faces sample the raised shoreline instead of falling through Float32 bounds',async()=>{
@@ -604,4 +604,29 @@ test('the integrated nine-road network stays live and collision-free with joined
  assert.equal(cars.length,28);const moved=new Map(cars.map(c=>[c.id,0]));
  for(let i=0;i<3000;i++){const before=cars.map(c=>c.distance);stepTraffic(cars,zones,.1,(c,n)=>signalAllows(c,n,i*.1));for(let k=0;k<cars.length;k++)moved.set(cars[k].id,moved.get(cars[k].id)!+(cars[k].distance-before[k]+cars[k].route.length)%cars[k].route.length);if(i%10===0)for(let a=0;a<cars.length;a++)for(let b=a+1;b<cars.length;b++)assert.equal(vehiclesOverlap(cars[a],cars[b],0),false);}
  assert.ok([...moved.values()].every(d=>d>100),'every car makes progress in five minutes');assert.ok(cars.every(c=>c.waiting<90),'no permanent tunnel/junction queue');
+});
+test('portal contact matches rendered apron triangles and no foundation protrudes through asphalt',async()=>{
+ const {createRoadTunnel}=await import('../src/roadTunnels');const {tunnelPortals}=await import('../src/tunnelPlan');const {tunnelDrivingHeight}=await import('../src/tunnelTraffic');
+ const site=createRoadTunnel();site.updateMatrixWorld(true);const decks:THREE.Mesh[]=[],asphalt:THREE.Mesh[]=[];
+ site.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='graded-portal-apron'){decks.push(o);if((o.material as THREE.MeshToonMaterial).color.getHex()===0x526d87)asphalt.push(o);}});
+ for(const f of tunnelPortals)for(let s=-5.9;s<-.04;s+=.13)for(const side of [-2,-1.65,0,1.65,2]){
+  const p=f.p.clone().addScaledVector(f.into,s).addScaledVector(f.right,side),ray=new THREE.Raycaster(new THREE.Vector3(p.x,80,p.z),new THREE.Vector3(0,-1,0));
+  const road=ray.intersectObjects(asphalt)[0],top=ray.intersectObjects(decks)[0];assert.ok(road&&top,'both lanes have an actual apron');
+  assert.ok(Math.abs(tunnelDrivingHeight(p.x,p.z)!-road.point.y)<.0001,'vehicle height uses actual triangles');
+  assert.ok(Math.abs(top.point.y-road.point.y)<.0001,'foundation stays beneath the driving surface');
+ }
+});
+test('apron slab closure has no unpaired mesh edges and does not mutate contact profiles',async()=>{
+ const {createRoadTunnel}=await import('../src/roadTunnels');const {apronProfile}=await import('../src/tunnelAprons');const {tunnelPortals}=await import('../src/tunnelPlan');
+ const snapshots=tunnelPortals.map(f=>Array.from(apronProfile(f,f.t===0?5:9,.025).positions));
+ const site=createRoadTunnel();site.traverse(o=>{if(!(o instanceof THREE.Mesh)||o.name!=='graded-portal-apron'||(o.material as THREE.MeshToonMaterial).color.getHex()!==0xe0d6b9)return;
+  const edges=new Map<string,number>(),index=o.geometry.index!;for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const a=index.getX(i+j),b=index.getX(i+(j+1)%3),key=a<b?`${a}:${b}`:`${b}:${a}`;edges.set(key,(edges.get(key)??0)+1);}assert.ok([...edges.values()].every(n=>n===2),'foundation is a closed solid');
+ });
+ tunnelPortals.forEach((f,i)=>assert.deepEqual(Array.from(apronProfile(f,f.t===0?5:9,.025).positions),snapshots[i]));
+});
+test('both straight portal throats join the curved lining without exposed gaps',async()=>{
+ const {createRoadTunnel}=await import('../src/roadTunnels');const {tunnelFrame,tunnelLength}=await import('../src/tunnelPlan');const site=createRoadTunnel();site.updateMatrixWorld(true);
+ for(const end of [0,1])for(let s=3.85;s<5.4;s+=.11){const f=tunnelFrame(end?1-s/tunnelLength:s/tunnelLength),origin=f.p.clone().add(new THREE.Vector3(0,2,0));
+  for(const direction of [new THREE.Vector3(0,1,0),f.right,f.right.clone().negate()]){const ray=new THREE.Raycaster(origin,direction,0,7);assert.ok(ray.intersectObject(site,true).some(h=>['tunnel-arch-solid-open','portal-curved-lining-collar','swept-hollow-shell'].includes(h.object.name)),'roof and both walls close the straight-to-curved joint');}
+ }
 });
