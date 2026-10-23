@@ -630,3 +630,58 @@ test('both straight portal throats join the curved lining without exposed gaps',
   for(const direction of [new THREE.Vector3(0,1,0),f.right,f.right.clone().negate()]){const ray=new THREE.Raycaster(origin,direction,0,7);assert.ok(ray.intersectObject(site,true).some(h=>['tunnel-arch-solid-open','portal-curved-lining-collar','swept-hollow-shell'].includes(h.object.name)),'roof and both walls close the straight-to-curved joint');}
  }
 });
+
+test('four editable fleet models retain bounds, light roles and nested transforms after batching',async()=>{
+ const {createFleetVehicle}=await import('../src/fleetAssets');const {batchVehicle}=await import('../src/vehicles');
+ for(const kind of ['truck','taxi','police','speedboat'] as const){const source=createFleetVehicle(kind),batched=createFleetVehicle(kind,true),box=new THREE.Box3().setFromObject(source),batchBox=new THREE.Box3().setFromObject(batched);
+  assert.ok(box.min.distanceTo(batchBox.min)<.00001&&box.max.distanceTo(batchBox.max)<.00001,kind+' batching retains full shape');
+  const size=box.getSize(new THREE.Vector3()),nominal=source.userData.nominalSize;assert.ok(box.max.x<=nominal.width/2+.00001&&box.min.x>=-nominal.width/2-.00001&&box.max.z<=nominal.length/2+.00001&&box.min.z>=-nominal.length/2-.00001,'centered traffic envelope includes mirrors and asymmetric equipment');
+  assert.ok(source.children.length>=3,'editable structural groups');assert.equal(source.userData.forward,'+Z');
+  if(kind!=='speedboat')assert.ok(Math.abs(box.min.y)<.00001,'wheel bottoms contact the road');else assert.ok(box.min.y<-.4&&box.max.y>1,'keel/motor below waterline, windscreen above');
+  let triangles=0;source.traverse(o=>{if(o instanceof THREE.Mesh){triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;for(const attribute of Object.values(o.geometry.attributes))for(const value of attribute.array)assert.ok(Number.isFinite(value));}});assert.ok(triangles<5000,'bounded model complexity');
+  source.position.set(15,4,-8);source.rotation.y=.7;const relocated=batchVehicle(source);const relocatedBox=new THREE.Box3().setFromObject(relocated);assert.ok(relocatedBox.min.distanceTo(box.min)<.0001&&relocatedBox.max.distanceTo(box.max)<.0001,'batching strips root placement but keeps child placement');
+ }
+ const police=createFleetVehicle('police');for(const [name,color]of [['red-police-lens',0xe14c50],['blue-police-lens',0x4b9fe8]] as const){const lens=police.getObjectByName(name) as THREE.Mesh,material=lens.material as THREE.MeshToonMaterial;assert.equal(material.userData.lightingRole,'vehicle-light');assert.equal(material.emissive.getHex(),color,'colored lenses retain their own hue');}
+});
+test('truck windows and front wheel arches are cut into real cab panels',async()=>{
+ const {createFleetVehicle}=await import('../src/fleetAssets');const truck=createFleetVehicle('truck');truck.updateMatrixWorld(true);const panels:THREE.Mesh[]=[];truck.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='pierced-cab-side')panels.push(o);});
+ for(const [y,z,open]of [[1.9,1.5,true],[.79,1.86,true],[2.5,1.0,false]] as const){const ray=new THREE.Raycaster(new THREE.Vector3(3,y,z),new THREE.Vector3(-1,0,0),0,6);assert.equal(ray.intersectObjects(panels).length===0,open,'side window/arch has depth and frame');}
+ const front=truck.getObjectByName('pierced-cab-front')!;assert.equal(new THREE.Raycaster(new THREE.Vector3(0,1.8,4),new THREE.Vector3(0,0,-1),0,2).intersectObject(front).length,0,'front windshield is not painted on solid wall');
+});
+test('speedboat has an open cockpit, closed V hull, solid foredeck and outward livery faces',async()=>{
+ const {createFleetVehicle}=await import('../src/fleetAssets');const boat=createFleetVehicle('speedboat');boat.updateMatrixWorld(true);const hull=boat.getObjectByName('closed-v-hull-shell') as THREE.Mesh;
+ const inside=new THREE.Raycaster(new THREE.Vector3(0,3,-.8),new THREE.Vector3(0,-1,0)).intersectObject(hull)[0];assert.ok(inside&&inside.point.y<0,'cockpit remains open down to inner hull');
+ const keel=new THREE.Raycaster(new THREE.Vector3(0,-2,-.8),new THREE.Vector3(0,1,0)).intersectObject(hull)[0];assert.ok(keel&&keel.point.y<-.3,'outward-facing keel closes the underside');
+ const deck=new THREE.Raycaster(new THREE.Vector3(0,3,1.8),new THREE.Vector3(0,-1,0)).intersectObject(boat.getObjectByName('solid-bow-deck')!)[0];assert.ok(deck&&deck.point.y>.7);
+ const inlays:THREE.Object3D[]=[];boat.traverse(o=>{if(o.name==='hull-livery-inlay')inlays.push(o);});for(const side of [-1,1]){const hits=new THREE.Raycaster(new THREE.Vector3(side*3,.56,0),new THREE.Vector3(-side,0,0),0,2.3).intersectObjects(inlays);assert.ok(hits.length>0,'both livery sides face outward');}
+ const edges=new Map<string,number>(),index=hull.geometry.index!;for(let i=0;i<index.count;i+=3)for(let j=0;j<3;j++){const a=index.getX(i+j),b=index.getX(i+(j+1)%3),key=a<b?`${a}:${b}`:`${b}:${a}`;edges.set(key,(edges.get(key)??0)+1);}assert.ok([...edges.values()].every(n=>n===2),'hollow hull shell is a closed solid');
+});
+test('offshore speedboats retain whole-hull clearance, heading and safe opposite-phase spacing',async()=>{
+ const {speedboatRoute,speedboatPose}=await import('../src/marineTraffic');const {createFleetVehicle}=await import('../src/fleetAssets');const {isLand}=await import('../src/layout');const box=new THREE.Box3().setFromObject(createFleetVehicle('speedboat')),length=speedboatRoute.getLength();let radius=Infinity;
+ for(let i=1;i<600;i++){const d=i/600*length,pose=speedboatPose(d),tangent=speedboatRoute.getTangentAt(i/600);assert.ok(Math.sin(pose.heading)*tangent.x+Math.cos(pose.heading)*tangent.z>.999);
+  for(const x of [box.min.x,box.max.x])for(const z of [box.min.z,box.max.z]){const p=new THREE.Vector3(x,0,z).applyAxisAngle(new THREE.Vector3(0,1,0),pose.heading).add(pose.position);assert.ok(!isLand(p.x,p.z)&&p.x< -132&&p.z< -90,'full craft clears shore, sailboat lane and harbors');}
+  assert.ok(pose.position.distanceTo(speedboatPose(d+length/2).position)>45,'two boats remain separated');const a=speedboatRoute.getPointAt((i-1)/600),b=speedboatRoute.getPointAt((i+1)/600),u=speedboatRoute.getTangentAt((i-1)/600),v=speedboatRoute.getTangentAt((i+1)/600);radius=Math.min(radius,a.distanceTo(b)/Math.acos(Math.min(1,u.dot(v))));
+ }
+ assert.ok(radius>15,'wide sweep avoids abrupt high-speed turns');assert.ok(speedboatPose(0).position.distanceTo(speedboatPose(length).position)<.00001,'closed route does not teleport');
+});
+test('mixed road fleet uses its complete physical sizes and stays live without collisions',async()=>{
+ const {cars}=await import('../src/traffic');const {poseAt,findJunctions,stepTraffic,vehiclesOverlap}=await import('../src/trafficSimulation');const {signalAllows,registerSignalStops}=await import('../src/trafficPlan');const {infrastructureSites}=await import('../src/trafficInfrastructure');registerSignalStops(infrastructureSites);
+ assert.equal(cars.length,28);for(const kind of ['truck','taxi','police'])assert.ok(cars.some(c=>c.mesh.userData.vehicleKind===kind),kind+' is integrated');
+ const simulated=cars.map(c=>({...c,pose:poseAt(c.route,c.distance)})),routes=[...new Set(cars.map(c=>c.route))],zones=findJunctions(routes),moved=simulated.map(()=>0);
+ for(const car of cars)if(['truck','taxi','police'].includes(car.mesh.userData.vehicleKind)){assert.equal(car.width,car.mesh.userData.nominalSize.width);assert.equal(car.length,car.mesh.userData.nominalSize.length);}
+ for(let i=0;i<3000;i++){const before=simulated.map(c=>c.distance);stepTraffic(simulated,zones,.1,(c,p)=>signalAllows(c,p,i*.1));simulated.forEach((c,j)=>moved[j]+=(c.distance-before[j]+c.route.length)%c.route.length);if(i%10===0)for(let a=0;a<simulated.length;a++)for(let b=a+1;b<simulated.length;b++)assert.equal(vehiclesOverlap(simulated[a],simulated[b],0),false,'mixed fleet overlap');}
+ assert.ok(moved.every(d=>d>100));assert.ok(simulated.every(c=>c.waiting<90));registerSignalStops([]);
+});
+test('truck cargo crossmembers carry the box while its frame clears the dual rear tyres',async()=>{
+ const {createFleetVehicle}=await import('../src/fleetAssets');const truck=createFleetVehicle('truck');truck.updateMatrixWorld(true);const frame=new THREE.Box3().setFromObject(truck.getObjectByName('ladder-frame')!),floor=new THREE.Box3().setFromObject(truck.getObjectByName('cargo-floor')!),supports:THREE.Object3D[]=[];
+ truck.traverse(o=>{if(o.name==='truck-tyre')assert.equal(frame.intersectsBox(new THREE.Box3().setFromObject(o)),false,'frame leaves tyre clearance');if(o.name==='cargo-crossmember')supports.push(o);});assert.equal(supports.length,3);for(const support of supports){const box=new THREE.Box3().setFromObject(support);assert.ok(box.intersectsBox(frame)&&box.intersectsBox(floor),'floor is supported from the chassis');}
+});
+test('both speedboat cockpits remain above the animated sea throughout ten minutes',async()=>{
+ const {createFleetVehicle}=await import('../src/fleetAssets');const {speedboatMotion,speedboatRoute}=await import('../src/marineTraffic');const boat=createFleetVehicle('speedboat');boat.updateMatrixWorld(true);const floor=new THREE.Box3().setFromObject(boat.getObjectByName('cockpit-floor')!),length=speedboatRoute.getLength();let margin=Infinity;
+ for(let t=0;t<=600;t+=.25)for(let i=0;i<2;i++){const pose=speedboatMotion(i*length/2+t*8,i*Math.PI,t),rotation=new THREE.Euler(pose.pitch,pose.heading,pose.roll,'YXZ');
+  for(const x of [floor.min.x,floor.max.x])for(const z of [floor.min.z,floor.max.z]){const p=new THREE.Vector3(x,floor.max.y,z).applyEuler(rotation).add(pose.position);
+   // Same geometric swell as water.ts's vertex shader, independently evaluated at the floor.
+   const water=.15*Math.sin(p.x*.025+p.z*.016+t*.8)+.09*Math.sin(-p.x*.017+p.z*.04-t*.65);margin=Math.min(margin,p.y-water);}
+ }
+ assert.ok(margin>.025,'water cannot flash through the cockpit floor during bob/pitch/roll');
+});

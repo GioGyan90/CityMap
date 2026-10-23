@@ -1,3 +1,4 @@
+import {updateMarineFleet} from './marineTraffic';
 import {updateTrafficInfrastructure} from './trafficInfrastructure';
 import {updateClouds} from './clouds';
 import {updateDayNight} from './night';
@@ -64,6 +65,7 @@ export function animate() {
     b.mesh.rotation.y = b.dir > 0 ? 0 : Math.PI;
   }
 
+  updateMarineFleet(dt);
   updateTransport(dt);
   updateTrafficInfrastructure(dt);
   updateTraffic(dt);

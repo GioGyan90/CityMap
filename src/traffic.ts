@@ -1,3 +1,4 @@
+import {createFleetVehicle,type FleetKind} from './fleetAssets';
 import {tunnelTrafficSources,tunnelDrivingHeight} from './tunnelTraffic';
 import {signalAllows} from './trafficPlan';
 import {trafficSeconds} from './trafficInfrastructure';
@@ -17,8 +18,9 @@ export function buildCars(){
  if(motorwayCurve)routes.push(makeTrafficRoute(motorwayCurve,roadCurves.length,true));
  junctions=findJunctions(routes);
  for(let i=0;i<28;i++){
-  const bus=i%7===0,route=routes[i%routes.length],mesh=createVehicle(bus?'bus':'sedan',[0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4],undefined,true);mesh.name=bus?'city-bus':'road-car';
-  const car:typeof cars[number]={id:i,mesh,route,distance:0,length:bus?5.7:3.2,width:bus?2:1.6,desiredSpeed:route.elevated?10+(i%3):5+(i%4)*.6,speed:0,waiting:0,pose:poseAt(route,0)};
+  const bus=i%7===0,kind:FleetKind|undefined=[1,13].includes(i)?'truck':[2,8,12,24].includes(i)?'taxi':[4,18].includes(i)?'police':undefined,route=routes[i%routes.length],mesh=kind?createFleetVehicle(kind,true):createVehicle(bus?'bus':'sedan',[0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4],undefined,true);mesh.name=kind?'road-'+kind:bus?'city-bus':'road-car';
+  const size=kind?mesh.userData.nominalSize:{length:bus?5.7:3.2,width:bus?2:1.6};
+  const car:typeof cars[number]={id:i,mesh,route,distance:0,length:size.length,width:size.width,desiredSpeed:route.elevated?10+(i%3):5+(i%4)*.6,speed:0,waiting:0,pose:poseAt(route,0)};
   // Allocate actual free space, including other roads at intersections, before spawning.
   let placed=false;
   for(let attempt=0;attempt<160;attempt++){

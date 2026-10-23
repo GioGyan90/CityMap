@@ -1,3 +1,4 @@
+import {buildMarineFleet} from './marineTraffic';
 import {createRoadTunnel} from './roadTunnels';
 import {buildTrafficInfrastructure} from './trafficInfrastructure';
 import {createResidentialCliff} from './residentialCliff';
@@ -81,6 +82,7 @@ for(const entry of specialBuildings){
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
 world.add(createRoadTunnel());
+buildMarineFleet();
 buildHarborAccess();
 buildBilliardsAccess();
 buildHillAccess();

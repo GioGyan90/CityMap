@@ -1,3 +1,4 @@
+import {createFleetVehicle,FLEET_TITLES,FLEET_PART_TITLES,type FleetKind} from './fleetAssets';
 import {createTunnelArch,createTunnelPortal,createTunnelLining,createRoadTunnel} from './roadTunnels';
 import {RAIL_PLANS} from './railNetworkPlan';
 import {createRailCar,createRailTrain} from './railVehicles';
@@ -29,6 +30,7 @@ type Item={id:string;title:string;source:THREE.Object3D;placement?:typeof specia
 const STORE='citymap-layout-draft-v1',NOTE_STORE='citymap-position-notes-v1';
 export function initAssetTools(){
  const items:Item[]=specialBuildings.map(s=>({id:s.id,title:s.name,source:s.id==='coaststation'&&coastalStationPreview?coastalStationPreview:s.group,placement:s}));
+ for(const kind of ['truck','speedboat','taxi','police'] as FleetKind[]){const source=createFleetVehicle(kind);items.push({id:'fleet-'+kind,title:'交通工具 · '+FLEET_TITLES[kind],source});for(const part of source.children)items.push({id:'fleet-part-'+part.name,title:FLEET_TITLES[kind]+'原件 · '+(FLEET_PART_TITLES[part.name]??part.name),source:part});}
  for(const [kind,title] of [['sedan','轿车'],['bus','公交车'],['ambulance','救护车']] as const)items.push({id:'vehicle-'+kind,title:'车辆 · '+title,source:createVehicle(kind)});
  for(const [id,title,source] of [['street-lamp','交通 · 路侧灯组合',createStreetLamp()],['traffic-signal','交通 · 三色信号灯组合',createSignalPost()],['rail-gate','交通 · 电车道口栏杆组合',createCrossingGate()],['guide-fence','交通 · 道口导向栏杆',createGuideFence()]] as const)items.push({id,title,source});
  for(const style of ['balcony','bay','shutters'] as const)items.push({id:'courtyard-home-'+style,title:'小区住宅 · '+({balcony:'生活阳台',bay:'凹窗挑檐',shutters:'百叶坡顶'}[style]),source:createHome(style)});

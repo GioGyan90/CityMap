@@ -104,8 +104,8 @@ function build(kind:VehicleKind,color:number,w:number,l:number){
  }
 }
 
-function batchVehicle(source:THREE.Group){
- const root=new THREE.Group();root.name=source.name;root.userData={...source.userData};const buckets=new Map<THREE.Material,THREE.BufferGeometry[]>();source.updateMatrixWorld(true);
- source.traverse(o=>{if(!(o instanceof THREE.Mesh))return;let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(o.matrix);if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));const material=o.material as THREE.Material;if(!buckets.has(material))buckets.set(material,[]);buckets.get(material)!.push(g);});
+export function batchVehicle(source:THREE.Group){
+ const root=new THREE.Group();root.name=source.name;root.userData={...source.userData};const buckets=new Map<THREE.Material,THREE.BufferGeometry[]>();source.updateMatrixWorld(true);const inverseRoot=source.matrixWorld.clone().invert();
+ source.traverse(o=>{if(!(o instanceof THREE.Mesh))return;let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(inverseRoot.clone().multiply(o.matrixWorld));if(!g.attributes.uv)g.setAttribute('uv',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));const material=o.material as THREE.Material;if(!buckets.has(material))buckets.set(material,[]);buckets.get(material)!.push(g);});
  for(const [material,parts] of buckets){const g=mergeGeometries(parts,false)!;const m=new THREE.Mesh(g,material);m.castShadow=m.receiveShadow=true;root.add(m);parts.forEach(g=>g.dispose());}return root;
 }
