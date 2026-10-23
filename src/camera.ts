@@ -27,6 +27,7 @@ export const VIEWS = {
  hospital:{pos:[87,52,10],target:[138,13,-48]},cafe:{pos:[22,59,193],target:[93,9,125]},
  promenade:{pos:[-96,29,127],target:[-67,4,98]},
  restaurant:{pos:[62,62,210],target:[141,10,137]},port:{pos:[48,78,279],target:[155,8,182]},
+ tunnels:{pos:[-96,48,-112],target:[-47,7,-166]},
  cargo:{pos:[-173,65,-76],target:[-95,7,-140]},passenger:{pos:[-166,46,210],target:[-90,6,151]},
  cruise:{pos:[-170,54,242],target:[-106,12,180]},
  skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[207,94,86],target:[256,terrainHeight(256,25)+5,25]},

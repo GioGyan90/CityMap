@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {roadProfiles,roadEdgeDistance} from './roadNetwork';
+import {roadProfiles,roadEdgeDistance,nearestRoad} from './roadNetwork';
 import {isLand,ZONES,westCoast} from './layout';
 import {surfaceHeight} from './terrainSurface';
 import {gridCell} from './mapCoordinates';
@@ -17,8 +17,10 @@ export function signalColor(seconds:number,junction:number,road:number):SignalCo
 let installedSignals:FixtureSite[]=[];
 export function registerSignalStops(sites:FixtureSite[]){installedSignals=sites.filter(s=>s.kind==='signal');}
 export function signalAllows(car:Vehicle,next:VehiclePose,seconds:number){
+ if(car.route.id===0&&car.pose.position.z< -154)return true;
+ const roadId=car.route.id===0?nearestRoad(car.pose.position.x,car.pose.position.z).road:car.route.id;
  if(installedSignals.length&&!car.route.elevated){
-  for(const s of installedSignals){if(s.road!==car.route.id||signalColor(seconds,s.junction!,s.road)==='green')continue;
+  for(const s of installedSignals){if(s.road!==roadId||signalColor(seconds,s.junction!,s.road)==='green')continue;
    const fx=-Math.sin(s.heading),fz=-Math.cos(s.heading);if(fx*Math.sin(car.pose.heading)+fz*Math.cos(car.pose.heading)<.65)continue;
    const current=(car.pose.position.x-s.x)*fx+(car.pose.position.z-s.z)*fz+car.length/2+2;
    const future=(next.position.x-s.x)*fx+(next.position.z-s.z)*fz+car.length/2+2;
@@ -27,7 +29,7 @@ export function signalAllows(car:Vehicle,next:VehiclePose,seconds:number){
   }return true;
  }
  if(car.route.elevated)return true;
- for(const i of controlledJunctions){const j=junctionPlan[i];if(!j.routes.has(car.route.id)||signalColor(seconds,i,car.route.id)==='green')continue;
+ for(const i of controlledJunctions){const j=junctionPlan[i];if(!j.routes.has(roadId)||signalColor(seconds,i,roadId)==='green')continue;
   const dx=j.position.x-car.pose.position.x,dz=j.position.z-car.pose.position.z;
   // A committed vehicle clears the intersection even after its phase changes.
   const stop=j.radius+car.length/2+2.5,current=Math.hypot(dx,dz),future=Math.hypot(next.position.x-j.position.x,next.position.z-j.position.z);

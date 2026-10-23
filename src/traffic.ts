@@ -1,3 +1,4 @@
+import {tunnelTrafficSources,tunnelDrivingHeight} from './tunnelTraffic';
 import {signalAllows} from './trafficPlan';
 import {trafficSeconds} from './trafficInfrastructure';
 import {createVehicle} from './vehicles';
@@ -10,10 +11,10 @@ import { roadCurves } from './roads';
 import { toon } from './materials';
 import { makeTrafficRoute,poseAt,findJunctions,stepTraffic,vehiclesOverlap,type Vehicle } from './trafficSimulation';
 export const cars:(Vehicle&{mesh:THREE.Group})[]=[];
-const routes=roadCurves.map((curve,id)=>makeTrafficRoute(curve,id));
+const routes=tunnelTrafficSources().map(({curve,id})=>makeTrafficRoute(curve,id));
 let junctions:ReturnType<typeof findJunctions>=[];
 export function buildCars(){
- if(motorwayCurve)routes.push(makeTrafficRoute(motorwayCurve,routes.length,true));
+ if(motorwayCurve)routes.push(makeTrafficRoute(motorwayCurve,roadCurves.length,true));
  junctions=findJunctions(routes);
  for(let i=0;i<28;i++){
   const bus=i%7===0,route=routes[i%routes.length],mesh=createVehicle(bus?'bus':'sedan',[0xe7b75d,0xf0eeee,0x5896ab,0xc96362][i%4],undefined,true);mesh.name=bus?'city-bus':'road-car';
@@ -32,5 +33,8 @@ export function buildCars(){
 }
 export function updateTraffic(dt:number){
  if(dt>0)stepTraffic(cars,junctions,dt,(car,next)=>signalAllows(car,next,trafficSeconds));
- for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);car.mesh.position.y=car.route.elevated?position.y+.12:surfaceHeight(position.x,position.z)+.02;car.mesh.rotation.set(pitch,heading,0,'YXZ');}
+ for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);const underground=car.route.id===0?tunnelDrivingHeight(position.x,position.z):undefined;
+  car.mesh.position.y=car.route.elevated?position.y+.12:underground!==undefined?underground+.015:surfaceHeight(position.x,position.z)+.02;
+  if(underground!==undefined){const dx=Math.sin(heading)*.5,dz=Math.cos(heading)*.5,a=tunnelDrivingHeight(position.x-dx,position.z-dz)??surfaceHeight(position.x-dx,position.z-dz),b=tunnelDrivingHeight(position.x+dx,position.z+dz)??surfaceHeight(position.x+dx,position.z+dz);car.pose.pitch=-Math.atan2(b-a,1);}
+  car.mesh.rotation.set(underground!==undefined?car.pose.pitch:pitch,heading,0,'YXZ');}
 }

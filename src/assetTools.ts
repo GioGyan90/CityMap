@@ -1,3 +1,4 @@
+import {createTunnelArch,createTunnelPortal,createTunnelLining,createRoadTunnel} from './roadTunnels';
 import {RAIL_PLANS} from './railNetworkPlan';
 import {createRailCar,createRailTrain} from './railVehicles';
 import {coastalStationPreview} from './coastalStation';
@@ -33,6 +34,7 @@ export function initAssetTools(){
  for(const style of ['balcony','bay','shutters'] as const)items.push({id:'courtyard-home-'+style,title:'小区住宅 · '+({balcony:'生活阳台',bay:'凹窗挑檐',shutters:'百叶坡顶'}[style]),source:createHome(style)});
  items.push({id:'curb-bus-shelter',title:'交通 · 路侧公交雨棚',source:createBusShelter()});if(courtSample)items.push({id:'residential-court',title:'住宅 · 围合花园小区',source:courtSample});
  for(const [id,title,source]of [['station-house','总站 · 拱券站房',createStationHouse()],['station-roof','总站原件 · 坡顶与钟塔',createStationRoof()],['station-clock','总站原件 · 立体钟面',createStationClock()],['station-canopy','总站原件 · 雨棚支撑单元',createPlatformCanopyBay()],['station-canopy-detail','车站 · 雨棚结构',createPlatformCanopyBay()]] as const)items.push({id,title,source});
+ for(const [id,title,source]of [['tunnel-arch','隧道原件 · 实心开孔拱圈',createTunnelArch()],['tunnel-portal','隧道组合 · 洞口与翼墙',createTunnelPortal()],['tunnel-lining','隧道组合 · 连续空心衬砌',createTunnelLining()],['tunnel-complete','货港隧道 · 完整公路连接',createRoadTunnel()]] as const)items.push({id,title,source});
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const plan of RAIL_PLANS){items.push({id:plan.id+'-train-kit',title:plan.name+' · 完整编组',source:createRailTrain(plan)});items.push({id:plan.id+'-cab-kit',title:plan.name+' · 车头原件',source:createRailCar(plan,0)});items.push({id:plan.id+'-coach-kit',title:plan.name+' · 客车原件',source:createRailCar(plan,1)});}

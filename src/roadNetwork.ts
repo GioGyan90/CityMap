@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import {ROAD_PATHS,terrainHeight,westCoast} from './layout';
-export const roadProfiles=ROAD_PATHS.map(road=>({...road,curve:new THREE.CatmullRomCurve3(road.points.map(([x,z])=>new THREE.Vector3(x,terrainHeight(x,z)+.2,z)),false,'catmullrom',.16)}));
+export const roadProfiles=ROAD_PATHS.map(road=>{const points=road.points.map(([x,z])=>new THREE.Vector3(x,terrainHeight(x,z)+.2,z));
+ if(road.id==='central-boulevard'){points[0].y=7.2;points[1].y=8.3;}
+ return {...road,curve:new THREE.CatmullRomCurve3(points,false,'catmullrom',.16)};});
 interface Segment {ax:number;az:number;ay:number;dx:number;dz:number;dy:number;l2:number;road:number;width:number}
 const cells=new Map<string,Segment[]>(),cellSize=12;
 for(let road=0;road<roadProfiles.length;road++){

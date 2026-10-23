@@ -1,3 +1,5 @@
+import polygonClipping from 'polygon-clipping';
+import {portalCuts} from './tunnelPlan';
 import {attachCloudShadows} from './cloudShadows';
 import {RECLAIMED_FILL_TOP} from './harborPlan';
 import {terrainRows,terrainCols,terrainPositions,surfaceHeight} from './terrainSurface';
@@ -23,6 +25,20 @@ for(let row=0;row<=rows;row++){
 }
 for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
  const a=row*(cols+1)+col,b=a+cols+1;indices.push(a,b,a+1,a+1,b,b+1);
+}
+// Clip the actual terrain triangles at each portal, preserving barycentric heights/colors.
+const originalIndices=indices.splice(0);const cuts=portalCuts.map(p=>[[...p,p[0]]] as polygonClipping.Polygon);
+for(let k=0;k<originalIndices.length;k+=3){
+ const ids=originalIndices.slice(k,k+3),v=ids.map(i=>new THREE.Vector3().fromArray(positions,i*3));
+ if(!v.some(p=>p.z< -145&&p.x< -25&&p.x> -80)){indices.push(...ids);continue;}
+ const result=polygonClipping.difference([[...v.map(p=>[p.x,p.z] as [number,number]),[v[0].x,v[0].z]]],...cuts);
+ for(const polygon of result){const rings=polygon.map(r=>r.slice(0,-1).map(p=>new THREE.Vector2(...p))),flat=rings.flat();
+ const triangles=THREE.ShapeUtils.triangulateShape(rings[0],rings.slice(1)),base=positions.length/3;
+ const [a,b,c]=v,den=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);
+ for(const p of flat){const u=((b.z-c.z)*(p.x-c.x)+(c.x-b.x)*(p.y-c.z))/den,w=((c.z-a.z)*(p.x-c.x)+(a.x-c.x)*(p.y-c.z))/den,q=1-u-w;
+ positions.push(p.x,u*a.y+w*b.y+q*c.y,p.y);for(let channel=0;channel<3;channel++)colors.push(u*colors[ids[0]*3+channel]+w*colors[ids[1]*3+channel]+q*colors[ids[2]*3+channel]);}
+ for(const tri of triangles){const [a,b,c]=tri.map(i=>flat[i]);if((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)>0)tri.reverse();indices.push(...tri.map(i=>base+i));}
+ }
 }
 const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(indices);geometry.computeVertexNormals();
 const terrain=new THREE.Mesh(geometry,createGroundMaterial());terrain.name='irregular-elevated-terrain';terrain.receiveShadow=true;world.add(terrain);

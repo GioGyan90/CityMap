@@ -1,18 +1,21 @@
+import {coveredTerrainHeight} from './tunnelPlan';
 import {westCoast,eastCoast,terrainHeight} from './layout';
 import {gradedTerrainHeight} from './roadNetwork';
-/** The same triangles are used for rendering and contact with the terrain. */
+/** Shared heightfield contact; portal voids use the separate tunnel driving surface. */
 export const terrainRows=201,terrainCols=180;
 export const terrainPositions=new Float32Array((terrainRows+1)*(terrainCols+1)*3);
 for(let row=0;row<=terrainRows;row++){
  const z=-200+402*row/terrainRows,left=westCoast(z),right=eastCoast(z);
- for(let col=0;col<=terrainCols;col++){const x=left+(right-left)*col/terrainCols,i=(row*(terrainCols+1)+col)*3;terrainPositions.set([x,gradedTerrainHeight(x,z),z],i);}
+ for(let col=0;col<=terrainCols;col++){const x=left+(right-left)*col/terrainCols,i=(row*(terrainCols+1)+col)*3;terrainPositions.set([x,coveredTerrainHeight(x,z,gradedTerrainHeight(x,z)),z],i);}
 }
 export function surfaceHeight(x:number,z:number){
  if(z< -200||z>202)return terrainHeight(x,z);
  const f=(z+200)/402*terrainRows,row=Math.min(terrainRows-1,Math.floor(f)),t=f-row,stride=terrainCols+1;
  const left0=terrainPositions[row*stride*3],left1=terrainPositions[(row+1)*stride*3],right0=terrainPositions[(row*stride+terrainCols)*3],right1=terrainPositions[((row+1)*stride+terrainCols)*3];
  const left=left0*(1-t)+left1*t,right=right0*(1-t)+right1*t;
- if(x<left||x>right)return terrainHeight(x,z);
+ if(x<left-.0001||x>right+.0001)return terrainHeight(x,z);
+ // Float32 shoreline vertices can sit micrometres inside the analytic coastline.
+ x=Math.max(left,Math.min(right,x));
  if(Math.abs(right-left)<.000001)return terrainHeight(x,z);
  const col=Math.min(terrainCols-1,Math.max(0,Math.floor((x-left)/(right-left)*terrainCols))),a=(row*stride+col)*3,b=a+stride*3,c=a+3,d=b+3;
  const interpolate=(i:number,j:number,k:number)=>{

@@ -1,3 +1,4 @@
+import {surfaceHeight} from '../src/terrainSurface';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -548,4 +549,59 @@ test('tapered neighbouring coach bodies do not intersect around either complete 
  for(const {plan,curve}of railRoutes){const shapes=[0,1].map(index=>{const car=createRailCar(plan,index);car.updateMatrixWorld(true);const points:P[]=[];car.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);if(v.y>.7)points.push({x:v.x,z:v.z});}});return hull(points);});
   for(let i=0;i<700;i++){const d=i/700*curve.getLength(),polygons=shapes.map((h,j)=>{const pose=carPose(curve,d-j*plan.carPitch,plan.carLength*.54),c=Math.cos(pose.heading),s=Math.sin(pose.heading);return h.map(p=>({x:pose.position.x+p.x*c+p.z*s,z:pose.position.z-p.x*s+p.z*c}));});assert.equal(overlap(polygons[0],polygons[1]),false,plan.id+' coach collision at '+i/700);}
  }
+});
+
+test('tunnel arches are genuine holes with solid reveals and no face across traffic',async()=>{
+ const {createTunnelArch,createTunnelPortal}=await import('../src/roadTunnels');
+ const portal=createTunnelPortal();portal.updateMatrixWorld(true);
+ const ray=new THREE.Raycaster(new THREE.Vector3(0,2,-8),new THREE.Vector3(0,0,1),0,14);
+ assert.equal(ray.intersectObject(portal,true).length,0,'centre of doorway remains open');
+ for(const x of [-5.65,5.65]){ray.set(new THREE.Vector3(x,2,-8),new THREE.Vector3(0,0,1));assert.ok(ray.intersectObject(createTunnelArch(),true).length>0,'solid arch jamb');}
+});
+test('tunnel roads use separate deck height and preserve the mountain roof',async()=>{
+ const {tunnelFrame,tunnelLength,TUNNEL}=await import('../src/tunnelPlan');const {tunnelDrivingHeight}=await import('../src/tunnelTraffic');
+ for(let s=5;s<tunnelLength-5;s+=.5){const f=tunnelFrame(s/tunnelLength);
+ for(const side of [-1,0,1]){const p=f.p.clone().addScaledVector(f.right,side*2.65),deck=tunnelDrivingHeight(p.x,p.z)!;assert.ok(Math.abs(deck-f.p.y-.025)<.04);assert.ok(surfaceHeight(p.x,p.z)>deck+TUNNEL.spring+Math.sqrt(TUNNEL.innerRadius**2-2.65**2)+.4,'continuous terrain stays above vehicle cavity');}}
+});
+test('tunnel traffic has no portal turn caps and buses clear both walls through the whole bend',async()=>{
+ const {tunnelTrafficSources,tunnelDrivingHeight}=await import('../src/tunnelTraffic');const {tunnelLocation,tunnelLength,tunnelFrame,TUNNEL}=await import('../src/tunnelPlan');
+ const {makeTrafficRoute,poseAt}=await import('../src/trafficSimulation');const sources=tunnelTrafficSources();assert.equal(sources.length,9);assert.equal(sources.some(s=>s.id===9),false);
+ const route=makeTrafficRoute(sources[0].curve,0);let seen=0;
+ for(let d=0;d<route.length;d+=.25){const pose=poseAt(route,d),n=tunnelLocation(pose.position.x,pose.position.z);if(n.distance>3||n.t*tunnelLength<4||(1-n.t)*tunnelLength<4)continue;seen++;
+ for(const longitudinal of [-2.85,0,2.85])for(const lateral of [-1,1]){const x=pose.position.x+Math.sin(pose.heading)*longitudinal+Math.cos(pose.heading)*lateral,z=pose.position.z+Math.cos(pose.heading)*longitudinal-Math.sin(pose.heading)*lateral,q=tunnelLocation(x,z);assert.ok(q.distance<TUNNEL.innerRadius-.15,'bus swept rectangle clears arch walls');}
+ assert.ok(tunnelDrivingHeight(pose.position.x,pose.position.z)!<surfaceHeight(pose.position.x,pose.position.z)-4,'traffic stays underground');
+ }
+ assert.ok(seen>250,'both directions traverse the entire tunnel');
+ for(const t of [0,1]){const f=tunnelFrame(t),near=sources[0].curve.getSpacedPoints(3000).filter(p=>p.distanceTo(f.p)<1.5);assert.ok(near.length>0);}
+});
+test('tunnel alignment stays on land with a usable radius and bounded mountain-road gradient',async()=>{
+ const {tunnelCurve,tunnelFrame,TUNNEL}=await import('../src/tunnelPlan');const {isLand}=await import('../src/layout');let maxGrade=0,minRadius=Infinity;
+ for(let i=1;i<999;i++){const a=tunnelCurve.getPointAt((i-1)/1000),b=tunnelCurve.getPointAt((i+1)/1000),f=tunnelFrame(i/1000),dot=tunnelFrame((i-1)/1000).forward.dot(tunnelFrame((i+1)/1000).forward);
+ maxGrade=Math.max(maxGrade,Math.abs(b.y-a.y)/Math.hypot(b.x-a.x,b.z-a.z));minRadius=Math.min(minRadius,a.distanceTo(b)/Math.acos(Math.min(1,dot)));
+ for(const side of [-1,1]){const p=f.p.clone().addScaledVector(f.right,side*(TUNNEL.innerRadius+TUNNEL.thickness));assert.ok(isLand(p.x,p.z),'complete shell remains within peninsula');}}
+ assert.ok(minRadius>10);assert.ok(maxGrade<.11);
+});
+test('joined-road buses and cars circulate through both mouths for ten minutes without overlaps',async()=>{
+ const {tunnelTrafficSources}=await import('../src/tunnelTraffic');const {tunnelLocation}=await import('../src/tunnelPlan');const {makeTrafficRoute,poseAt,stepTraffic,vehiclesOverlap}=await import('../src/trafficSimulation');
+ const route=makeTrafficRoute(tunnelTrafficSources()[0].curve,0),cars=Array.from({length:6},(_,id)=>({id,route,distance:id*route.length/6,length:id<2?5.7:3.2,width:id<2?2:1.6,desiredSpeed:7,speed:0,waiting:0,pose:poseAt(route,id*route.length/6)}));const entered=new Set<number>();
+ for(let i=0;i<6000;i++){stepTraffic(cars,[],.1);for(const car of cars){const n=tunnelLocation(car.pose.position.x,car.pose.position.z);if(n.distance<2.5&&n.t>.1&&n.t<.9)entered.add(car.id);}if(i%10===0)for(let a=0;a<cars.length;a++)for(let b=a+1;b<cars.length;b++)assert.equal(vehiclesOverlap(cars[a],cars[b],0),false);}
+ assert.equal(entered.size,6);assert.ok(cars.every(c=>c.waiting<20),'circulation remains live');
+});
+test('underground road and lining expose the correct driving-side faces',async()=>{
+ const {createRoadTunnel}=await import('../src/roadTunnels');const {tunnelFrame}=await import('../src/tunnelPlan');const site=createRoadTunnel();site.updateMatrixWorld(true);
+ for(const t of [.1,.3,.5,.7,.9]){const f=tunnelFrame(t),origin=f.p.clone().add(new THREE.Vector3(0,2,0));for(const direction of [new THREE.Vector3(0,1,0),f.right,f.right.clone().negate()]){const ray=new THREE.Raycaster(origin,direction);assert.ok(ray.intersectObject(site,true).some(h=>h.object.name==='swept-hollow-shell'),'inside-facing shell');}
+ const down=new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0));assert.ok(down.intersectObject(site,true).some(h=>h.object.name==='independent-underground-road'&&h.distance<2.1),'road faces upward');}
+});
+test('coastal retaining faces sample the raised shoreline instead of falling through Float32 bounds',async()=>{
+ const {westCoast,eastCoast}=await import('../src/layout');const {terrainPositions,terrainCols,terrainRows}=await import('../src/terrainSurface');
+ for(let row=0;row<=terrainRows;row++){const z=-200+row*2;for(const [coast,col]of [[westCoast,0],[eastCoast,terrainCols]] as const){const expected=terrainPositions[(row*(terrainCols+1)+col)*3+1];assert.ok(Math.abs(surfaceHeight(coast(z),z)-expected)<.0001,'cliff top meets its terrain vertex');}}
+});
+test('the integrated nine-road network stays live and collision-free with joined tunnel traffic',async()=>{
+ const {tunnelTrafficSources}=await import('../src/tunnelTraffic');const {makeTrafficRoute,poseAt,findJunctions,stepTraffic,vehiclesOverlap}=await import('../src/trafficSimulation');const {signalAllows}=await import('../src/trafficPlan');
+ const routes=tunnelTrafficSources().map(s=>makeTrafficRoute(s.curve,s.id)),zones=findJunctions(routes),cars:any[]=[];
+ for(let id=0;id<28;id++){const route=routes[id%routes.length],bus=id%7===0,car={id,route,distance:0,length:bus?5.7:3.2,width:bus?2:1.6,desiredSpeed:5+(id%4)*.6,speed:0,waiting:0,pose:poseAt(route,0)};
+ for(let attempt=0;attempt<160;attempt++){car.distance=((Math.floor(id/routes.length)+.2)*route.length/4+attempt*7.3)%route.length;car.pose=poseAt(route,car.distance);if(zones.some(z=>Math.hypot(car.pose.position.x-z.position.x,car.pose.position.z-z.position.z)<z.radius+car.length)||cars.some(other=>vehiclesOverlap(car,other,3)))continue;cars.push(car);break;}}
+ assert.equal(cars.length,28);const moved=new Map(cars.map(c=>[c.id,0]));
+ for(let i=0;i<3000;i++){const before=cars.map(c=>c.distance);stepTraffic(cars,zones,.1,(c,n)=>signalAllows(c,n,i*.1));for(let k=0;k<cars.length;k++)moved.set(cars[k].id,moved.get(cars[k].id)!+(cars[k].distance-before[k]+cars[k].route.length)%cars[k].route.length);if(i%10===0)for(let a=0;a<cars.length;a++)for(let b=a+1;b<cars.length;b++)assert.equal(vehiclesOverlap(cars[a],cars[b],0),false);}
+ assert.ok([...moved.values()].every(d=>d>100),'every car makes progress in five minutes');assert.ok(cars.every(c=>c.waiting<90),'no permanent tunnel/junction queue');
 });

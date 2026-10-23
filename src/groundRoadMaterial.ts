@@ -1,3 +1,4 @@
+import {tunnelPortals} from './tunnelPlan';
 import * as THREE from 'three';
 import {attachCloudShadows} from './cloudShadows';
 import {toon} from './materials';
@@ -18,6 +19,8 @@ for(const road of roadProfiles){const count=Math.floor(road.curve.getLength()/7)
  const t=(i+.5)/count,p=road.curve.getPointAt(t),v=road.curve.getTangentAt(t);const [x,y]=project(p.x,p.z);
  ctx.save();ctx.translate(x,y);ctx.rotate(-Math.atan2(v.x,v.z));ctx.fillStyle='#0000ff';ctx.fillRect(-.13/bounds.w*resolution,-1.2/bounds.d*resolution,.26/bounds.w*resolution,2.4/bounds.d*resolution);ctx.restore();
 }}
+// Rounded outdoor stroke caps must not paint asphalt on the ridge behind a mouth.
+for(const f of tunnelPortals){ctx.beginPath();for(const [i,[s,side]]of [[.02,-1],[8,-1],[8,1],[.02,1]].entries()){const p=f.p.clone().addScaledVector(f.into,s).addScaledVector(f.right,side*7.2),q=project(p.x,p.z);if(i)ctx.lineTo(q[0],q[1]);else ctx.moveTo(q[0],q[1]);}ctx.closePath();ctx.fillStyle='#000';ctx.fill();}
 export function paintGroundRect(x:number,z:number,w:number,d:number,color:'asphalt'|'walk'|'line'){
  const [px,pz]=project(x-w/2,z-d/2);ctx.fillStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.fillRect(px,pz,w/bounds.w*resolution,d/bounds.d*resolution);texture.needsUpdate=true;
 }
@@ -44,3 +47,6 @@ export function paintGroundPath(points:[number,number][],width:number,color:'asp
 export function paintGroundPolygon(points:[number,number][],color:'asphalt'|'walk'|'line'){
  ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x,z);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.closePath();ctx.fillStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.fill();texture.needsUpdate=true;
 }
+
+/** Actual mask is also available to offline scene inspection tools. */
+export {texture as terrainRoadMask};
