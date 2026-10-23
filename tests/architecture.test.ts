@@ -90,10 +90,10 @@ test('government portico leaves a clear human-height route from the steps to the
  }
 });
 
-test('complete city assembles with finite geometry and explicit rail termini',async()=>{
+test('complete city assembles with finite geometry and two closed rail circuits',async()=>{
  world.clear();await import('../src/environment');await import('../src/city');world.updateMatrixWorld(true);
- assert.ok(world.getObjectByName('north-rail-terminus'));
- assert.ok(world.getObjectByName('south-rail-terminus'));
+ assert.ok(world.getObjectByName('coast-double-track-circuit'));
+ assert.ok(world.getObjectByName('express-double-track-circuit'));assert.equal(world.userData.transport.tracksPerLine,2);
  let meshes=0;
  world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;meshes++;
   const p=o.geometry.attributes.position;
@@ -318,8 +318,8 @@ test('beach fish market keeps a clear pier aisle, non-overlapping planks, ground
 
 test('fish-market footpath crosses the tram with flush infill and open rail channels',()=>{
  const crossing=world.getObjectByName('fish-market-tram-crossing')!;assert.ok(crossing);crossing.updateWorldMatrix(true,true);
- for(const x of [-.8,.8]){const origin=new THREE.Vector3(x,2,0).applyMatrix4(crossing.matrixWorld),direction=new THREE.Vector3(0,-1,0);assert.equal(new THREE.Raycaster(origin,direction,0,2.1).intersectObject(crossing,true).length,0,'rail slot is unobstructed');}
- const origin=new THREE.Vector3(0,2,0).applyMatrix4(crossing.matrixWorld);assert.ok(new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,2.1).intersectObject(crossing,true).length>0,'infill supports the crossing');
+ for(const slot of crossing.userData.railSlots){const origin=new THREE.Vector3(...slot).add(new THREE.Vector3(0,2,0));assert.equal(new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,2.2).intersectObject(crossing,true).length,0,'four real flange channels remain open');}
+ assert.equal(crossing.userData.railSlots.length,4);const origin=crossing.position.clone().add(new THREE.Vector3(0,2,0));assert.ok(new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,2.2).intersectObject(crossing,true).length>0,'infill supports the crossing');
 });
 
 
@@ -464,8 +464,8 @@ test('rail gate sweep stays clear of train envelope and gives sufficient closing
  const gate=createCrossingGate(),arm=gate.getObjectByName('barrier-pivot')!;gate.position.x=3.45;
  for(let i=0;i<=20;i++){arm.rotation.x=-Math.PI*.47*i/20;gate.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(arm);assert.ok(bounds.min.x>3.3,'arm never sweeps into the train');assert.ok(bounds.min.y>=1.15);}
  for(const g of [createStreetLamp(),createSignalPost(),createCrossingGate()]){g.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(g);assert.ok(Math.abs(b.min.y)<1e-6,'assembly foundation rests on ground');}
- // Max tram speed is below 12 m/s; a 67 m warning closes in 1.6 s before its 7.4 m nose arrives.
- assert.ok(67-12*1.6>7.4+2);
+ // Forward route-distance warning accounts for both trains and both tracks.
+ assert.ok(25-5*1.6>3.6/2+2);
 });
 
 test('small residential courts fit clipped land, keep all roof/balcony footprints off roads and retain grid IDs',async()=>{
@@ -504,13 +504,14 @@ test('residential entrance stairs meet the rendered terrain, previews include pa
 
 test('coastal terminus matches the pictured tram end, clears the road and leaves the fish-market walk open',async()=>{
  const {STATION_PLAN,STATION_ORIGIN}=await import('../src/coastalStationPlan');const {transit}=await import('../src/transport');const {coastalStation,coastalStationPreview}=await import('../src/coastalStation');const {roadEdgeDistance}=await import('../src/roadNetwork');const {gridCell}=await import('../src/mapCoordinates');
- assert.ok(transit[0].curve.getPointAt(1).distanceTo(STATION_ORIGIN)<1e-8);assert.equal(STATION_PLAN.grid,'K15');assert.equal(gridCell(STATION_ORIGIN.x,STATION_ORIGIN.z).id,STATION_PLAN.grid);coastalStation!.updateMatrixWorld(true);let checked=0;
+ const {nearestRailPoint}=await import('../src/railNetwork');assert.ok(nearestRailPoint(transit[0].curve,STATION_ORIGIN.x,STATION_ORIGIN.z).distance<.15);assert.equal(gridCell(STATION_ORIGIN.x,STATION_ORIGIN.z).id,STATION_PLAN.grid);coastalStation!.updateMatrixWorld(true);let checked=0;
  coastalStation!.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);assert.ok(roadEdgeDistance(v.x,v.z)>.6,'whole station footprint clears asphalt');assert.ok(v.z>=58.49,'no station part blocks the existing z=57 crossing approach');checked++;}});assert.ok(checked>10000);assert.ok(coastalStationPreview?.getObjectByName('preview-running-rail'));assert.ok(coastalStationPreview?.getObjectByName('preview-station-forecourt'));
 });
 
-test('terminal buffer stays beyond the stopped train and both car centres have boarding platform',async()=>{
- const {transit}=await import('../src/transport');const {trainProgress}=await import('../src/transitDesign');const {STATION_ORIGIN,STATION_HEADING}=await import('../src/coastalStationPlan');const {createBufferStop}=await import('../src/coastalStationAssets');const curve=transit[0].curve,p=curve.getPointAt(trainProgress(curve,.5)),v=curve.getTangentAt(trainProgress(curve,.5));const local=p.clone().sub(STATION_ORIGIN).applyAxisAngle(new THREE.Vector3(0,1,0),-STATION_HEADING),angle=Math.atan2(v.x,v.z)-STATION_HEADING,nose=local.z+7.4*Math.cos(angle)+1.25*Math.abs(Math.sin(angle)),buffer=createBufferStop();buffer.position.z=.15;buffer.updateMatrixWorld(true);assert.ok(nose<new THREE.Box3().setFromObject(buffer).min.z-.8);
- assert.ok(-local.z+4<16.4&&-local.z-4>0,'both passenger car centres stop beside the platform');assert.equal(transit[0].terminalDwell,4);
+test('through-station boards all three cars and has no buffer across the loop',async()=>{
+ const {transit}=await import('../src/transport');const {carPose}=await import('../src/railOperations');const {STATION_ORIGIN,STATION_HEADING,STATION_PLAN}=await import('../src/coastalStationPlan');const {coastalStation}=await import('../src/coastalStation');const train=transit[0],stop=train.stops.find(s=>s.id==='coast-0.955-14')!;assert.ok(stop);assert.equal(train.plan.cars,3);
+ for(let i=0;i<train.plan.cars;i++){const p=carPose(train.curve,stop.distance-i*train.plan.carPitch,train.plan.carLength*.54).position.sub(STATION_ORIGIN).applyAxisAngle(new THREE.Vector3(0,1,0),-STATION_HEADING);assert.ok(p.z>-STATION_PLAN.platformLength+1&&p.z<-.5,'each coach centre boards at the through-platform');}
+ assert.equal(coastalStation!.getObjectByName('terminal-end-fence'),undefined);assert.equal(coastalStation!.getObjectByName('red-white-buffer-beam'),undefined);
 });
 
 test('station ramp has a clear flat turn, grounded terminal stairs and a clock above the main roof',async()=>{
@@ -521,4 +522,30 @@ test('station ramp has a clear flat turn, grounded terminal stairs and a clock a
 
 test('both slopes of the continuous station canopy have outward upward normals after batching',async()=>{
  const {coastalStation}=await import('../src/coastalStation');const canopy=coastalStation!.getObjectByName('curved-platform-canopy')!;let count=0;canopy.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const m=o.material as THREE.MeshToonMaterial;if(m.color.getHex()!==0x367f9b)return;const n=o.geometry.attributes.normal;for(let i=0;i<n.count;i++){assert.ok(n.getY(i)>.9,'neither roof slope faces down');count++;}});assert.ok(count>0);
+});
+
+test('both rail fleets circulate for ten minutes without reversing, catching up or leaving the track envelope',async()=>{
+ const {transit}=await import('../src/transport');const {advanceRail,carPose}=await import('../src/railOperations');const states=transit.map(t=>({...t.state}));let minSeparation=Infinity;
+ for(let frame=0;frame<3000;frame++){for(let i=0;i<transit.length;i++){const t=transit[i],before=states[i].distance;states[i]=advanceRail(states[i],.2,t.speed,t.curve.getLength(),t.stops);const delta=(states[i].distance-before+t.curve.getLength())%t.curve.getLength();assert.ok(delta<=t.speed*.2+.00001,'always forward, including departure after dwell');}
+  for(const start of [0,2]){const t=transit[start],a=states[start],b=states[start+1];for(let i=0;i<t.plan.cars;i++)for(let j=0;j<t.plan.cars;j++){const p=carPose(t.curve,a.distance-i*t.plan.carPitch,t.plan.carLength*.54).position,q=carPose(t.curve,b.distance-j*t.plan.carPitch,t.plan.carLength*.54).position,d=p.distanceTo(q);minSeparation=Math.min(minSeparation,d);assert.ok(d>t.plan.carLength+2,'two fleets retain separation through stops and turns');}}
+ }assert.equal(transit.length,4);console.log({railFleetMinimumSeparation:minSeparation});
+});
+
+test('double rail civil works clear roads, terrain and fixed landmark envelopes',async()=>{
+ const {railRoutes}=await import('../src/transport');const {roadEdgeDistance}=await import('../src/roadNetwork');const {surfaceHeight}=await import('../src/terrainSurface');const {specialBuildings}=await import('../src/specialBuildings');
+ for(const {plan,curve}of railRoutes){for(const p of curve.getSpacedPoints(900)){assert.ok(p.y-surfaceHeight(p.x,p.z)>(plan.elevated?6:.4),'rail bed stays above terrain');if(!plan.elevated)assert.ok(roadEdgeDistance(p.x,p.z)>3.6,'both ground tracks and their bed clear asphalt');
+  for(const entry of specialBuildings){if(entry.id==='coaststation')continue;const box=new THREE.Box3().setFromObject(entry.group);box.min.x-=1.5;box.max.x+=1.5;box.min.z-=1.5;box.max.z+=1.5;if(p.y<box.max.y+.2&&p.y+3>box.min.y)assert.ok(p.x<box.min.x||p.x>box.max.x||p.z<box.min.z||p.z>box.max.z,plan.id+' avoids '+entry.id);}
+ }
+ const root=world.getObjectByName(plan.id+'-double-track-circuit')!;for(const [x,,z]of root.userData.piers)for(const dx of [-.75,.75])for(const dz of [-.9,.9])assert.ok(roadEdgeDistance(x+dx,z+dz)>.5,'whole viaduct pier avoids traffic');
+ }
+});
+
+test('tapered neighbouring coach bodies do not intersect around either complete circuit',async()=>{
+ const {createRailCar}=await import('../src/railVehicles');const {railRoutes}=await import('../src/transport');const {carPose}=await import('../src/railOperations');
+ type P={x:number;z:number};const cross=(a:P,b:P,c:P)=>(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
+ const hull=(points:P[])=>{points.sort((a,b)=>a.x-b.x||a.z-b.z);const a:P[]=[],b:P[]=[];for(const p of points){while(a.length>1&&cross(a[a.length-2],a[a.length-1],p)<=0)a.pop();a.push(p);}for(const p of [...points].reverse()){while(b.length>1&&cross(b[b.length-2],b[b.length-1],p)<=0)b.pop();b.push(p);}a.pop();b.pop();return [...a,...b];};
+ const overlap=(a:P[],b:P[])=>{for(const polygon of [a,b])for(let i=0;i<polygon.length;i++){const p=polygon[i],q=polygon[(i+1)%polygon.length],nx=q.z-p.z,nz=p.x-q.x,pa=a.map(p=>p.x*nx+p.z*nz),pb=b.map(p=>p.x*nx+p.z*nz);if(Math.max(...pa)<Math.min(...pb)||Math.max(...pb)<Math.min(...pa))return false;}return true;};
+ for(const {plan,curve}of railRoutes){const shapes=[0,1].map(index=>{const car=createRailCar(plan,index);car.updateMatrixWorld(true);const points:P[]=[];car.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);if(v.y>.7)points.push({x:v.x,z:v.z});}});return hull(points);});
+  for(let i=0;i<700;i++){const d=i/700*curve.getLength(),polygons=shapes.map((h,j)=>{const pose=carPose(curve,d-j*plan.carPitch,plan.carLength*.54),c=Math.cos(pose.heading),s=Math.sin(pose.heading);return h.map(p=>({x:pose.position.x+p.x*c+p.z*s,z:pose.position.z-p.x*s+p.z*c}));});assert.equal(overlap(polygons[0],polygons[1]),false,plan.id+' coach collision at '+i/700);}
+ }
 });

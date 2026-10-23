@@ -1,5 +1,7 @@
+import {RAIL_PLANS} from './railNetworkPlan';
+import {createRailCar,createRailTrain} from './railVehicles';
 import {coastalStationPreview} from './coastalStation';
-import {createStationHouse,createStationRoof,createStationClock,createBufferStop,createPlatformCanopyBay} from './coastalStationAssets';
+import {createStationHouse,createStationRoof,createStationClock,createPlatformCanopyBay} from './coastalStationAssets';
 import {createHome,createBusShelter} from './residentialAssets';
 import {courtSample} from './residential';
 import {createStreetLamp,createSignalPost,createCrossingGate,createGuideFence} from './trafficAssets';
@@ -30,10 +32,11 @@ export function initAssetTools(){
  for(const [id,title,source] of [['street-lamp','交通 · 路侧灯组合',createStreetLamp()],['traffic-signal','交通 · 三色信号灯组合',createSignalPost()],['rail-gate','交通 · 电车道口栏杆组合',createCrossingGate()],['guide-fence','交通 · 道口导向栏杆',createGuideFence()]] as const)items.push({id,title,source});
  for(const style of ['balcony','bay','shutters'] as const)items.push({id:'courtyard-home-'+style,title:'小区住宅 · '+({balcony:'生活阳台',bay:'凹窗挑檐',shutters:'百叶坡顶'}[style]),source:createHome(style)});
  items.push({id:'curb-bus-shelter',title:'交通 · 路侧公交雨棚',source:createBusShelter()});if(courtSample)items.push({id:'residential-court',title:'住宅 · 围合花园小区',source:courtSample});
- for(const [id,title,source]of [['station-house','总站 · 拱券站房',createStationHouse()],['station-roof','总站原件 · 坡顶与钟塔',createStationRoof()],['station-clock','总站原件 · 立体钟面',createStationClock()],['station-canopy','总站原件 · 雨棚支撑单元',createPlatformCanopyBay()],['buffer-stop','总站原件 · 轨道止冲器',createBufferStop()]] as const)items.push({id,title,source});
+ for(const [id,title,source]of [['station-house','总站 · 拱券站房',createStationHouse()],['station-roof','总站原件 · 坡顶与钟塔',createStationRoof()],['station-clock','总站原件 · 立体钟面',createStationClock()],['station-canopy','总站原件 · 雨棚支撑单元',createPlatformCanopyBay()],['station-canopy-detail','车站 · 雨棚结构',createPlatformCanopyBay()]] as const)items.push({id,title,source});
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
- for(const [name,title] of [['horizontal-sailboat-hull','帆船'],['moving-train','城际列车']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
+ for(const plan of RAIL_PLANS){items.push({id:plan.id+'-train-kit',title:plan.name+' · 完整编组',source:createRailTrain(plan)});items.push({id:plan.id+'-cab-kit',title:plan.name+' · 车头原件',source:createRailCar(plan,0)});items.push({id:plan.id+'-coach-kit',title:plan.name+' · 客车原件',source:createRailCar(plan,1)});}
+ for(const [name,title] of [['horizontal-sailboat-hull','帆船']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
  items.push({id:'palm-cluster',title:'景观组合 · 三棵椰树与沙丘',source:createPalmCluster()});
  const cliff=world.getObjectByName('residential-coastal-cliff');if(cliff){items.push({id:'residential-cliff',title:'地貌组合 · 临海住宅低崖',source:cliff});for(const [name,title] of [['continuous-rock-core','连续岩体'],['fractured-cliff-blocks','错层岩块'],['nearshore-reef-clusters','近岸礁石']] as const){const source=cliff.getObjectByName(name);if(source)items.push({id:'cliff-'+name,title:'地貌分组 · '+title,source});}}
  for(const [kind,title] of [['towering','厚积云'],['broken','碎积云'],['veil','高层薄云']] as const)items.push({id:'cloud-'+kind,title:'云团组合 · '+title,source:createCloud(kind,83017,54)});

@@ -127,15 +127,6 @@ test('local street junctions meet the same road centreline instead of nearly tou
   assert.ok(distance<.1,`${id} misses ${target} by ${distance}`);
  }
 });
-test('whole trains stop before both terminal buffers',async()=>{
- const {COMMUTER_POINTS,trainProgress}=await import('../src/transitDesign');
- const curve=source(COMMUTER_POINTS),length=curve.getLength();
- for(let i=0;i<=1000;i++){
-  const distance=trainProgress(curve,i/1000)*length;
-  assert.ok(distance>=8.9&&length-distance>=8.9,'train body stays within the usable track');
- }
-});
-
 test('map grid coordinates and saved placement validation round trip at cell boundaries',async()=>{
  const {gridCell,MAP_GRID,columnLabel,validatePositions}=await import('../src/mapCoordinates');
  assert.equal(gridCell(MAP_GRID.originX,MAP_GRID.originZ).id,'A01');
@@ -175,8 +166,13 @@ test('long buses reserve the full garden S-bend before entering opposite lanes',
  assert.ok(travel.every(d=>d>1000));
 });
 
-test('coastal train dwells at both terminals, pauses correctly and preserves elapsed time across frame sizes',async()=>{
- const {advanceTrainPhase}=await import('../src/transitDesign');let s=advanceTrainPhase(.499,0,.1,.025,4);assert.equal(s.offset,.5);assert.ok(Math.abs(s.remaining-3.94)<1e-8);const paused=advanceTrainPhase(s.offset,s.remaining,0,.025,4);assert.deepEqual(paused,s);s=advanceTrainPhase(s.offset,s.remaining,2,.025,4);assert.equal(s.offset,.5);s=advanceTrainPhase(s.offset,s.remaining,2,.025,4);assert.ok(s.offset>.5);
- const north=advanceTrainPhase(.999,0,.1,.025,4);assert.equal(north.offset,0);assert.ok(north.remaining>3.9);
- let small={offset:.25,remaining:0};for(let i=0;i<10000;i++)small=advanceTrainPhase(small.offset,small.remaining,.05,.025,4);const large=advanceTrainPhase(.25,0,500,.025,4);assert.ok(Math.abs(small.offset-large.offset)<1e-8&&Math.abs(small.remaining-large.remaining)<1e-8);
+test('closed rail operations dwell without reversing and preserve large-frame elapsed time',async()=>{
+ const {advanceRail}=await import('../src/railOperations');const stops=[{id:'A',distance:40,dwell:4},{id:'B',distance:180,dwell:4}],initial={distance:39,remaining:0,nextStop:0};let a=advanceRail(initial,1,5,300,stops);assert.equal(a.distance,40);assert.ok(Math.abs(a.remaining-3.2)<1e-8);assert.deepEqual(advanceRail(a,0,5,300,stops),a);a=advanceRail(a,4,5,300,stops);assert.ok(a.distance>40);
+ let small={...initial};for(let i=0;i<10000;i++)small=advanceRail(small,.05,5,300,stops);const large=advanceRail(initial,500,5,300,stops);assert.ok(Math.abs(small.distance-large.distance)<1e-7&&Math.abs(small.remaining-large.remaining)<1e-7);assert.equal(small.nextStop,large.nextStop);
+});
+
+test('rail circuits join tangentially, preserve gauge and have usable compact turn radii',async()=>{
+ const {RAIL_PLANS,railCircuit}=await import('../src/railNetworkPlan');for(const plan of RAIL_PLANS){const curve=railCircuit(plan);assert.ok(curve.getPointAt(0).distanceTo(curve.getPointAt(1))<1e-8);assert.ok(curve.getTangentAt(.00001).dot(curve.getTangentAt(.99999))>.999);
+ let minRadius=Infinity;for(let i=0;i<2000;i++){const t=i/2000,a=curve.getTangentAt(t),b=curve.getTangentAt((t+.0005)%1),angle=Math.acos(THREE.MathUtils.clamp(a.dot(b),-1,1));minRadius=Math.min(minRadius,curve.getLength()*.0005/(angle||1e-9));}assert.ok(minRadius>(plan.elevated?8:3.5),plan.id+' turn radius '+minRadius);
+ }
 });

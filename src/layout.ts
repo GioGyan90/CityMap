@@ -1,3 +1,4 @@
+import {inRailReservation} from './railNetworkPlan';
 import {residentialCliffLift} from './residentialCliffPlan';
 import {HARBOR_SITES} from './harborPlan';
 /** Geography and zoning shared by terrain, parcels, roads, picking and labels. */
@@ -12,9 +13,9 @@ export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;l
 export const ZONES:Record<string,Zone>={
  cargo:{...HARBOR_SITES.cargo,sx:1,sz:1,level:1.06},passenger:{...HARBOR_SITES.passenger,sx:1,sz:1,level:1.06},
  villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
- park:{x:-20,z:-87.4,w:48,d:48,sx:1.65,sz:1.6,level:3.5974665423},market:{x:-18,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-18,z:57,w:24,d:28,sx:1.25,sz:1.25},
+ park:{x:-13,z:-91.4,w:36,d:36,sx:1.15,sz:1.15,level:3.5974665423},market:{x:-9,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-13,z:57,w:24,d:28,sx:1.25,sz:1.25},
  fishmarket:{x:-82,z:57,w:20,d:24,sx:1,sz:1,level:.51,ry:Math.PI/2},
- hall1:{x:-20,z:-20,w:24,d:24,sx:1,sz:1},hall3:{x:41,z:-130,w:20,d:24,sx:1,sz:1},
+ hall1:{x:-16,z:-20,w:24,d:24,sx:1,sz:1},hall3:{x:41,z:-130,w:20,d:24,sx:1,sz:1},
  hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
  hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
@@ -61,4 +62,4 @@ export const ROAD_PATHS:Road[]=[
 export function roadDistance(x:number,z:number){let best=Infinity;for(const road of ROAD_PATHS)for(let i=1;i<road.points.length;i++){const a=road.points[i-1],b=road.points[i];const vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));best=Math.min(best,Math.hypot(x-a[0]-t*vx,z-a[1]-t*vz)-road.width/2);}return best;}
 export function reserved(x:number,z:number,w:number,d:number){return (x>230&&x<260&&z>19&&z<62)||Object.entries(ZONES).some(([id,s])=>id!=='cruise'&&Math.abs(x-s.x)<(s.w+w)/2+3&&Math.abs(z-s.z)<(s.d+d)/2+3);}
 function pathDistance(x:number,z:number,points:number[][]){let best=Infinity;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));best=Math.min(best,Math.hypot(x-a[0]-vx*t,z-a[1]-vz*t));}return best;}
-export function railCorridor(x:number,z:number){return pathDistance(x,z,[[4,-158],[83,-162],[172,-146],[208,-85],[208,-5],[199,68],[191,126]])<12||pathDistance(x,z,[[192,-125],[225,-82],[235,-14],[226,57],[206,114]])<14;}
+export function railCorridor(x:number,z:number){return inRailReservation(x,z)||pathDistance(x,z,[[192,-125],[225,-82],[235,-14],[226,57],[206,114]])<14;}

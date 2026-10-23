@@ -7,7 +7,7 @@ import {roadEdgeDistance,roadProfiles} from './roadNetwork';
 import {surfaceHeight} from './terrainSurface';
 import {paintGroundPath} from './groundRoadMaterial';
 import {transit} from './transport';
-import {trainProgress} from './transitDesign';
+import {RAIL_PLANS} from './railNetworkPlan';
 import {gridCell} from './mapCoordinates';
 import {createStreetLamp,createSignalPost,setSignalColor,createCrossingGate,createGuideFence} from './trafficAssets';
 import {planTrafficFixtures,signalColor,registerSignalStops,type FixtureSite} from './trafficPlan';
@@ -15,7 +15,7 @@ export const infrastructureSites:FixtureSite[]=[];
 const signals:{root:THREE.Group;site:FixtureSite}[]=[],lenses:THREE.MeshToonMaterial[]=[],gates:THREE.Group[]=[];
 export let trafficSeconds=0;
 let crossing:THREE.Object3D|undefined,closed=0,hold=0;
-export function crossingWarning(distance:number){return distance<67;}
+export function crossingWarning(distance:number){return distance<25;}
 export function buildTrafficInfrastructure(){
  if(world.getObjectByName('traffic-infrastructure'))return;
  const root=new THREE.Group();root.name='traffic-infrastructure';world.add(root);
@@ -34,9 +34,9 @@ export function buildTrafficInfrastructure(){
  crossing=world.getObjectByName('fish-market-tram-crossing');
  const records:unknown[]=[];
  if(crossing){crossing.updateMatrixWorld(true);for(const side of [-1,1]){
-  const g=createCrossingGate(),p=crossing.localToWorld(new THREE.Vector3(side*3.45,0,-1.7));g.position.set(p.x,surfaceHeight(p.x,p.z)-.03,p.z);g.rotation.y=crossing.rotation.y;conformFoundation(g);rail.add(g);gates.push(g);records.push({id:'fish-market-gate-'+(side<0?'seaward':'inland'),kind:'rail-gate',grid:gridCell(p.x,p.z).id,x:p.x,y:g.position.y,z:p.z});
+  const g=createCrossingGate(),p=crossing.localToWorld(new THREE.Vector3((side<0?-3.45:crossing.userData.trackSpacing+3.45),0,-1.7));const deck=crossing.position.y+.15,ground=surfaceHeight(p.x,p.z);g.position.set(p.x,deck+(ground-deck)*.62,p.z);g.rotation.y=crossing.rotation.y;conformFoundation(g);rail.add(g);gates.push(g);records.push({id:'fish-market-gate-'+(side<0?'seaward':'inland'),kind:'rail-gate',grid:gridCell(p.x,p.z).id,x:p.x,y:g.position.y,z:p.z});
   // Outside the 2.6 m walking path; short approach fences leave both entrances open.
-  for(const direction of [-1,1]){const f=createGuideFence(),q=crossing.localToWorld(new THREE.Vector3(side*5.6,0,direction*1.9));f.position.set(q.x,surfaceHeight(q.x,q.z)-.03,q.z);f.rotation.y=crossing.rotation.y+Math.PI/2;
+  for(const direction of [-1,1]){const f=createGuideFence(),q=crossing.localToWorld(new THREE.Vector3((side<0?-5.6:crossing.userData.trackSpacing+5.6),0,direction*1.9));f.position.set(q.x,surfaceHeight(q.x,q.z)-.03,q.z);f.rotation.y=crossing.rotation.y+Math.PI/2;
    if([-1,0,1].some(z=>{const test=new THREE.Vector3(0,0,z).applyAxisAngle(new THREE.Vector3(0,1,0),f.rotation.y).add(f.position);return roadEdgeDistance(test.x,test.z)<.85;}))continue;
    // Each foot follows the actual ground, with the rails joining those feet.
    for(const m of f.children){const local=m.position.clone().applyAxisAngle(new THREE.Vector3(0,1,0),f.rotation.y).add(f.position);m.position.y+=surfaceHeight(local.x,local.z)-surfaceHeight(q.x,q.z);}rail.add(f);records.push({id:'guide-fence-'+side+'-'+direction,kind:'guide-fence',grid:gridCell(q.x,q.z).id,x:q.x,y:f.position.y,z:q.z});
@@ -50,7 +50,7 @@ export function updateTrafficInfrastructure(dt:number){
  trafficSeconds+=Math.max(0,dt);
  for(const {root,site} of signals)setSignalColor(root,signalColor(trafficSeconds,site.junction!,site.road));
  if(!crossing||!transit[0])return;
- const train=transit[0],p=train.curve.getPointAt(trainProgress(train.curve,train.offset)),distance=p.distanceTo(crossing.position),warn=crossingWarning(distance);
+ let distance=Infinity,warn=false;for(const train of transit.filter(t=>t.plan.id==='coast')){const len=train.curve.getLength();for(const at of crossing.userData.crossings as number[]){const ahead=(at*len-train.state.distance+len)%len,behind=(train.state.distance-at*len+len)%len;distance=Math.min(distance,ahead);if(crossingWarning(ahead)||behind<(train.plan.cars-1)*train.plan.carPitch+train.plan.carLength+3)warn=true;}}
  if(warn)hold=4;else hold=Math.max(0,hold-dt);
  const target=warn||hold>0?1:0;closed=THREE.MathUtils.clamp(closed+Math.sign(target-closed)*dt/1.6,0,1);if(dt===0&&warn)closed=1;
  for(const g of gates){g.getObjectByName('barrier-pivot')!.rotation.x=-(1-closed)*Math.PI*.47;
