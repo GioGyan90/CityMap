@@ -11,6 +11,8 @@ const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sor
 export const VIEWS = {
  station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
  parking:parkingView,
+ traffic:{pos:[65,53,86],target:[22,4,40]},
+ crossing:{pos:[-92,24,80],target:[-58,2,57]},
  hero:{pos:[-225,225,320],target:[80,13,8]},top:{pos:[75,600,3.01],target:[75,0,3]},
  park:{pos:[-109,76,20],target:[-20,12,-87.4]},market:{pos:[-78,45,70],target:[-18,8,15]},hall2:{pos:[-59,29,100],target:[-18,5,57]},
  fishmarket:{pos:[-42,30,97],target:[-87,3,57]},

@@ -1,3 +1,4 @@
+import {updateTrafficInfrastructure} from './trafficInfrastructure';
 import {updateClouds} from './clouds';
 import {updateDayNight} from './night';
 import { updateFocus, renderFocusOutline } from './focus';
@@ -63,8 +64,9 @@ export function animate() {
     b.mesh.rotation.y = b.dir > 0 ? 0 : Math.PI;
   }
 
-  updateTraffic(dt);
   updateTransport(dt);
+  updateTrafficInfrastructure(dt);
+  updateTraffic(dt);
 
   /* 灯塔光束旋转 */
   const beaconLight = world.getObjectByName('lighthouse-beacon');

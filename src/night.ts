@@ -1,11 +1,11 @@
+import {setInfrastructureNight} from './trafficInfrastructure';
 import * as THREE from 'three';
 import {scene,world,sky,hemi,sun,fill,camera} from './scene';
 import {setCloudLighting,disableCloudShadows} from './clouds';
 import {surfaceHeight} from './terrainSurface';
 import {twilightProfile} from './twilight';
 import {DAY_LIGHTING} from './visualStyle';
-import {COAST} from './config';
-import {ROAD_PATHS,ZONES} from './layout';
+import {ZONES} from './layout';
 import {setWaterLighting} from './water';
 import {SolarClock,civilParts,formatTime,solarEvents,sampleSolar,smooth} from './solarCycle';
 import './timeControls.css';
@@ -25,19 +25,6 @@ const rideMaterials=new Set<THREE.MeshToonMaterial>();
 world.getObjectByName('ferris-rotor')?.traverse(object=>{
   if(object instanceof THREE.Mesh && object.material instanceof THREE.MeshToonMaterial)rideMaterials.add(object.material);
 });
-// One instanced draw per lamp component, rather than hundreds of point lights.
-const sites:[number,number][]=[];
-for(let z=-177;z<170;z+=14)sites.push([COAST(z)+9,z]);
-for(const road of ROAD_PATHS)for(let i=1;i<road.points.length;i++){
- const a=road.points[i-1],b=road.points[i],count=Math.max(1,Math.floor(Math.hypot(b[0]-a[0],b[1]-a[1])/15));
- for(let j=0;j<count;j++){const t=j/count;sites.push([a[0]+(b[0]-a[0])*t+road.width*.6,a[1]+(b[1]-a[1])*t]);}
-}
-const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.07,.11,3.5,5),new THREE.MeshToonMaterial({color:0x38495a}),sites.length);
-const lamps=new THREE.InstancedMesh(new THREE.SphereGeometry(.38,6,5),new THREE.MeshBasicMaterial({color:0xffda87,transparent:true,opacity:0,depthWrite:false}),sites.length);
-const pools=new THREE.InstancedMesh(new THREE.CircleGeometry(2.5,16),new THREE.MeshBasicMaterial({color:0xf5b95b,transparent:true,opacity:.14,depthWrite:false}),sites.length);
-const matrix=new THREE.Matrix4();const rotation=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-Math.PI/2);
-sites.forEach(([x,z],i)=>{matrix.makeTranslation(x,surfaceHeight(x,z)+1.75,z);poles.setMatrixAt(i,matrix);matrix.makeTranslation(x,surfaceHeight(x,z)+3.55,z);lamps.setMatrixAt(i,matrix);matrix.compose(new THREE.Vector3(x,surfaceHeight(x,z)+.2,z),rotation,new THREE.Vector3(1,1,1));pools.setMatrixAt(i,matrix)});
-world.add(poles);nightGroup.add(lamps,pools);
 for(const id of ['park','hotel','market','hospital','port','restaurant','promenade','hall2','fishmarket']){
  const zone=ZONES[id],x=zone.x,z=zone.z;
  const light=new THREE.PointLight(0xffc477,30,55,1.8);light.position.set(x,surfaceHeight(x,z)+8,z);nightGroup.add(light);
@@ -75,7 +62,7 @@ export function refreshDayNight(){
  const sm=sky.material as THREE.ShaderMaterial;sm.uniforms.sunPosition.value.copy(sunDir);sm.uniforms.nightBlend.value=night;sm.uniforms.horizonColor.value.copy(fogColor);sm.uniforms.daylight.value=daylight;sm.uniforms.twilightStrength.value=twilight.glow;sm.uniforms.twilightHorizon.value.set(twilight.horizon);sm.uniforms.twilightRose.value.set(twilight.rose);sm.uniforms.twilightZenith.value.set(twilight.zenith);sky.position.copy(camera.position);
  celestial.visible=true;celestial.position.copy(camera.position);starMaterial.opacity=Math.pow(night,1.7)*.85;starfield.rotation.y=(civilParts(solarClock.timestamp).minutes/1440)*Math.PI*2;
  moon.position.copy(moonDir).multiplyScalar(1450);moon.visible=state.moon.altitude>-.4;moonMaterial.uniforms.sunDirection.value.copy(sunDir);moonMaterial.uniforms.visibility.value=(.25+.75*night)*state.moonVisibility;
- nightGroup.visible=night>.001;(lamps.material as THREE.MeshBasicMaterial).opacity=night;(pools.material as THREE.MeshBasicMaterial).opacity=.14*night;nightGroup.children.forEach(o=>{if(o instanceof THREE.PointLight)o.intensity=30*night;});
+ nightGroup.visible=night>.001;setInfrastructureNight(night);nightGroup.children.forEach(o=>{if(o instanceof THREE.PointLight)o.intensity=30*night;});
  for(const material of litMaterials){material.emissive.set(0xffca75);material.emissiveIntensity=.85*night;}
  for(const material of glazingMaterials){material.emissive.set(0xffdca0);material.emissiveIntensity=.55*night;}
  for(const material of rideMaterials){material.emissive.copy(material.color);material.emissiveIntensity=.45*night;}

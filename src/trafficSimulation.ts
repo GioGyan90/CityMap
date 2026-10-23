@@ -50,11 +50,19 @@ export function findJunctions(routes:TrafficRoute[]){
    let zone=junctions.find(z=>z.position.distanceTo(end)<16);
    if(!zone){zone={position:end.clone(),routes:new Set(),radius:12,owner:null};junctions.push(zone);}zone.routes.add(routes[a].id);zone.routes.add(routes[b].id);
   }
+ }
+ // Tight S-bends need exclusive clearance too: long buses sweep across the inside lane.
+ // Append after real junctions so their stable placement IDs remain unchanged.
+ for(const route of routes){if(route.elevated)continue;const length=route.source.getLength();
+  for(let d=7;d<length-7;d+=2){const a=route.source.getPointAt((d-6)/length),p=route.source.getPointAt(d/length),b=route.source.getPointAt((d+6)/length),u=p.clone().sub(a).setY(0).normalize(),v=b.clone().sub(p).setY(0).normalize();
+   if(u.dot(v)>.55||junctions.some(z=>z.routes.has(route.id)&&z.position.distanceTo(p)<20))continue;
+   junctions.push({position:p,routes:new Set([route.id]),radius:12,owner:null});
+  }
  }return junctions;
 }
 function inJunction(car:Vehicle,zone:Junction,pose=car.pose){return zone.routes.has(car.route.id)&&Math.hypot(pose.position.x-zone.position.x,pose.position.z-zone.position.z)<zone.radius+car.length/2+1;}
 /** Metre-based following, exclusive junction reservations and swept small steps. */
-export function stepTraffic(cars:Vehicle[],zones:Junction[],dt:number){
+export function stepTraffic(cars:Vehicle[],zones:Junction[],dt:number,permit:(car:Vehicle,next:VehiclePose)=>boolean=()=>true){
  const steps=Math.max(1,Math.ceil(dt/.025)),tick=dt/steps;
  for(let step=0;step<steps;step++){
   for(const zone of zones){if(zone.owner!==null){const owner=cars.find(c=>c.id===zone.owner);if(!owner||!inJunction(owner,zone))zone.owner=null;}}
@@ -65,7 +73,7 @@ export function stepTraffic(cars:Vehicle[],zones:Junction[],dt:number){
    if(advance<1e-6)advance=0;
    let next=poseAt(car.route,car.distance+advance);
    const entering=zones.filter(z=>inJunction(car,z,next));
-   if(entering.some(z=>z.owner!==null&&z.owner!==car.id))advance=0;
+   if(entering.some(z=>z.owner!==null&&z.owner!==car.id)||!permit(car,next))advance=0;
    if(advance>0&&cars.some(other=>other!==car&&vehiclesOverlap({...car,pose:next},other)))advance=0;
    if(advance>0){for(const zone of entering)zone.owner=car.id;car.distance=(car.distance+advance)%car.route.length;car.pose=next;car.waiting=0;car.speed=advance/tick;}
    else {car.speed=0;car.waiting+=tick;}

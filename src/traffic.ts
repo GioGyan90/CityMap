@@ -1,3 +1,5 @@
+import {signalAllows} from './trafficPlan';
+import {trafficSeconds} from './trafficInfrastructure';
 import {createVehicle} from './vehicles';
 import {surfaceHeight} from './terrainSurface';
 import { motorwayCurve } from './transport';
@@ -29,6 +31,6 @@ export function buildCars(){
  world.userData.traffic={version:'separated-lanes-reservations-v1',vehicles:cars,junctions};updateTraffic(0);
 }
 export function updateTraffic(dt:number){
- if(dt>0)stepTraffic(cars,junctions,dt);
+ if(dt>0)stepTraffic(cars,junctions,dt,(car,next)=>signalAllows(car,next,trafficSeconds));
  for(const car of cars){const {position,heading,pitch}=car.pose;car.mesh.position.copy(position);car.mesh.position.y=car.route.elevated?position.y+.12:surfaceHeight(position.x,position.z)+.02;car.mesh.rotation.set(pitch,heading,0,'YXZ');}
 }

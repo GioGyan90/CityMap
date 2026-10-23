@@ -1,3 +1,4 @@
+import {buildTrafficInfrastructure} from './trafficInfrastructure';
 import {createResidentialCliff} from './residentialCliff';
 import {createBeachFishMarket} from './beachFishMarket';
 import {HALL_THEMES,createThemedHall} from './themedHalls';
@@ -85,7 +86,7 @@ buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
 buildSiteDetails();
 buildParcels();
-plantTrees();buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildClouds();
+plantTrees();buildTransport();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();buildClouds();
 auditPlacedPlants(world);
 batchBuildings();finalizeOutlines();collectBackgroundBuildings();
 world.userData.layoutVersion='peninsula-terrain-v2';

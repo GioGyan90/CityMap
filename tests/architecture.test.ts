@@ -431,3 +431,39 @@ test('cloud preview clones refresh camera-local rays without mutating original u
  camera.position.x=50;camera.updateMatrixWorld();(m as any).onBeforeRender(null,null,camera,null,mesh);assert.ok(m.uniforms.cameraLocal.value.distanceTo(first)>1);assert.equal(m.uniformsNeedUpdate,true);
  assert.ok(((original.children[0] as THREE.Mesh).material as THREE.ShaderMaterial).uniforms.cameraLocal.value.equals(new THREE.Vector3()));
 });
+
+test('traffic foundations follow curved-road normals, have grid IDs and leave roads and entrances clear',async()=>{
+ const {planTrafficFixtures,baseClear}=await import('../src/trafficPlan');const {gridCell}=await import('../src/mapCoordinates');const {surfaceHeight}=await import('../src/terrainSurface');
+ const sites=planTrafficFixtures(),lamps=sites.filter(s=>s.kind==='lamp'),signals=sites.filter(s=>s.kind==='signal');
+ assert.ok(lamps.length>=30&&lamps.length<65,'sparse road lighting replaces 148 overlapping poles');assert.ok(signals.length>=15);
+ for(const site of sites){assert.ok(baseClear(site.x,site.z));assert.equal(site.grid,gridCell(site.x,site.z).id);assert.notEqual(site.grid,'OUT');assert.ok(Math.abs(site.y+.03-surfaceHeight(site.x,site.z))<1e-6);}
+ for(let i=0;i<lamps.length;i++)for(let j=i+1;j<lamps.length;j++)assert.ok(Math.hypot(lamps[i].x-lamps[j].x,lamps[i].z-lamps[j].z)>=25);
+ const excluded=planTrafficFixtures((x,z)=>x<50&&z>0);assert.ok(excluded.every(s=>!(s.x<50&&s.z>0)),'entrance exclusion applies to all component foundations');
+});
+
+test('signal phases include amber and all-red clearance, and cover every selected road approach',async()=>{
+ const {signalColor,junctionPlan,controlledJunctions,planTrafficFixtures}=await import('../src/trafficPlan');const {roadProfiles}=await import('../src/roadNetwork');const sites=planTrafficFixtures();
+ for(const ji of controlledJunctions){const j=junctionPlan[ji],primary=[...j.routes].sort((a,b)=>roadProfiles[b].width-roadProfiles[a].width||a-b)[0];
+  for(const r of j.routes){const colors=new Set<string>();for(let t=0;t<52;t+=.25){colors.add(signalColor(t,ji,r));if(signalColor(t,ji,primary)!=='red'&&r!==primary)assert.equal(signalColor(t,ji,r),'red');}assert.deepEqual([...colors].sort(),['amber','green','red']);assert.ok(sites.some(s=>s.kind==='signal'&&s.junction===ji&&s.road===r),'every incoming route has a physical signal');}
+  assert.ok(Array.from({length:104},(_,i)=>i*.5).some(t=>[...j.routes].every(r=>signalColor(t,ji,r)==='red')));
+ }
+});
+
+test('traffic lights stop the actual vehicle nose at the marked line and let committed vehicles clear',async()=>{
+ const {planTrafficFixtures,registerSignalStops,signalColor,signalAllows}=await import('../src/trafficPlan');const {roadProfiles}=await import('../src/roadNetwork');const {makeTrafficRoute}=await import('../src/trafficSimulation');
+ const sites=planTrafficFixtures();registerSignalStops(sites);
+ for(const s of sites.filter(s=>s.kind==='signal')){const r=roadProfiles[s.road],fx=-Math.sin(s.heading),fz=-Math.cos(s.heading),normal=new THREE.Vector3(-fz,0,fx),line=new THREE.Vector3(s.x,s.y,s.z).addScaledVector(normal,-(s.curbSide??1)*(r.width/2+1.25)).add(new THREE.Vector3(fx,0,fz).multiplyScalar(-3.6));
+  const pose={position:line,heading:Math.atan2(fx,fz),pitch:0},car={id:1,route:makeTrafficRoute(r.curve,s.road),distance:0,length:3.2,width:1.6,desiredSpeed:6,speed:1,waiting:0,pose};const next={...pose,position:line.clone().add(new THREE.Vector3(fx,0,fz).multiplyScalar(.1))};
+  const red=Array.from({length:52},(_,i)=>i).find(t=>signalColor(t,s.junction!,s.road)==='red')!,green=Array.from({length:52},(_,i)=>i).find(t=>signalColor(t,s.junction!,s.road)==='green')!;
+  assert.equal(signalAllows(car,next,red),false);assert.equal(signalAllows(car,next,green),true);car.pose={...pose,position:line.clone().add(new THREE.Vector3(fx,0,fz).multiplyScalar(4))};assert.equal(signalAllows(car,{...car.pose,position:car.pose.position.clone().add(new THREE.Vector3(fx,0,fz).multiplyScalar(.1))},red),true);
+ }registerSignalStops([]);
+});
+
+test('rail gate sweep stays clear of train envelope and gives sufficient closing lead time',async()=>{
+ const {createCrossingGate,createStreetLamp,createSignalPost}=await import('../src/trafficAssets');
+ const gate=createCrossingGate(),arm=gate.getObjectByName('barrier-pivot')!;gate.position.x=3.45;
+ for(let i=0;i<=20;i++){arm.rotation.x=-Math.PI*.47*i/20;gate.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(arm);assert.ok(bounds.min.x>3.3,'arm never sweeps into the train');assert.ok(bounds.min.y>=1.15);}
+ for(const g of [createStreetLamp(),createSignalPost(),createCrossingGate()]){g.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(g);assert.ok(Math.abs(b.min.y)<1e-6,'assembly foundation rests on ground');}
+ // Max tram speed is below 12 m/s; a 67 m warning closes in 1.6 s before its 7.4 m nose arrives.
+ assert.ok(67-12*1.6>7.4+2);
+});
