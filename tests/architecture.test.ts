@@ -809,3 +809,35 @@ test('indexed railway reservations match exhaustive segment distances at multipl
   assert.equal(inRailReservation(x,z,margin),railClearance(x,z)<margin||station,`reservation at ${x},${z}, margin ${margin}`);
  }
 });
+
+test('baked residential plans match the integrated city and invalidate on planning input changes',async()=>{
+ const {residentialPlanKey,residentialPlanData}=await import('../src/generated/residentialPlans');
+ const {residentialPlanningKey,lastResidentialPlanKey,lastResidentialPlanSource}=await import('../src/residentialPlan');
+ const {terrainPositions}=await import('../src/terrainSurface');
+ const {parkingAccessPaths}=await import('../src/parking');
+ assert.equal(lastResidentialPlanKey,residentialPlanKey);assert.equal(lastResidentialPlanSource,'baked');
+ assert.deepEqual(JSON.parse(residentialPlanData),world.userData.residential.courts);
+ const key=residentialPlanningKey([]),height=terrainPositions[1];
+ assert.notEqual(residentialPlanningKey([{x:0,z:0,w:1,d:1}]),key);
+ try{terrainPositions[1]=height+1;assert.notEqual(residentialPlanningKey([]),key);}finally{terrainPositions[1]=height;}
+ parkingAccessPaths.push({points:[[0,0],[1,1]],width:1});try{assert.notEqual(residentialPlanningKey([]),key);}finally{parkingAccessPaths.pop();}
+ assert.equal(residentialPlanningKey([]),key);
+});
+
+test('indexed access reservations match full scans and include newly appended paths',async()=>{
+ const {parkingAccessPaths,parkingAccessBlocked}=await import('../src/parking');
+ const brute=(x:number,z:number)=>parkingAccessPaths.some(path=>{const [a,b]=path.points,dx=b[0]-a[0],dz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz)));return Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t)<path.width/2+1.4;});
+ for(let z=-180;z<200;z+=4.7)for(let x=-100;x<290;x+=5.3)assert.equal(parkingAccessBlocked(x,z),brute(x,z));
+ const count=parkingAccessPaths.length;assert.equal(parkingAccessBlocked(900,900),false);
+ try{parkingAccessPaths.push({points:[[890,890],[910,910]],width:4});assert.equal(parkingAccessBlocked(900,900),true);assert.equal(parkingAccessBlocked(900,904),brute(900,904));}finally{parkingAccessPaths.length=count;parkingAccessBlocked(900,900);}
+ assert.equal(parkingAccessBlocked(900,900),false);
+});
+
+test('tunnel bounds rejection preserves exact reservations and terrain cover',async()=>{
+ const {inTunnelReservation,tunnelLocation,coveredTerrainHeight,tunnelLength,TUNNEL}=await import('../src/tunnelPlan');
+ for(let z=-210;z<210;z+=9.7)for(let x=-110;x<300;x+=11.3){
+  const n=tunnelLocation(x,z);for(const margin of [0,8,40])assert.equal(inTunnelReservation(x,z,margin),n.distance<9+margin);
+  const base=2,s=n.t*tunnelLength,expected=n.distance>13||s<.6||s>tunnelLength-.6?base:Math.max(base,THREE.MathUtils.lerp(base,n.y+TUNNEL.spring+TUNNEL.innerRadius+TUNNEL.thickness+TUNNEL.cover,1-THREE.MathUtils.smoothstep(n.distance,6.1,13)));
+  assert.equal(coveredTerrainHeight(x,z,base),expected);
+ }
+});

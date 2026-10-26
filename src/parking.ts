@@ -11,7 +11,15 @@ import {buildingFootprints} from './config';
 interface Rect {x:number;z:number;w:number;d:number}
 interface Office extends Rect {entrance:{x:number;z:number}}
 export const parkingAccessPaths:{points:[number,number][];width:number}[]=[];
-export function parkingAccessBlocked(x:number,z:number){return parkingAccessPaths.some(path=>{const [a,b]=path.points,vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));return Math.hypot(x-a[0]-vx*t,z-a[1]-vz*t)<path.width/2+1.4;});}
+// Reservations are appended during city construction; index new paths before querying.
+const accessCells=new Map<string,typeof parkingAccessPaths>(),accessCellSize=12;let indexedPaths=0;
+export function parkingAccessBlocked(x:number,z:number){
+ if(parkingAccessPaths.length<indexedPaths){accessCells.clear();indexedPaths=0;}
+ while(indexedPaths<parkingAccessPaths.length){const path=parkingAccessPaths[indexedPaths++],[a,b]=path.points,reach=path.width/2+1.4;
+  for(let cx=Math.floor((Math.min(a[0],b[0])-reach)/accessCellSize);cx<=Math.floor((Math.max(a[0],b[0])+reach)/accessCellSize);cx++)for(let cz=Math.floor((Math.min(a[1],b[1])-reach)/accessCellSize);cz<=Math.floor((Math.max(a[1],b[1])+reach)/accessCellSize);cz++){const key=cx+','+cz;if(!accessCells.has(key))accessCells.set(key,[]);accessCells.get(key)!.push(path);}
+ }
+ return (accessCells.get(Math.floor(x/accessCellSize)+','+Math.floor(z/accessCellSize))??[]).some(path=>{const [a,b]=path.points,vx=b[0]-a[0],vz=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz)));return Math.hypot(x-a[0]-vx*t,z-a[1]-vz*t)<path.width/2+1.4;});
+}
 export function buildParkingLots(offices:Office[],occupied:Rect[]){
  const lots:{x:number;z:number;w:number;d:number;spaces:number;parked:number;serves:[number,number];driveway:[number,number][]}[]=[];
  const group=new THREE.Group();group.name='parking-details';world.add(group);
