@@ -1,3 +1,4 @@
+import {motorwayProfile} from './motorwayPlan';
 import {batchStationPart} from './coastalStationAssets';
 import {roadEdgeDistance} from './roadNetwork';
 import {railRoute} from './railNetwork';
@@ -42,7 +43,7 @@ export function buildTransport(){
  for(const plan of RAIL_PLANS){const height=plan.elevated?()=>40:(x:number,z:number)=>surfaceHeight(x,z)+.4,curve=railRoute(plan);railRoutes.push({plan,curve});railway(curve,plan);const stops=makeStops(plan,curve);train(curve,plan,.12,stops);train(curve,plan,.62,stops);buildRailStations(plan,curve,(x,z)=>{let best=Infinity,y=0;for(let i=0;i<2500;i++){const p=curve.getPointAt(i/2500),d=Math.hypot(x-p.x,z-p.z);if(d<best){best=d;y=p.y;}}return y;});}
  buildCoastalStation(coastalRailCurve());
  // Raised highway with a gentle approach, concrete piers and metal safety barriers.
- const highway=route([[192,-125],[225,-82],[235,-14],[226,57],[206,114]],7);
+ const highway=motorwayProfile;
  motorwayCurve=highway;
  roadRibbon(highway,10,.1,roadMat,true).name='elevated-motorway';
  for(let i=0;i<14;i++){const p=highway.getPointAt(i/13),base=surfaceHeight(p.x,p.z);box(1.6,p.y-base,2,0xa3aaa1,p.x,(p.y+base)/2,p.z);}

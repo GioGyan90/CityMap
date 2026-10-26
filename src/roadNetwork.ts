@@ -71,6 +71,6 @@ export function gradedTerrainHeight(x:number,z:number){
  for(const road of nearby(x,z)){
   const distance=road.distance-road.width/2-1.8,t=THREE.MathUtils.clamp(1-distance/4,0,1),weight=t*t*(3-2*t);
   total+=weight;weighted+=road.y*weight;coverage=Math.max(coverage,weight);
- }const main=total?THREE.MathUtils.lerp(base,weighted/total,coverage):base;if(nearby(x,z).some(r=>r.distance<r.width/2+.7))return main;const a=nearestHillAccess(x,z),u=THREE.MathUtils.clamp(1-(a.distance-a.width/2-2)/6,0,1);const edge=Math.min(Infinity,...nearby(x,z).map(r=>r.distance-r.width/2)),publicFade=THREE.MathUtils.clamp((edge-.7)/2,0,1);return THREE.MathUtils.lerp(main,a.y,u*u*(3-2*u)*publicFade);
+ }const main=total?THREE.MathUtils.lerp(base,weighted/total,coverage):base;if(nearby(x,z).some(r=>r.distance<r.width/2+.7))return main;const a=nearestHillAccess(x,z),u=THREE.MathUtils.clamp(1-(a.distance-a.width/2-2)/6,0,1);const edge=Math.min(Infinity,...nearby(x,z).map(r=>r.distance-r.width/2)),publicFade=THREE.MathUtils.clamp((edge-.7)/2,0,1);const hill=THREE.MathUtils.lerp(main,a.y,u*u*(3-2*u)*publicFade),j=hillApproaches[1].junction;if(!j)return hill;const d=Math.hypot(x-j.x,z-j.z),blend=THREE.MathUtils.smoothstep(d,2.5,7),plane=j.y+j.slope*((x-j.x)*j.dx+(z-j.z)*j.dz);return THREE.MathUtils.lerp(plane,hill,blend);
 }
 export const promenadeCurve=new THREE.CatmullRomCurve3(Array.from({length:28},(_,i)=>{const z=-172+i*13;return new THREE.Vector3(westCoast(z)+8,terrainHeight(westCoast(z)+8,z),z)}),false,'catmullrom',.16);
