@@ -1,5 +1,5 @@
 import {STATION_ORIGIN} from './coastalStationPlan';
-import {terrainHeight} from './layout';
+import {terrainHeight,ZONES} from './layout';
 import {surfaceHeight} from './terrainSurface';
 import * as THREE from 'three';
 import { camera, controls, world } from "./scene";
@@ -31,7 +31,7 @@ export const VIEWS = {
  tunnels:{pos:[-96,48,-112],target:[-47,7,-166]},
  cargo:{pos:[-173,65,-76],target:[-95,7,-140]},passenger:{pos:[-166,46,210],target:[-90,6,151]},
  cruise:{pos:[-170,54,242],target:[-106,12,180]},
- skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[207,94,86],target:[256,terrainHeight(256,25)+5,25]},
+ skyline:{pos:[-64,140,-3],target:[70,42,-126]},residential:{pos:[207,94,86],target:[ZONES.villa.x,terrainHeight(ZONES.villa.x,ZONES.villa.z)+5,ZONES.villa.z]},
  lighthouse:{pos:[301,93,104],target:[254,terrainHeight(254,50)+10,50]}
 
 };

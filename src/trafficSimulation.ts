@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-export interface TrafficRoute {id:number;curve:THREE.CatmullRomCurve3;length:number;elevated:boolean;source:THREE.CatmullRomCurve3}
+export interface TrafficRoute {id:number;curve:THREE.CatmullRomCurve3;length:number;elevated:boolean;source:THREE.Curve<THREE.Vector3>}
 export interface VehiclePose {position:THREE.Vector3;heading:number;pitch:number}
 export interface Vehicle {id:number;route:TrafficRoute;distance:number;length:number;width:number;desiredSpeed:number;speed:number;waiting:number;pose:VehiclePose}
 export interface Junction {position:THREE.Vector3;routes:Set<number>;radius:number;owner:number|null}
 const lane=1.65;
-export function makeTrafficRoute(source:THREE.CatmullRomCurve3,id:number,elevated=false):TrafficRoute{
+export function makeTrafficRoute(source:THREE.Curve<THREE.Vector3>,id:number,elevated=false):TrafficRoute{
  const n=Math.max(32,Math.ceil(source.getLength()/3)),points:THREE.Vector3[]=[];
  const offset=(t:number,side:number)=>{const p=source.getPointAt(t),v=source.getTangentAt(t),l=Math.hypot(v.x,v.z);p.x-=v.z/l*lane*side;p.z+=v.x/l*lane*side;return p;};
  for(let i=0;i<=n;i++)points.push(offset(i/n,1));
@@ -65,7 +65,7 @@ function inJunction(car:Vehicle,zone:Junction,pose=car.pose){return zone.routes.
 export function stepTraffic(cars:Vehicle[],zones:Junction[],dt:number,permit:(car:Vehicle,next:VehiclePose)=>boolean=()=>true){
  const steps=Math.max(1,Math.ceil(dt/.025)),tick=dt/steps;
  for(let step=0;step<steps;step++){
-  for(const zone of zones){if(zone.owner!==null){const owner=cars.find(c=>c.id===zone.owner);if(!owner||!inJunction(owner,zone))zone.owner=null;}}
+  for(const zone of zones){if(zone.owner!==null){const owner=cars.find(c=>c.id===zone.owner);if(!owner||!inJunction(owner,zone)||owner.waiting>12)zone.owner=null;}}
   const order=[...cars].sort((a,b)=>b.waiting-a.waiting||a.id-b.id);
   for(const car of order){
    let advance=Math.min(car.desiredSpeed,car.speed+3*tick)*tick;

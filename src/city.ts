@@ -1,3 +1,4 @@
+import {buildSiteAccess} from './siteAccess';
 import {buildFacilityCourtyards} from './facilityCourtyards';
 import {buildMarineFleet} from './marineTraffic';
 import {createRoadTunnel} from './roadTunnels';
@@ -89,9 +90,9 @@ buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
-buildSiteDetails();buildFacilityCourtyards();
+buildSiteDetails();buildFacilityCourtyards();buildSiteAccess();
 buildTransport();
-buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();buildClouds();
+buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();if(!world.userData.deferClouds)buildClouds();
 auditPlacedPlants(world);
 batchBuildings();finalizeOutlines();collectBackgroundBuildings();
 world.userData.layoutVersion='peninsula-terrain-v2';

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {DAY_LIGHTING} from './visualStyle';
 import {world} from './scene';
-import {cloudAssembly,cloudDensityAtlas,cloudMotion,cloudPosition,projectedCloudShadow,type CloudKind} from './cloudModel';
+import {cloudAssembly,cloudDensityPixels,cloudMotion,cloudPosition,projectedCloudShadow,type CloudKind} from './cloudModel';
 import {cloudVertexShader,cloudFragmentShader} from './cloudShader';
 import {cloudShadowUniforms} from './cloudShadows';
 import {seededRandom} from './proceduralGeometry';
@@ -22,7 +22,7 @@ export function prepareCloudMaterial(material:THREE.ShaderMaterial){
 export function createCloud(kind:CloudKind,seed:number,width=54){
  const root=new THREE.Group();root.name='cloud-'+kind;
  const lobes=cloudAssembly(kind,seed),height=kind==='veil'?width*.15:kind==='towering'?width*.48:width*.35,depth=width*.57;
- const baked=cloudDensityAtlas(lobes,seed),atlas=new THREE.DataTexture(baked.data,baked.width,baked.height,THREE.RGBAFormat);atlas.minFilter=atlas.magFilter=THREE.LinearFilter;atlas.needsUpdate=true;
+ const baked=cloudDensityPixels(lobes,seed),atlas=new THREE.DataTexture(new Uint8Array(baked.data),baked.width,baked.height,THREE.RedFormat);atlas.minFilter=atlas.magFilter=THREE.LinearFilter;atlas.needsUpdate=true;
 
  const mat=prepareCloudMaterial(new THREE.ShaderMaterial({vertexShader:cloudVertexShader,fragmentShader:cloudFragmentShader,transparent:true,depthWrite:false,side:THREE.BackSide,uniforms:{marchSteps:{value:typeof innerWidth==='number'&&innerWidth<700?20:32},cameraLocal:{value:new THREE.Vector3()},sunLocal:{value:worldSun.clone()},topColor:{value:new THREE.Color(0xfffdf7)},baseColor:{value:new THREE.Color(0x899db7)},rimColor:{value:new THREE.Color(0xfff7df)},densityAtlas:{value:atlas},opticalDepth:{value:kind==='veil'?2.3:kind==='towering'?10:7},visibility:{value:1},daylight:{value:1},seed:{value:seed*.013}}}));
  mat.userData.lightingRole='volumetric-cloud';

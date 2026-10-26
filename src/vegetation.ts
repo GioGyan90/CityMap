@@ -27,7 +27,7 @@ export function plantTrees(){
  const placements:Placement[]=[],trees:Placement[]=[],low:Placement[]=[];
  for(let z=Z0+4;z<Z1-4;z+=7){const x=COAST(z)+range(2.5,10.5);if(!blocked(x,z,1)&&Math.abs(x-COAST(z)-8)>3.4)placements.push({x,z,scale:range(.75,1.05),angle:range(0,Math.PI*2),kind:'palm-'+Math.floor(random()*3)});}
  // Forest patches use several silhouettes; open town ground favours slender and flowering trees.
- for(let tries=0;trees.length<420&&tries<11000;tries++){
+ for(let tries=0;trees.length<420&&tries<16000;tries++){
   const x=range(-50,274),z=range(Z0+6,Z1-6),scale=range(.72,1.22);
   if(!isLand(x,z)||x<COAST(z)+BEACH_W+1||blocked(x,z,1.4)||random()>groveDensity(x,z))continue;
   if(trees.some(t=>Math.hypot(t.x-x,t.z-z)<2.4*(t.scale+scale)))continue;
