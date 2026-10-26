@@ -29,7 +29,7 @@ export function addLabel(text, x, y, z, cls = '') {
   }
   const obj = new CSS2DObject(div);
   const specialId=div.dataset.special;
-  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='coaststation'?13:specialId==='commercial'?105:specialId==='hotel'?35:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:specialId==='fishmarket'?12:specialId.startsWith('hall')?16:31);}}
+  if(specialId){const entry=specialBuildings.find(s=>s.id===specialId);if(entry){x=entry.pick.position.x;z=entry.pick.position.z;y=entry.group.position.y+(specialId==='coaststation'?13:specialId==='commercial'?82:specialId==='hotel'?35:specialId==='cruise'?30:specialId==='promenade'?13:specialId==='market'?22:specialId==='fishmarket'?12:specialId.startsWith('hall')?16:31);}}
   else if(text==='山 脉'){x=205;z=-170;y=terrainHeight(x,z)+15;}
   else if(text==='山麓车站'){const station=world.children.filter(o=>o.name==='elevated-rail-station').sort((a,b)=>b.position.z-a.position.z)[0];if(station){x=station.position.x;z=station.position.z;y=station.position.y+8;}}
   else if(text==='城市花园'){x=72;z=75;y=terrainHeight(x,z)+8;}

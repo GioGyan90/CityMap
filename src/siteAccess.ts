@@ -7,7 +7,7 @@ import {parkingAccessPaths} from './parking';
 import {world} from './scene';
 import {toon} from './materials';
 import {gridCell} from './mapCoordinates';
-export const SITE_GATES=[{id:'hospital',x:133,z:-10},{id:'campus',x:142,z:81},{id:'civic',x:60,z:39.5},{id:'market',x:-9,z:36},{id:'hotel',x:-12,z:162.5},{id:'cafe',x:93,z:139.5},{id:'park',x:-13,z:-77.2},{id:'commercial',x:67.6,z:-120.6},{id:'restaurant',x:126.8,z:140}];
+export const SITE_GATES=[{id:'hospital',x:133,z:-10},{id:'campus',x:142,z:81},{id:'civic',x:60,z:39.5},{id:'market',x:-9,z:36},{id:'hotel',x:-12,z:162.5},{id:'cafe',x:93,z:139.5},{id:'park',x:-13,z:-77.2},{id:'commercial',x:77,z:-110.5},{id:'restaurant',x:126.8,z:140}];
 type Point=[number,number];
 export function planSiteAccess(gate:typeof SITE_GATES[number]){
  const road=nearestRoad(gate.x,gate.z),length=Math.hypot(gate.x-road.x,gate.z-road.z),n=new THREE.Vector2(gate.x-road.x,gate.z-road.z).normalize();

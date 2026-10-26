@@ -66,11 +66,6 @@ export function marketDetails(cx:number,cz:number) {
   }
   billiardsHall(cx,cz+28,2,true);
 }
-export function commercialDistrict(cx:number,cz:number) {
-  makeBuilding({x:cx-2,z:cz-2,w:13,d:13,h:82,style:'artdeco',base:'#e7dfc8',win:'#478db5',roof:0x1f76a8});
-  for(const dx of [-8,8]) makeBuilding({x:cx+dx,z:cz+5,w:5,d:5,h:dx<0?21:30,style:'glass',base:'#e9f2f2',roof:0x317fa6});
-
-}
 export function hospitalDetails(cx:number,cz:number) {
   // Horizontal blue glazing, white mullions and a real H-shaped helipad marking.
   for(const y of [4,7,10,13]) {
