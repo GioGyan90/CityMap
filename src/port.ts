@@ -12,7 +12,7 @@ export const boats = [];
 
 export function buildPort() {
  const root=new THREE.Group();root.name='fish-market-wharf';root.position.y=GROUND_Y;world.add(root);const k=kit(root);
- k.box(42,.4,28,0xe6d3aa,0,.3,0);
+ k.box(42,.4,28,0xe6d3aa,0,.3,0).name='dock-market-plaza';
  // A pedestrian market has small pitched stalls, fish counters and working boats.
  for(const x of [-13,-4,5])for(const z of [-7,3]){
   k.box(7,3.4,5,0xffedc7,x,2.2,z);
@@ -25,7 +25,11 @@ export function buildPort() {
   }
  }
  for(const x of [-12,5]){
-  k.box(4,.4,15,0xbf9d6a,x,.3,20);
+  // Separate the timber from the plaza top (.5); keep its underside supported.
+  k.box(4,.48,15,0xbf9d6a,x,.34,20).name='dock-market-timber-pier';
+  const rampGeometry=new THREE.BufferGeometry();
+  rampGeometry.setAttribute('position',new THREE.Float32BufferAttribute([x-2,.502,12,x-2,.58,12.5,x+2,.502,12,x+2,.502,12,x-2,.58,12.5,x+2,.58,12.5],3));rampGeometry.computeVertexNormals();
+  k.mesh(rampGeometry,0xbf9d6a).name='dock-market-pier-threshold';
   for(const z of [15,24])k.box(.6,2,.6,0x876e4f,x,-.6,z);
   const boat=makeWorkboat(x+4.8,22,'fishing');boat.userData.ambient=false;boat.name='market-fishing-boat';
   root.attach(boat);boat.position.set(x+4.8,-.8,22);boat.scale.set(.65,.65,.65);boat.rotation.y=Math.PI/2;

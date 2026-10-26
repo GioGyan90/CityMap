@@ -926,3 +926,13 @@ test('fountains follow supported ballistic jets, stay in their basins and freeze
  for(const ripple of state.ripples)assert.ok(Math.hypot(ripple.mesh.position.x,ripple.mesh.position.z)+ripple.mesh.scale.x<2.1);
  fountainStates.splice(before);
 });
+
+test('dock-market piers clear the plaza with upward thresholds and English geometric signage',async()=>{
+ const root=world.getObjectByName('fish-market-wharf')!;root.updateWorldMatrix(true,true);
+ const plaza=new THREE.Box3().setFromObject(root.getObjectByName('dock-market-plaza')!,true),piers:THREE.Mesh[]=[];
+ root.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='dock-market-timber-pier')piers.push(o);});assert.equal(piers.length,2);
+ for(const pier of piers){const b=new THREE.Box3().setFromObject(pier,true);assert.ok(b.max.y-plaza.max.y>.075);assert.ok(b.min.y<plaza.max.y,'pier side meets plaza without floating');
+ for(let x=b.min.x;x<=b.max.x;x+=.5)for(let z=b.min.z;z<=Math.min(b.max.z,plaza.max.z);z+=.5)assert.ok(b.max.y-surfaceHeight(x,z)>.04,'timber clears actual terrain');}
+ root.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='dock-market-pier-threshold'){const n=o.geometry.attributes.normal;for(let i=0;i<n.count;i++)assert.ok(n.getY(i)>.9);}});
+ const {createDockMarketSign}=await import('../src/dockMarketSign');const sign=createDockMarketSign();assert.equal(sign.userData.signText,'DOCK MARKET');assert.ok(sign.children.filter(o=>o.name==='dock-market-letter-pixel').length>100);sign.traverse(o=>{if(o instanceof THREE.Mesh)assert.equal((o.material as THREE.MeshToonMaterial).map,null);});
+});
