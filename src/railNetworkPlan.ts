@@ -21,4 +21,14 @@ export function railStationReservations(){return RAIL_PLANS.flatMap(plan=>{const
 const stationReservations=railStationReservations();
 const corridorSamples=RAIL_PLANS.map(p=>({plan:p,points:railCircuit(p).getSpacedPoints(650)}));
 export function railClearance(x:number,z:number){let best=Infinity;for(const {points}of corridorSamples)for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],dx=b.x-a.x,dz=b.z-a.z,t=THREE.MathUtils.clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1),0,1);best=Math.min(best,Math.hypot(x-a.x-dx*t,z-a.z-dz*t));}return best;}
-export function inRailReservation(x:number,z:number,margin=4.3){return railClearance(x,z)<margin||stationReservations.some(p=>{const dx=x-p.x,dz=z-p.z;return Math.abs(dx*Math.cos(p.angle)-dz*Math.sin(p.angle))<p.w/2&&Math.abs(dx*Math.sin(p.angle)+dz*Math.cos(p.angle))<p.d/2;});}
+// Index segment bounds once; exact distances still decide reservations.
+const railCells=new Map<string,{ax:number;az:number;dx:number;dz:number;l2:number}[]>(),railCellSize=16;
+for(const {points}of corridorSamples)for(let i=1;i<points.length;i++){
+ const a=points[i-1],b=points[i],segment={ax:a.x,az:a.z,dx:b.x-a.x,dz:b.z-a.z,l2:(b.x-a.x)**2+(b.z-a.z)**2||1};
+ for(let x=Math.floor(Math.min(a.x,b.x)/railCellSize);x<=Math.floor(Math.max(a.x,b.x)/railCellSize);x++)for(let z=Math.floor(Math.min(a.z,b.z)/railCellSize);z<=Math.floor(Math.max(a.z,b.z)/railCellSize);z++){const key=x+','+z;if(!railCells.has(key))railCells.set(key,[]);railCells.get(key)!.push(segment);}
+}
+function nearRail(x:number,z:number,margin:number){
+ if(!Number.isFinite(margin))return railClearance(x,z)<margin;
+ for(let cx=Math.floor((x-margin)/railCellSize);cx<=Math.floor((x+margin)/railCellSize);cx++)for(let cz=Math.floor((z-margin)/railCellSize);cz<=Math.floor((z+margin)/railCellSize);cz++)for(const s of railCells.get(cx+','+cz)??[]){const t=THREE.MathUtils.clamp(((x-s.ax)*s.dx+(z-s.az)*s.dz)/s.l2,0,1);if((x-s.ax-s.dx*t)**2+(z-s.az-s.dz*t)**2<margin*margin)return true;}return false;
+}
+export function inRailReservation(x:number,z:number,margin=4.3){return (margin>0&&nearRail(x,z,margin))||stationReservations.some(p=>{const dx=x-p.x,dz=z-p.z;return Math.abs(dx*Math.cos(p.angle)-dz*Math.sin(p.angle))<p.w/2&&Math.abs(dx*Math.sin(p.angle)+dz*Math.cos(p.angle))<p.d/2;});}

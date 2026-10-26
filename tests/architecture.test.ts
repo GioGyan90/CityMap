@@ -800,3 +800,12 @@ test('parked ambulance has a continuous supported approach from the hospital pla
  const floors=[...reference.children.slice(0,2),court.getObjectByName('entrance-ramp')!,court.getObjectByName('ambulance-apron')!,drive.getObjectByName('continuous-hospital-drive-surface')!];world.updateMatrixWorld(true);let previous:number|undefined;
  for(let i=0;i<=100;i++){const z=-49.18+(49.18-27)*i/100,x=hospitalExitPose(0).position.x,ray=new THREE.Raycaster(new THREE.Vector3(x,15,z),new THREE.Vector3(0,-1,0)),hits=ray.intersectObjects(floors,true);assert.ok(hits.length,'unsupported ambulance approach at '+z);if(previous!==undefined)assert.ok(Math.abs(hits[0].point.y-previous)<.18,'abrupt platform/driveway step');previous=hits[0].point.y;}
 });
+
+test('indexed railway reservations match exhaustive segment distances at multiple margins',async()=>{
+ const {inRailReservation,railClearance,railStationReservations}=await import('../src/railNetworkPlan');
+ const stations=railStationReservations();
+ for(let z=-185;z<=150;z+=7.3)for(let x=-88;x<=230;x+=9.1)for(const margin of [.25,4.3,10,30]){
+  const station=stations.some(p=>{const dx=x-p.x,dz=z-p.z;return Math.abs(dx*Math.cos(p.angle)-dz*Math.sin(p.angle))<p.w/2&&Math.abs(dx*Math.sin(p.angle)+dz*Math.cos(p.angle))<p.d/2;});
+  assert.equal(inRailReservation(x,z,margin),railClearance(x,z)<margin||station,`reservation at ${x},${z}, margin ${margin}`);
+ }
+});
