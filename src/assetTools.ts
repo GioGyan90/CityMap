@@ -1,3 +1,5 @@
+import {createPoliceStation,POLICE_STATION_PARTS} from './policeStation';
+import {createPoliceCar,createPoliceBadge,POLICE_CAR_TITLES,POLICE_CAR_PARTS} from './policeAssets';
 import {createCommercialDistrict} from './commercialDistrict';
 import {createJunctionSample} from './roadJunctions';
 import {createWorkboat,WORKBOAT_KINDS,WORKBOAT_TITLES} from './workboats';
@@ -43,6 +45,7 @@ export function initAssetTools(){
  for(const [id,title]of [['hospital','医院康复庭院'],['campus','学院学习庭院']] as const){const source=world.getObjectByName(id+'-courtyard');if(source){items.push({id:id+'-courtyard',title,source});for(const part of source.children)items.push({id:id+'-courtyard-part-'+source.children.indexOf(part),title:title+' · '+part.name,source:part});}}
  for(const [id,title]of [['tee','丁字路口'],['cross','十字路口'],['gateway','建筑入口接人行道'],['hill-fork','山坡分岔']] as const)items.push({id:'junction-'+id,title:'道路接头 · '+title,source:createJunctionSample(id)});
  const commercialParts=createCommercialDistrict(false,true);for(const part of commercialParts.children)items.push({id:'commercial-'+part.name,title:'商业区 · '+part.name,source:part});
+ const policeParts=createPoliceStation();for(const part of policeParts.children)items.push({id:'police-part-'+part.name,title:'警局分区 · '+(POLICE_STATION_PARTS[part.name]??part.name),source:part});for(const kind of ['short','long'] as const){const car=createPoliceCar(kind);items.push({id:'police-car-'+kind,title:POLICE_CAR_TITLES[kind],source:car});for(const part of car.children)items.push({id:'police-car-'+kind+'-'+part.name,title:POLICE_CAR_TITLES[kind]+' · '+(POLICE_CAR_PARTS[part.name]??part.name),source:part});}items.push({id:'police-badge',title:'警局原件 · 盾徽',source:createPoliceBadge()});
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const plan of RAIL_PLANS){items.push({id:plan.id+'-train-kit',title:plan.name+' · 完整编组',source:createRailTrain(plan)});items.push({id:plan.id+'-cab-kit',title:plan.name+' · 车头原件',source:createRailCar(plan,0)});items.push({id:plan.id+'-coach-kit',title:plan.name+' · 客车原件',source:createRailCar(plan,1)});}

@@ -1,3 +1,5 @@
+import {createPoliceStation} from './policeStation';
+import {buildPoliceAccess} from './policeAccess';
 import {buildCommercialAccess} from './commercialAccess';
 import {createCommercialDistrict} from './commercialDistrict';
 import {buildHospitalDrive} from './hospitalDrive';
@@ -51,6 +53,7 @@ registerSpecial('hospital','医院学院区','蓝白医院与屋顶停机坪',[3
 registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
   referenceHotel(-20,32);
 });
+const police=createPoliceStation(true);world.add(police);registerGroup('police','港湾警察署','三层警署、独立公众入口、双车棚与长短两款警车',police,[0,0],[15.5,16,28]);
 registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
 for(const t of HALL_THEMES){const hall=createThemedHall(t.theme);world.add(hall);registerGroup(t.id,t.name,t.description,hall,[0,0],[18,14,22]);}
 const beachMarket=createBeachFishMarket();world.add(beachMarket);registerGroup('fishmarket','码头鱼市','木屋、帆布鱼摊、竹筐、木板桌与小渔船码头',beachMarket,[0,0],[24,12,42]);
@@ -93,7 +96,7 @@ buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
-buildCommercialAccess();
+buildCommercialAccess();buildPoliceAccess();
 buildSiteDetails();buildFacilityCourtyards();buildHospitalDrive();buildSiteAccess();
 buildTransport();
 buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();if(!world.userData.deferClouds)buildClouds();

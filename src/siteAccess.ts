@@ -7,7 +7,7 @@ import {parkingAccessPaths} from './parking';
 import {world} from './scene';
 import {toon} from './materials';
 import {gridCell} from './mapCoordinates';
-export const SITE_GATES=[{id:'hospital',x:133,z:-10},{id:'campus',x:142,z:81},{id:'civic',x:60,z:39.5},{id:'market',x:-9,z:36},{id:'hotel',x:-12,z:162.5},{id:'cafe',x:93,z:139.5},{id:'park',x:-13,z:-77.2},{id:'restaurant',x:126.8,z:140}];
+export const SITE_GATES=[{id:'hospital',x:133,z:-10},{id:'campus',x:142,z:81},{id:'civic',x:60,z:39.5},{id:'market',x:-9,z:36},{id:'hotel',x:-17,z:155.2},{id:'cafe',x:93,z:139.5},{id:'park',x:-13,z:-77.2},{id:'restaurant',x:126.8,z:140}];
 type Point=[number,number];
 export function planSiteAccess(gate:typeof SITE_GATES[number]){
  const road=nearestRoad(gate.x,gate.z),length=Math.hypot(gate.x-road.x,gate.z-road.z),n=new THREE.Vector2(gate.x-road.x,gate.z-road.z).normalize();
@@ -40,8 +40,8 @@ export function buildSiteAccess(){
   paintGroundPath(plan.points,plan.width,'walk');paintGroundPath(plan.points.slice(0,2),3,'walk');
   for(let i=1;i<plan.points.length;i++)parkingAccessPaths.push({points:[plan.points[i-1],plan.points[i]],width:plan.width});
   // Short grounded threshold wedge removes the small raised forecourt curb at the gate.
-  if(['hospital','campus','restaurant'].includes(gate.id)&&plan.points.length>1){
-   const a=new THREE.Vector3(gate.x,surfaceHeight(gate.x,gate.z)+(gate.id==='restaurant'?.315:.18),gate.z),b=new THREE.Vector3(plan.points[1][0],0,plan.points[1][1]),direction=b.clone().sub(a);direction.y=0;direction.normalize();b.copy(a).addScaledVector(direction,3);b.y=surfaceHeight(b.x,b.z)+.025;
+  if(['hospital','campus','restaurant','hotel'].includes(gate.id)&&plan.points.length>1){
+   const a=new THREE.Vector3(gate.x,gate.id==='hotel'?ZONES.hotel.level!+.67*1.15+.005:surfaceHeight(gate.x,gate.z)+(gate.id==='restaurant'?.315:.18),gate.z),b=new THREE.Vector3(plan.points[1][0],0,plan.points[1][1]),direction=b.clone().sub(a);direction.y=0;direction.normalize();b.copy(a).addScaledVector(direction,3);b.y=surfaceHeight(b.x,b.z)+.025;
    const right=new THREE.Vector3(-direction.z,0,direction.x).multiplyScalar(1.3),p=[a.clone().add(right),a.clone().sub(right),b.clone().add(right),b.clone().sub(right)],verts:number[]=[];
    for(const [i,j,k]of [[0,2,1],[1,2,3]])for(const id of [i,j,k])verts.push(...p[id].toArray());
    for(const [i,j]of [[0,1],[1,3],[3,2],[2,0]]){const low=(v:THREE.Vector3)=>new THREE.Vector3(v.x,surfaceHeight(v.x,v.z)-.08,v.z);for(const v of [p[i],p[j],low(p[j]),p[i],low(p[j]),low(p[i])])verts.push(...v.toArray());}

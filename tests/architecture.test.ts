@@ -906,3 +906,14 @@ test('streamed geometry batching matches legacy transforms and colours without m
  }
  parts.forEach((p,i)=>assert.deepEqual(Array.from(p.mesh.geometry.attributes.position.array),before[i]));
 });
+
+test('police precinct keeps its long van under the canopy and leaves a real driveway and public path',async()=>{
+ const {createPoliceStation}=await import('../src/policeStation'),{createPoliceCar}=await import('../src/policeAssets'),{specialBuildings}=await import('../src/specialBuildings'),{ZONES}=await import('../src/layout'),{nearestRoad}=await import('../src/roadNetwork');
+ const root=createPoliceStation();root.updateMatrixWorld(true);const cars=root.getObjectByName('06-short-and-long-police-cars')!.children.map(c=>new THREE.Box3().setFromObject(c));assert.equal(cars.length,2);assert.ok(cars[1].getSize(new THREE.Vector3()).z>cars[0].getSize(new THREE.Vector3()).z+1,'long car has its own longer chassis');assert.ok(cars[1].max.y<3.39,'long van and antenna clear the canopy');assert.ok(cars.every(b=>Math.abs(b.min.y-.3)<1e-5),'wheels rest on the parking apron');
+ const aisle=new THREE.Box3(new THREE.Vector3(-5.5,.4,7.75),new THREE.Vector3(7.7,3.24,13.2)),walk=new THREE.Box3(new THREE.Vector3(-7.35,.4,0),new THREE.Vector3(-6.05,2.5,13.2));root.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const b=new THREE.Box3().setFromObject(o);assert.equal(b.intersectsBox(aisle),false,'parking aisle obstructed by '+o.name);assert.equal(b.intersectsBox(walk),false,'public footpath obstructed by '+o.name);});
+ const van=createPoliceCar('long');assert.equal(van.getObjectsByProperty('name','medical-cross').length,0);assert.equal(van.getObjectsByProperty('name','ambulance-stripe').length,0);
+ const placed=specialBuildings.find(s=>s.id==='police')!;placed.group.updateMatrixWorld(true);for(const corner of [[-7.75,-14],[-7.75,14],[7.75,-14],[7.75,14]]){const x=ZONES.police.x+corner[0],z=ZONES.police.z+corner[1],r=nearestRoad(x,z);assert.ok(r.distance>r.width/2,'station footprint enters a driving lane');}
+ const drive=world.getObjectByName('police-station-driveway')!;let faces=0;drive.traverse(o=>{if(o instanceof THREE.Mesh){const n=o.geometry.attributes.normal;for(let i=0;i<n.count;i++){assert.ok(n.getY(i)>.8,'driveway faces point up');faces++;}}});assert.ok(faces>=12);const end=drive.userData.end,r=nearestRoad(end[0],end[2]);assert.ok(Math.abs(r.distance-r.width/2-.05)<.06,'driveway meets the actual curb without raising the public traffic lanes');
+ const smaller=ZONES.hotel.sx*ZONES.hotel.sz/(1.8*1.7);assert.ok(smaller<.72&&smaller>.66,'hotel horizontal area reduced about thirty percent');
+ const batched=createPoliceStation(true),a=new THREE.Box3().setFromObject(root),b=new THREE.Box3().setFromObject(batched);assert.ok(a.min.distanceTo(b.min)<1e-4&&a.max.distanceTo(b.max)<1e-4);
+});

@@ -29,7 +29,7 @@ export function referenceHotel(cx:number,cz:number){
  // Fountain and gardens stay within the clipped plaza, away from the corner surrendered to traffic.
  k.mesh(new THREE.CylinderGeometry(2.2,2.4,.45,24),C.cream,-5.4,.9,6.2);k.mesh(new THREE.CylinderGeometry(1.95,1.95,.15,24),0x36b7d1,-5.4,1.17,6.2);
  k.mesh(new THREE.CylinderGeometry(.27,.5,2.1,12),C.white,-5.4,2.1,6.2);k.mesh(new THREE.CylinderGeometry(1.15,.55,.35,20),C.white,-5.4,2.75,6.2);k.ball(.32,0x65d9ef,-5.4,3.55,6.2);
- garden(root,7.8,6.6,2.5);garden(root,-10,-6,1.7);palm(root,-11,-8);palm(root,11,-6);palm(root,10,3,5.8);
+ garden(root,7.8,6.6,2.5);garden(root,-10,-6,1.7);palm(root,-11,-8);palm(root,9,-7);palm(root,10,3,5.8);
  return root;
 }
 export function referenceHospital(cx:number,cz:number){
