@@ -1,0 +1,3 @@
+/** Widths in world metres. Vehicle lane envelopes remain unchanged. */
+export const ROAD_DESIGN={sidewalk:1.8,curb:.22,promenade:3.4,privateDrive:3.6,footpath:2.4,entryApron:4.2,maxPublicGrade:.14,maxPrivateGrade:.14};
+export const ROAD_STYLES=[{kind:'boulevard',width:9,pattern:'blue-grey asphalt, dashed warm-white centre'},{kind:'arterial',width:8,pattern:'asphalt and continuous sidewalk'},{kind:'urban',width:6,pattern:'asphalt, junction clear zones'},{kind:'local',width:5,pattern:'narrow asphalt'},{kind:'private',width:3.6,pattern:'warm stone border and asphalt'},{kind:'walk',width:2.4,pattern:'staggered 1.25 m paving joints'}];

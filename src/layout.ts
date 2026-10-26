@@ -13,7 +13,7 @@ export function isLand(x:number,z:number){return z>=-200&&z<=202&&x>=westCoast(z
 export interface Zone {x:number;z:number;w:number;d:number;sx:number;sz:number;level?:number;ry?:number}
 export const ZONES:Record<string,Zone>={
  cargo:{...HARBOR_SITES.cargo,sx:1,sz:1,level:1.06},passenger:{...HARBOR_SITES.passenger,sx:1,sz:1,level:1.06},
- villa:{x:256,z:25,w:20,d:24,sx:1,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
+ villa:{x:254.5,z:25,w:17,d:24,sx:.85,sz:1},lighthouse:{x:254,z:50,w:16,d:16,sx:1,sz:1},
  park:{x:-13,z:-91.4,w:36,d:36,sx:1.15,sz:1.15,level:3.5974665423},market:{x:-9,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-13,z:57,w:24,d:28,sx:1.25,sz:1.25},
  fishmarket:{x:-82,z:57,w:20,d:24,sx:1,sz:1,level:.51,ry:Math.PI/2},
  hall1:{x:-16,z:-20,w:24,d:24,sx:1,sz:1},hall3:{x:41,z:-130,w:20,d:24,sx:1,sz:1},

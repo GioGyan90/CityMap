@@ -722,3 +722,27 @@ test('facility courtyard routes and hospital landing stay clear and connected',a
   }
  }
 });
+
+test('graded public and private roads limit slopes and private access retains real terrain contact',async()=>{
+ const {roadProfiles,hillApproaches}=await import('../src/roadNetwork');const {isLand}=await import('../src/layout');
+ const grades:Record<string,number>={};
+ for(const r of [...roadProfiles,...hillApproaches]){const p=r.curve.getSpacedPoints(Math.ceil(r.curve.getLength()*3));let max=0;for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i];max=Math.max(max,Math.abs(b.y-a.y)/Math.hypot(b.x-a.x,b.z-a.z));}grades[r.id]=max;assert.ok(max<.145,r.id+' grade '+max);}
+ for(const r of hillApproaches){assert.ok(r.curve.getLength()>40);const pts=r.curve.getSpacedPoints(150);for(const p of pts){assert.ok(isLand(p.x,p.z),'access must remain on land');for(const side of [-1,1]){const t=r.curve.getTangentAt(pts.indexOf(p)/(pts.length-1)),n=new THREE.Vector3(-t.z,0,t.x).normalize().multiplyScalar(side*(r.width/2+.25));assert.ok(isLand(p.x+n.x,p.z+n.z),'full private road clears shoreline');}assert.ok(Math.abs(surfaceHeight(p.x,p.z)-p.y)<.45,'hill access follows the graded ground');}}
+ console.log({roadGrades:grades});
+});
+test('landmark gates have continuous reserved walks ending at sidewalks',async()=>{
+ const {SITE_GATES}=await import('../src/siteAccess'),{nearestRoad}=await import('../src/roadNetwork');const plans=world.userData.siteAccess;assert.equal(plans.length,SITE_GATES.length);
+ for(const plan of plans){assert.equal(plan.rejected,false,plan.id+' gate disconnected');assert.ok(plan.points.length>=2);const end=plan.points.at(-1),r=nearestRoad(...end);assert.ok(r.distance>=r.width/2&&r.distance<=r.width/2+2,'walk terminates at the actual sidewalk');for(const p of plan.points)assert.ok(p.every(Number.isFinite));}
+});
+test('packed cloud bytes preserve the procedural density exactly and use one GPU channel',async()=>{
+ const {readFileSync}=await import('node:fs'),{gunzipSync}=await import('node:zlib'),{cloudAssembly,cloudDensityAtlas,cloudDensityPixels,installPackedCloudDensity}=await import('../src/cloudModel');
+ const packed=readFileSync('public/cache/cloud-density-v1.bin'),raw=gunzipSync(packed);assert.ok(packed.length<raw.length*.12);installPackedCloudDensity(raw);
+ for(const i of [0,5,11]){const seed=83017+i*193,kind=i<4?'towering':i<9?'broken':'veil',lobes=cloudAssembly(kind,seed),a=cloudDensityAtlas(lobes,seed),b=cloudDensityPixels(lobes,seed);assert.equal(b.data.length,a.data.length/4);for(let j=0;j<b.data.length;j++)assert.equal(b.data[j],a.data[j*4]);}
+});
+
+
+test('junction anchors share elevations and private roads avoid steep terrain stair steps',async()=>{
+ const {junctionAnchors,roadProfiles,hillApproaches}=await import('../src/roadNetwork');
+ for(const n of junctionAnchors){const values=roadProfiles.filter(r=>n.roads.includes(r.id)).map(r=>r.curve.getPoint(r.points.findIndex(p=>Math.hypot(p[0]-n.x,p[1]-n.z)<.1)/(r.points.length-1)).y);assert.ok(Math.max(...values)-Math.min(...values)<.015,'junction height agrees');}
+ for(const road of hillApproaches){const p=road.curve.getSpacedPoints(1000);let max=0;for(let i=1;i<p.length;i++)max=Math.max(max,Math.abs(surfaceHeight(p[i].x,p[i].z)-surfaceHeight(p[i-1].x,p[i-1].z))/Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z));assert.ok(max<.22,'actual terrain grade '+road.id+' '+max);}
+});

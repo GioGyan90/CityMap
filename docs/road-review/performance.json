@@ -1,0 +1,70 @@
+{
+  "baseline": [
+    {
+      "milliseconds": {
+        "environment": 422.45546100000007,
+        "city": 7291.345977
+      },
+      "meshes": 5546,
+      "triangles": 1493389,
+      "homes": 61,
+      "greening": {
+        "trees": 283,
+        "palms": 8,
+        "shrubs": 108,
+        "grass": 151,
+        "batches": 17
+      }
+    },
+    {
+      "milliseconds": {
+        "environment": 389.04202200000003,
+        "city": 6773.626824
+      },
+      "meshes": 5546,
+      "triangles": 1493389,
+      "homes": 61,
+      "greening": {
+        "trees": 283,
+        "palms": 8,
+        "shrubs": 108,
+        "grass": 151,
+        "batches": 17
+      }
+    }
+  ],
+  "optimized": [
+    {
+      "milliseconds": {
+        "environment": 463.53331599999996,
+        "city": 5613.808765000001
+      },
+      "meshes": 5734,
+      "triangles": 1484687,
+      "homes": 58,
+      "greening": {
+        "trees": 307,
+        "palms": 8,
+        "shrubs": 118,
+        "grass": 148,
+        "batches": 17
+      }
+    },
+    {
+      "milliseconds": {
+        "environment": 491.68326899999994,
+        "city": 5713.338677
+      },
+      "meshes": 5734,
+      "triangles": 1484687,
+      "homes": 58,
+      "greening": {
+        "trees": 307,
+        "palms": 8,
+        "shrubs": 118,
+        "grass": 148,
+        "batches": 17
+      }
+    }
+  ]
+}

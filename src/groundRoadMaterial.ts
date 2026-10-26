@@ -1,8 +1,9 @@
+import {ROAD_DESIGN} from './roadDesign';
 import {tunnelPortals} from './tunnelPlan';
 import * as THREE from 'three';
 import {attachCloudShadows} from './cloudShadows';
 import {toon} from './materials';
-import {roadProfiles,promenadeCurve} from './roadNetwork';
+import {roadProfiles,promenadeCurve,hillApproaches,nearestRoad,junctionAnchors} from './roadNetwork';
 const bounds={x:-130,z:-220,w:470,d:470},resolution=3072;
 const canvas=document.createElement('canvas');canvas.width=canvas.height=resolution;
 const ctx=canvas.getContext('2d')!;ctx.fillStyle='#000';ctx.fillRect(0,0,resolution,resolution);
@@ -12,11 +13,17 @@ function path(curve:THREE.Curve<THREE.Vector3>,width:number,color:string){
  ctx.beginPath();curve.getSpacedPoints(Math.ceil(curve.getLength())).forEach((p,i)=>{const [x,y]=project(p.x,p.z);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
  ctx.strokeStyle=color;ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
 }
+function anchor(x:number,z:number,radius:number,color:string){const p=project(x,z);ctx.beginPath();ctx.arc(p[0],p[1],radius/bounds.w*resolution,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
 // All sidewalks first, then the complete asphalt network: junctions have one surface.
-path(promenadeCurve,3.4,'#00ff00');for(const road of roadProfiles)path(road.curve,road.width+3,'#00ff00');
+path(promenadeCurve,3.4,'#00ff00');for(const road of roadProfiles)path(road.curve,road.width+2*ROAD_DESIGN.sidewalk,'#00ff00');
+for(const road of hillApproaches)path(road.curve,road.width+.7,'#00ff00');
+for(const node of junctionAnchors)anchor(node.x,node.z,node.radius+ROAD_DESIGN.sidewalk,'#00ff00');
 for(const road of roadProfiles)path(road.curve,road.width,'#ff0000');
+for(const road of hillApproaches)path(road.curve,road.width,road.id==='villa'?'#ff0000':'#00ff00');
+for(const node of junctionAnchors)anchor(node.x,node.z,node.radius,'#ff0000');
+const markSamples=roadProfiles.map(r=>r.curve.getSpacedPoints(Math.ceil(r.curve.getLength()/3)));
 for(const road of roadProfiles){const count=Math.floor(road.curve.getLength()/7);for(let i=0;i<count;i++){
- const t=(i+.5)/count,p=road.curve.getPointAt(t),v=road.curve.getTangentAt(t);const [x,y]=project(p.x,p.z);
+ const t=(i+.5)/count,p=road.curve.getPointAt(t),v=road.curve.getTangentAt(t);if(junctionAnchors.some(n=>Math.hypot(n.x-p.x,n.z-p.z)<n.radius+3)||roadProfiles.some(other=>other!==road&&markSamples[roadProfiles.indexOf(other)].some(q=>Math.hypot(q.x-p.x,q.z-p.z)<other.width/2+3)))continue;const [x,y]=project(p.x,p.z);
  ctx.save();ctx.translate(x,y);ctx.rotate(-Math.atan2(v.x,v.z));ctx.fillStyle='#0000ff';ctx.fillRect(-.13/bounds.w*resolution,-1.2/bounds.d*resolution,.26/bounds.w*resolution,2.4/bounds.d*resolution);ctx.restore();
 }}
 // Rounded outdoor stroke caps must not paint asphalt on the ridge behind a mouth.
@@ -34,14 +41,26 @@ export function createGroundMaterial(){
   shader.fragmentShader='varying vec2 roadUv;uniform sampler2D roadMask;uniform vec3 asphaltColor;uniform vec3 walkColor;uniform vec3 lineColor;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
    vec3 road=texture2D(roadMask,roadUv).rgb;
-   diffuseColor.rgb=diffuseColor.rgb*(1.-clamp(road.r+road.g+road.b,0.,1.))+asphaltColor*road.r+walkColor*road.g+lineColor*road.b;`);
+   vec2 paving=(roadUv*vec2(470.,-470.))/1.25;
+   paving.x+=mod(floor(paving.y),2.)*.5;vec2 tile=fract(paving);
+   float joint=1.-smoothstep(.025,.05,min(min(tile.x,1.-tile.x),min(tile.y,1.-tile.y)));
+   vec3 walk=walkColor*(1.-joint*.12);float grain=fract(sin(dot(floor(roadUv*470.*8.),vec2(12.9898,78.233)))*43758.5453);
+   diffuseColor.rgb=diffuseColor.rgb*(1.-clamp(road.r+road.g+road.b,0.,1.))+asphaltColor*(.98+.035*grain)*road.r+walk*road.g+lineColor*road.b;`);
   attachCloudShadows(shader);
  };
  material.customProgramCacheKey=()=> 'shared-terrain-roads-v1';return material;
 }
 
+/** Round joins form continuous anchor strokes. Walks terminate outside the drivable asphalt. */
 export function paintGroundPath(points:[number,number][],width:number,color:'asphalt'|'walk'|'line'){
- ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x,z);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap='butt';ctx.strokeStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.stroke();texture.needsUpdate=true;
+ const stroke=(values:[number,number][])=>{if(values.length<2)return;ctx.beginPath();values.forEach(([x,z],i)=>{const p=project(x,z);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap=ctx.lineJoin='round';ctx.strokeStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.stroke();};
+ if(color!=='walk')stroke(points);else{
+  let run:[number,number][]=[];
+  for(let j=1;j<points.length;j++){const a=points[j-1],b=points[j],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/.3));for(let i=0;i<=n;i++){
+   const t=i/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t,r=nearestRoad(x,z);
+   if(r.distance>=r.width/2+width/2-.12&&junctionAnchors.every(n=>Math.hypot(n.x-x,n.z-z)>=n.radius+width/2-.12))run.push([x,z]);else{stroke(run);run=[];}
+  }}stroke(run);
+ }texture.needsUpdate=true;
 }
 
 export function paintGroundPolygon(points:[number,number][],color:'asphalt'|'walk'|'line'){

@@ -16,23 +16,26 @@ export function polygonArea(ring:Point[]){return Math.abs(ring.reduce((s,p,i)=>{
 export function inside(ring:Point[],x:number,z:number){let yes=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;}
 export function edgeDistance(ring:Point[],x:number,z:number){let best=Infinity;for(let i=1;i<ring.length;i++){const a=ring[i-1],b=ring[i],dx=b[0]-a[0],dz=b[1]-a[1],t=THREE.MathUtils.clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);best=Math.min(best,Math.hypot(x-a[0]-dx*t,z-a[1]-dz*t));}return best;}
 function strip(curve:THREE.Curve<THREE.Vector3>,width:number):Poly{const n=Math.ceil(curve.getLength()/2),sides=[-1,1].map(side=>Array.from({length:n+1},(_,i)=>{const p=curve.getPointAt(i/n),v=curve.getTangentAt(i/n),l=Math.hypot(v.x,v.z);return [p.x-v.z/l*width/2*side,p.z+v.x/l*width/2*side] as Point;}));const ring=[...sides[0],...sides[1].reverse()];ring.push(ring[0]);return [ring];}
+const connectionCells=new Map<string,{r:typeof roadProfiles[number];p:THREE.Vector3}[]>();
+for(const r of roadProfiles)for(const p of r.curve.getSpacedPoints(Math.ceil(r.curve.getLength()/2))){for(let x=Math.floor((p.x-12)/16);x<=Math.floor((p.x+12)/16);x++)for(let z=Math.floor((p.z-12)/16);z<=Math.floor((p.z+12)/16);z++){const k=x+','+z;if(!connectionCells.has(k))connectionCells.set(k,[]);connectionCells.get(k)!.push({r,p});}}
 function roadConnection(gate:Point,ring:Point[],occupied:Poly[]){let best:{road:Point;distance:number}|undefined;
- for(const r of roadProfiles){for(const p of r.curve.getSpacedPoints(Math.ceil(r.curve.getLength()/2))){const distance=Math.hypot(p.x-gate[0],p.z-gate[1]);if(distance>12||distance<r.width/2+1||best&&distance>=best.distance)continue;
+ for(const {r,p} of connectionCells.get(Math.floor(gate[0]/16)+','+Math.floor(gate[1]/16))??[]){const distance=Math.hypot(p.x-gate[0],p.z-gate[1]);if(distance>12||distance<r.width/2+1||best&&distance>=best.distance)continue;
   const dx=(p.x-gate[0])/distance,dz=(p.z-gate[1])/distance,end:Point=[p.x-dx*(r.width/2+.7),p.z-dz*(r.width/2+.7)];let clear=true;
   for(let k=1;k<=12;k++){const t=k/12,x=gate[0]+(end[0]-gate[0])*t,z=gate[1]+(end[1]-gate[1])*t;if(!isLand(x,z)||railCorridor(x,z)||occupied.some(poly=>inside(poly[0],x,z))||Object.values(ZONES).some(s=>Math.abs(x-s.x)<s.w/2+1&&Math.abs(z-s.z)<s.d/2+1)){clear=false;break;}}
   if(clear&&Math.abs(surfaceHeight(...gate)-surfaceHeight(...end))<1.2)best={road:end,distance};
- }}return best?.road;
+ }return best?.road;
 }
 export function planResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
  const obstacles:Poly[]=[rectangle(STATION_RESERVATION.x,STATION_RESERVATION.z,STATION_RESERVATION.w,STATION_RESERVATION.d),...roadProfiles.map(r=>strip(r.curve,r.width+4.8)),...Object.values(ZONES).map(s=>rectangle(s.x,s.z,s.w+6,s.d+6)),...occupied.map(s=>rectangle(s.x,s.z,s.w+3,s.d+3))];
  for(const plan of RAIL_PLANS)obstacles.push(strip(railCircuit(plan),10));
  for(const path of parkingAccessPaths){const [a,b]=path.points;obstacles.push(strip(new THREE.LineCurve3(new THREE.Vector3(a[0],0,a[1]),new THREE.Vector3(b[0],0,b[1])),path.width+3));}
  for(const [x,z] of [[42,-82],[89,-92],[42,70],[105,101]])obstacles.push(rectangle(x,z,14,5));
+ const obstacleBounds=obstacles.map(p=>{const points=p.flat();return {p,minX:Math.min(...points.map(q=>q[0])),maxX:Math.max(...points.map(q=>q[0])),minZ:Math.min(...points.map(q=>q[1])),maxZ:Math.max(...points.map(q=>q[1]))};});
  const results:CourtPlan[]=[],used:Poly[]=[];
  // Forty-metre neighbourhood cells align with the existing twenty-metre planning grid.
  const candidates:Point[]=[];for(let z=-120;z<=180;z+=20)for(let x=-20;x<=220;x+=20)candidates.push([x,z]);
  for(const [cx,cz] of candidates){if(results.length>=22)break;
-  const clips=polygonClipping.difference(rectangle(cx,cz,42,40) as any,...[...obstacles,...used].map(p=>p as any));
+  const clips=polygonClipping.difference(rectangle(cx,cz,42,40) as any,...[...obstacleBounds.filter(b=>b.maxX>=cx-21&&b.minX<=cx+21&&b.maxZ>=cz-20&&b.minZ<=cz+20).map(b=>b.p),...used].map(p=>p as any));
   for(const polygon of clips){if(polygon.length!==1)continue;const ring=polygon[0] as Point[],area=polygonArea(ring);if(area<290||ring.some(([x,z])=>!isLand(x,z)))continue;
    const minX=Math.min(...ring.map(p=>p[0])),maxX=Math.max(...ring.map(p=>p[0])),minZ=Math.min(...ring.map(p=>p[1])),maxZ=Math.max(...ring.map(p=>p[1]));
    const open:Point[]=[];for(let z=minZ+3;z<maxZ-3;z+=2)for(let x=minX+3;x<maxX-3;x+=2)if(inside(ring,x,z)&&edgeDistance(ring,x,z)>3.4)open.push([x,z]);

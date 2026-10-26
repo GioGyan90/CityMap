@@ -79,7 +79,7 @@ export function initAssetTools(){
  <div class="asset-row"><label><input type="checkbox" id="asset-grid">20 米网格</label><button id="asset-top-map">地图俯视</button></div>
  <output id="asset-coord">打开网格后，点击地图选取位置。</output><input id="asset-note" placeholder="给选取的位置写备注"><button id="asset-add-note">记录选取的位置</button><div id="asset-notes"></div>
  <div class="asset-row"><button id="asset-export">导出布局 JSON</button><button id="asset-import">导入草稿</button><button id="asset-reset">恢复原始位置</button></div><input type="file" id="asset-file" accept="application/json" hidden><output id="asset-status" role="status"></output>`;
- document.body.appendChild(panel);const launch=document.createElement('button');launch.className='asset-launch';launch.textContent='资产查看 / 网格规划';document.body.appendChild(launch);
+ document.body.appendChild(panel);const launch=(document.getElementById('asset-lazy-launch') as HTMLButtonElement)??document.createElement('button');launch.className='asset-launch';launch.textContent='资产查看 / 网格规划';document.body.appendChild(launch);
  const el=<T extends HTMLElement>(id:string)=>panel.querySelector<T>('#asset-'+id)!;
  const select=el<HTMLSelectElement>('select'),status=el<HTMLOutputElement>('status');
  const original=new Map(specialBuildings.map(s=>[s.id,s.group.position.clone()]));

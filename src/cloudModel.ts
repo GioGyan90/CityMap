@@ -55,3 +55,15 @@ export function cloudDensityAtlas(lobes:CloudLobe[],seed:number){
  }
  return {data,width,height,size};
 }
+
+const packedDensity=new Map<string,Uint8Array>();
+const densityKey=(lobes:CloudLobe[],seed:number)=>seed+':'+JSON.stringify(lobes);
+export function installPackedCloudDensity(data:Uint8Array){
+ if(data.length!==12*48**3)throw Error('Invalid cloud density cache length');
+ for(let i=0;i<12;i++){const kind:CloudKind=i<4?'towering':i<9?'broken':'veil',seed=83017+i*193;packedDensity.set(densityKey(cloudAssembly(kind,seed),seed),data.subarray(i*48**3,(i+1)*48**3));}
+}
+/** Single-channel GPU texture preserves the original sampled red density byte-for-byte. */
+export function cloudDensityPixels(lobes:CloudLobe[],seed:number){
+ const key=densityKey(lobes,seed);if(!packedDensity.has(key)){const atlas=cloudDensityAtlas(lobes,seed),data=new Uint8Array(48**3);for(let i=0;i<data.length;i++)data[i]=atlas.data[i*4];packedDensity.set(key,data);}
+ return {data:packedDensity.get(key)!,width:384,height:288,size:48};
+}
