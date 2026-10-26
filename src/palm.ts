@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {mergeGeometryBatch,type GeometryBatchPart} from './geometryBatch';
 import {toon} from './materials';
 import {seededRandom,circularProfile,sweepProfile,cutLeafGeometry} from './proceduralGeometry';
 
@@ -62,9 +62,9 @@ export function createPalm(options:PalmOptions={}){
 
 /** Bake vertex colors once per variant; every placed palm then shares this geometry. */
 export function bakePalm(tree:THREE.Group){
- const parts:THREE.BufferGeometry[]=[];tree.updateWorldMatrix(true,true);const inverse=tree.matrixWorld.clone().invert();
- tree.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(inverse.clone().multiply(o.matrixWorld));const color=(o.material as THREE.MeshToonMaterial).color,colors=new Float32Array(g.attributes.position.count*3);for(let i=0;i<colors.length;i+=3){const existing=g.attributes.color,vertex=(o.material as THREE.MeshToonMaterial).vertexColors&&existing;colors[i]=color.r*(vertex?existing.getX(i/3):1);colors[i+1]=color.g*(vertex?existing.getY(i/3):1);colors[i+2]=color.b*(vertex?existing.getZ(i/3):1);}g.setAttribute('color',new THREE.BufferAttribute(colors,3));g.deleteAttribute('uv');parts.push(g);});
- const result=mergeGeometries(parts,false)!;parts.forEach(g=>g.dispose());result.computeBoundingBox();result.computeBoundingSphere();return result;
+ const parts:GeometryBatchPart[]=[];tree.updateWorldMatrix(true,true);const inverse=tree.matrixWorld.clone().invert();
+ tree.traverse(o=>{if(o instanceof THREE.Mesh)parts.push({mesh:o,matrix:inverse.clone().multiply(o.matrixWorld),count:o.geometry.index?.count??o.geometry.attributes.position.count});});
+ const result=mergeGeometryBatch(parts,false,true);result.computeBoundingBox();result.computeBoundingSphere();return result;
 }
 /** Three separately editable trees on a shared sand mound. */
 export function createPalmCluster(){

@@ -1,0 +1,33 @@
+{
+  "before": {
+    "environmentMs": 517.96830725,
+    "cityMs": 3427.8894755,
+    "totalMs": 3945.85778275,
+    "runs": 4,
+    "geometry_hashes": [
+      "4b8d457e4f6a976ca1232244f2d6911565fabf0c048aec336949be378ce4b9f7"
+    ],
+    "road_hashes": [
+      "e3a96e59f985dce07de00c000b3798a3b493549cb8fc786e7baf76c32133892a"
+    ],
+    "jsRawBytes": 949990,
+    "jsGzipBytes": 307583,
+    "reachableJSChunks": 22
+  },
+  "after": {
+    "environmentMs": 490.15015324999996,
+    "cityMs": 2842.45138975,
+    "totalMs": 3332.6015429999998,
+    "runs": 4,
+    "geometry_hashes": [
+      "4b8d457e4f6a976ca1232244f2d6911565fabf0c048aec336949be378ce4b9f7"
+    ],
+    "road_hashes": [
+      "e3a96e59f985dce07de00c000b3798a3b493549cb8fc786e7baf76c32133892a"
+    ],
+    "jsRawBytes": 950365,
+    "jsGzipBytes": 307737,
+    "reachableJSChunks": 22
+  },
+  "reductionPercent": 15.541772499529905
+}
