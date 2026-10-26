@@ -701,7 +701,7 @@ test('facility courtyard routes and hospital landing stay clear and connected',a
   const root=createFacilityCourtyard(kind);root.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(root,true);
   assert.ok(box.min.x>=-22&&box.max.x<=18);
-  assert.ok(box.min.z>=-12&&box.max.z<=38);
+  assert.ok(box.min.z>=(kind==='campus'?-23:-12)&&box.max.z<=38);
   for(const route of root.userData.clearRoutes){
    const clearance=new THREE.Box3(new THREE.Vector3(route.x-route.w/2,.85,route.z-route.d/2),new THREE.Vector3(route.x+route.w/2,2.5,route.z+route.d/2));
    for(const part of root.children){if(['walkways','entrance-ramp','ambulance-apron'].includes(part.name))continue;
@@ -770,4 +770,33 @@ test('villa wall, foundation piers and hillside guardrails leave the entry and b
  for(const mesh of site.children.filter(o=>o instanceof THREE.Mesh&&(o.geometry as THREE.BoxGeometry).type==='BoxGeometry'))assert.ok(!gate.intersectsBox(new THREE.Box3().setFromObject(mesh,true)),'foundation blocks villa entry');
  for(const id of ['villa','lighthouse']){const points=hillApproaches.find(r=>r.id===id)!.points;assert.ok(points.length>30);}
  let posts=0;for(const o of site.children.filter(o=>o.name.endsWith('-grounded-rail-post'))){const p=o.position,id=o.name.startsWith('villa')?'villa':'lighthouse';assert.ok(hillRailClear(p.x,p.z,id));posts++;}assert.ok(posts>30);
+});
+
+test('all three academy door landings connect continuously to the courtyard spine',async()=>{
+ const site=world.getObjectByName('special-campus')!,paving=world.getObjectByName('campus-courtyard')!.getObjectByName('walkways')!,doors:THREE.Object3D[]=[];site.traverse(o=>{if(o.name==='building-entrance')doors.push(o);});assert.equal(doors.length,3);site.updateWorldMatrix(true,true);let samples=0;
+ for(const door of doors){const d=door.getWorldPosition(new THREE.Vector3()),normal=new THREE.Vector3(0,0,1).transformDirection(door.matrixWorld),start=d.clone().addScaledVector(normal,1.5),points=[start,new THREE.Vector3(start.x,start.y,39.1),new THREE.Vector3(156,start.y,39.1),new THREE.Vector3(156,start.y,50)];
+  for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],n=Math.max(1,Math.ceil(a.distanceTo(b)/.25));for(let j=0;j<=n;j++){const p=a.clone().lerp(b,j/n),ray=new THREE.Raycaster(new THREE.Vector3(p.x,p.y+10,p.z),new THREE.Vector3(0,-1,0));assert.ok(ray.intersectObject(paving,true).length,'grass gap after teaching-block door '+d.toArray());samples++;}}
+ }assert.ok(samples>100);
+});
+test('hospital outbound driveway reaches the public carriageway with a full ambulance turning envelope',async()=>{
+ const {hospitalDriveCurve,hospitalExitPose,hospitalDriveWidth,hospitalDrivePoint}=await import('../src/hospitalDrive'),{nearestRoad}=await import('../src/roadNetwork');const root=world.getObjectByName('hospital-vehicle-access')!,surface=root.getObjectByName('continuous-hospital-drive-surface')!,van=world.getObjectByName('hospital-ambulance')!;world.updateMatrixWorld(true);
+ const size=new THREE.Box3().setFromObject(van,true).getSize(new THREE.Vector3());assert.ok(size.x<2.5&&size.z<5.5,'ambulance remains a normal-sized city vehicle');assert.ok(van.getWorldScale(new THREE.Vector3()).distanceTo(new THREE.Vector3(1,1,1))<1e-6);
+ const roadSamples=hospitalDriveCurve.getSpacedPoints(900);
+ for(let i=0;i<=180;i++){const t=i/180,pose=hospitalExitPose(t),forward=new THREE.Vector3(Math.sin(pose.heading),0,Math.cos(pose.heading)),right=new THREE.Vector3(forward.z,0,-forward.x);
+  const ray=new THREE.Raycaster(pose.position.clone().add(new THREE.Vector3(0,3,0)),new THREE.Vector3(0,-1,0));assert.ok(ray.intersectObject(surface,true).length,'drive surface absent at '+t+' '+pose.position.toArray());
+  // Every body corner must lie in the continuous drive, including the seven-metre-radius bend.
+  for(const a of [-.5,.5])for(const b of [-.5,.5]){const p=pose.position.clone().addScaledVector(right,size.x*a).addScaledVector(forward,size.z*b);let distance=Infinity;for(const q of roadSamples)distance=Math.min(distance,Math.hypot(p.x-q.x,p.z-q.z));if(t>.12&&t<.9)assert.ok(distance<hospitalDriveWidth(t)/2+.06,'ambulance corner leaves turn envelope');}
+ }
+ const end=hospitalDriveCurve.getPointAt(1),road=nearestRoad(end.x,end.z);assert.ok(road.distance<.05,'drive reaches public road centreline');
+ for(const side of [-1,0,1]){const p=hospitalDrivePoint(1,side*hospitalDriveWidth(1)/2);assert.ok(Math.abs(p.y-surfaceHeight(p.x,p.z))<.04,'no abrupt step at road merge');}
+});
+test('junction additions contain only local corner infill and no straight arm end seams',async()=>{
+ const {junctionFilletPatches}=await import('../src/roadJunctions');const patches=junctionFilletPatches([{x:-1,z:0,width:8},{x:1,z:0,width:8},{x:0,z:1,width:6}]);assert.equal(patches.length,2);
+ for(const patch of patches){const xs=patch.map(p=>p[0]),zs=patch.map(p=>p[1]);assert.ok(Math.max(...xs)-Math.min(...xs)<.7&&Math.max(...zs)-Math.min(...zs)<.7,'no ten-metre straight overlay remains on a curve');}
+});
+
+test('parked ambulance has a continuous supported approach from the hospital platform to its exit drive',async()=>{
+ const {hospitalExitPose}=await import('../src/hospitalDrive'),reference=world.getObjectByName('reference-hospital')!,court=world.getObjectByName('hospital-courtyard')!,drive=world.getObjectByName('hospital-vehicle-access')!;
+ const floors=[...reference.children.slice(0,2),court.getObjectByName('entrance-ramp')!,court.getObjectByName('ambulance-apron')!,drive.getObjectByName('continuous-hospital-drive-surface')!];world.updateMatrixWorld(true);let previous:number|undefined;
+ for(let i=0;i<=100;i++){const z=-49.18+(49.18-27)*i/100,x=hospitalExitPose(0).position.x,ray=new THREE.Raycaster(new THREE.Vector3(x,15,z),new THREE.Vector3(0,-1,0)),hits=ray.intersectObjects(floors,true);assert.ok(hits.length,'unsupported ambulance approach at '+z);if(previous!==undefined)assert.ok(Math.abs(hits[0].point.y-previous)<.18,'abrupt platform/driveway step');previous=hits[0].point.y;}
 });

@@ -28,3 +28,12 @@ export function createJunctionSample(kind:'tee'|'cross'|'gateway'|'hill-fork'){
  const roadArms=kind==='gateway'||kind==='hill-fork'?arms.slice(0,2):arms;const asphalt=slab(junctionOutline(roadArms,0),.02,0x526d87);asphalt.name='bounded-carriageway-fillets';root.add(asphalt);
  root.userData.arms=arms;return root;
 }
+
+/** Only the tiny corner infill is added to existing curved strokes; no straight arm overlays. */
+export function junctionFilletPatches(input:JunctionArm[],sidewalk=0,fillet=.65):JunctionPoint[][]{
+ const arms=input.map(a=>{const l=Math.hypot(a.x,a.z);return {x:a.x/l,z:a.z/l,h:a.width/2+sidewalk};}).sort((a,b)=>Math.atan2(a.z,a.x)-Math.atan2(b.z,b.x)),patches:JunctionPoint[][]=[];
+ for(let i=0;i<arms.length;i++){const a=arms[i],b=arms[(i+1)%arms.length],det=a.x*b.z-a.z*b.x,angle=(Math.atan2(b.z,b.x)-Math.atan2(a.z,a.x)+Math.PI*2)%(Math.PI*2);if(angle>=Math.PI-.1||Math.abs(det)<.12)continue;
+  const p=[-a.z*a.h,a.x*a.h],q=[b.z*b.h,-b.x*b.h],t=((q[0]-p[0])*b.z-(q[1]-p[1])*b.x)/det,c:JunctionPoint=[p[0]+a.x*t,p[1]+a.z*t];if(Math.hypot(...c)>10)continue;
+  const u:JunctionPoint=[c[0]+a.x*fillet,c[1]+a.z*fillet],v:JunctionPoint=[c[0]+b.x*fillet,c[1]+b.z*fillet],patch:JunctionPoint[]=[c,u];for(let j=1;j<=10;j++){const s=j/10;patch.push([(1-s)**2*u[0]+2*s*(1-s)*c[0]+s*s*v[0],(1-s)**2*u[1]+2*s*(1-s)*c[1]+s*s*v[1]]);}patches.push(patch);
+ }return patches;
+}
