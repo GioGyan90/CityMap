@@ -96,7 +96,8 @@ function select(id: string|null) {
   selectedSpecial=next;
   next?.group.traverse(obj=>{if(obj instanceof THREE.Mesh)obj.layers.enable(1);});
   for(const group of groups) {
-    const muted=!!next && group!==next.group;
+    const related=next?.id==='commercial'&&group.userData.hallId==='hall3'||next?.id==='hall3'&&group.name==='commercial-city-living';
+    const muted=!!next && group!==next.group&&!related;
     group.traverse(obj=>{
       const material=originalMaterials.get(obj);
       if(material && (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments)) obj.material=muted?(obj instanceof THREE.LineSegments?grayLine:gray):material;
@@ -119,7 +120,8 @@ export function updateFocus(dt: number) {
   select(id);
   const alpha=1-Math.exp(-10*dt);
   for(const group of groups) {
-    const target=originalHeights.get(group)!*(selectedSpecial && group!==selectedSpecial.group ? .88:1);
+    const integrated=group.name==='commercial-city-living'||group.userData.hallId==='hall3';
+    const target=originalHeights.get(group)!*(!integrated && selectedSpecial && group!==selectedSpecial.group ? .88:1);
     // All selectable roots are independent siblings; shrink around their ground-level pivot.
     group.scale.y=THREE.MathUtils.lerp(group.scale.y,target,alpha);
     if(Math.abs(group.scale.y-target)<.0001)group.scale.y=target;

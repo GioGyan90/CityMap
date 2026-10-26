@@ -1,7 +1,8 @@
 """Mesa EGL inspection of the exported real triangles. Requires moderngl, numpy, Pillow.
 Uses simplified fixed lighting, not the complete Three.js browser render pipeline.
 """
-import json,sys,io,base64
+import json,sys,io,base64,os
+from pathlib import Path
 import moderngl
 import numpy as np
 from PIL import Image,ImageDraw
@@ -42,6 +43,8 @@ for index,view in enumerate(data['views']):
   shader['emission'].value=tuple(mesh['emission']);vao.render()
  ctx.depth_mask=True
  image=Image.frombytes('RGB',(width,height),fbo.read(components=3)).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+ if os.environ.get('CITYMAP_REVIEW_FRAMES') and (not os.environ.get('CITYMAP_REVIEW_NAMES') or view['name'] in os.environ['CITYMAP_REVIEW_NAMES'].split(',')):
+  folder=Path(os.environ['CITYMAP_REVIEW_FRAMES']);folder.mkdir(parents=True,exist_ok=True);image.save(folder/(view['name']+'.jpg'))
  image=image.resize((480,320));ImageDraw.Draw(image).text((10,10),view['name']+' | actual mesh / EGL',fill='white')
  page.paste(image,((index%3)*480,(index//3)*320))
 page.save(sys.argv[2],quality=92)
