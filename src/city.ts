@@ -1,3 +1,4 @@
+import {buildHospitalDrive} from './hospitalDrive';
 import {buildSiteAccess} from './siteAccess';
 import {buildFacilityCourtyards} from './facilityCourtyards';
 import {buildMarineFleet} from './marineTraffic';
@@ -90,7 +91,7 @@ buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
-buildSiteDetails();buildFacilityCourtyards();buildSiteAccess();
+buildSiteDetails();buildFacilityCourtyards();buildHospitalDrive();buildSiteAccess();
 buildTransport();
 buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();if(!world.userData.deferClouds)buildClouds();
 auditPlacedPlants(world);

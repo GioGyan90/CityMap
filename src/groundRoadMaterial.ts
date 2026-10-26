@@ -1,4 +1,4 @@
-import {junctionOutline,junctionArms} from './roadJunctions';
+import {junctionFilletPatches,junctionArms} from './roadJunctions';
 import {ROAD_DESIGN} from './roadDesign';
 import {tunnelPortals} from './tunnelPlan';
 import * as THREE from 'three';
@@ -15,8 +15,11 @@ function path(curve:THREE.Curve<THREE.Vector3>,width:number,color:string){
  ctx.beginPath();curve.getSpacedPoints(Math.ceil(curve.getLength())).forEach((p,i)=>{const [x,y]=project(p.x,p.z);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
  ctx.strokeStyle=color;ctx.lineWidth=width/bounds.w*resolution;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
 }
-function patch(node:typeof junctionAnchors[number],walk:boolean){const points=junctionOutline(junctionArms(node,roadProfiles),walk?ROAD_DESIGN.sidewalk:0);ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x+node.x,z+node.z);if(i)ctx.lineTo(...p as [number,number]);else ctx.moveTo(...p as [number,number]);});ctx.closePath();ctx.fillStyle=walk?'#00ff00':'#ff0000';ctx.fill();}
-
+function patch(node:typeof junctionAnchors[number],walk:boolean){
+ for(const points of junctionFilletPatches(junctionArms(node,roadProfiles),walk?ROAD_DESIGN.sidewalk:0)){
+  ctx.beginPath();points.forEach(([x,z],i)=>{const p=project(x+node.x,z+node.z);if(i)ctx.lineTo(...p as [number,number]);else ctx.moveTo(...p as [number,number]);});ctx.closePath();ctx.fillStyle=walk?'#00ff00':'#ff0000';ctx.fill();
+ }
+}
 // All sidewalks first, then the complete asphalt network: junctions have one surface.
 path(promenadeCurve,3.4,'#00ff00');for(const road of roadProfiles)path(road.curve,road.width+2*ROAD_DESIGN.sidewalk,'#00ff00');
 for(const road of hillApproaches)path(road.curve,road.width+.7,'#00ff00');

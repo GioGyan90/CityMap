@@ -1,3 +1,5 @@
+> **2026-10-26 教学楼出口与医院车行出口：** 先读 [facility-exits-and-turns.md](facility-exits-and-turns.md)。弯道仅加局部圆角，不再叠加长直臂；庭院铺地合并，三处教学楼门口接通；新增医院 6 m 双向车道及 7 m 半径转弯接公路，并修正救护车叠加放大。103 项测试与同机位前后证据见 `docs/access-turn-review/`。
+
 > **2026-10-26 道路交汇专项修正：** 先读 [road-junction-details.md](road-junction-details.md)。已用小圆角丁字/十字接头替代圆盘，修复步道断口、高架侧坡穿路、别墅挡墙堵门及灯塔分岔护栏；四类接头样件可单独查看。前后图、像素连续性和净空证据见 `docs/junction-review/`。上一轮载入压缩与回折道路方案见 [road-continuity.md](road-continuity.md)。
 
 > **2026-10-23 四类交通工具已完成：** 下一轮先读 [fleet-vehicles.md](fleet-vehicles.md)。新增卡车、快艇、出租车、警车的原件与组合；道路接入 2/4/2 辆新车，两艘快艇在货港西侧巡航，新增“快艇航线”镜头。六角度、合批及场景离屏证据见 `docs/fleet-review/`；90 项测试与生产构建通过。浏览器 WebGL 验证边界见专题文档。以下保留隧道历史交接。

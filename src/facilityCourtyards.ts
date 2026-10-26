@@ -1,3 +1,4 @@
+import polygonClipping from 'polygon-clipping';
 import * as THREE from 'three';
 import {kit} from './referenceArchitecture';
 import {createPlanter,renderPlant,treeSamples} from './plantAssets';
@@ -11,8 +12,8 @@ function part(root:THREE.Group,name:string){const p=new THREE.Group();p.name=nam
 export function createFacilityCourtyard(kind:'hospital'|'campus'){
  const root=new THREE.Group();root.name=kind+'-courtyard';
  const surface=.18;
- const paving=part(root,'walkways'),k=kit(paving);
- const walk=(x:number,z:number,w:number,d:number)=>k.box(w,.24,d,C.paving,x,surface-.12,z);
+ const paving=part(root,'walkways'),k=kit(paving),walks:number[][][][]=[];
+ const walk=(x:number,z:number,w:number,d:number)=>walks.push([[[x-w/2,z-d/2],[x+w/2,z-d/2],[x+w/2,z+d/2],[x-w/2,z+d/2],[x-w/2,z-d/2]]]);
  const bench=(x:number,z:number,angle=0)=>{const g=part(root,'bench');g.position.set(x,surface,z);g.rotation.y=angle;const b=kit(g);
   for(const dx of [-.95,.95]){b.box(.12,.52,.6,C.metal,dx,.26,0);b.box(.12,.95,.1,C.metal,dx,.475,-.28);}
   for(const dz of [-.24,0,.24])b.box(2.5,.1,.19,C.wood,0,.56,dz);
@@ -42,8 +43,8 @@ export function createFacilityCourtyard(kind:'hospital'|'campus'){
  };
  if(kind==='hospital'){
   // Central pedestrian spine remains unobstructed; right-hand apron retains the ambulance approach.
-  walk(-5,14,4,38);walk(-1,30,36,3);walk(-12,3,18,3);walk(-12,24,16,3);
-  walk(-17,13,3,20);walk(2,13,3,20);
+  walk(-5,14,4,38);walk(-7.75,30,22.5,3);walk(-12,3,18,3);walk(-12,24,16,3);
+  walk(-17,13,3,20);walk(2,13,3,20);walk(-1.5,3,9,2.4);walk(-1.5,24,9,2.4);
   const apron=part(root,'ambulance-apron'),a=kit(apron);
   a.box(9.2,.2,35,0x91a9ac,10.1,.08,9.5);
   for(const z of [-3,2,7,12,17,22])a.box(.14,.025,2,C.cream,10.1,.195,z);
@@ -51,18 +52,18 @@ export function createFacilityCourtyard(kind:'hospital'|'campus'){
   pergola(-12,13,6,5);bench(-13.3,11.4);bench(-13.3,14.6,Math.PI);
   bed(-12,21,5.8,2.5);bed(-12,6,5.8,2.5);
   bed(-.8,9,1.8,5);bed(-.8,20,1.8,5);
-  bed(-16.2,28.6,4,2,true);bed(15.7,29,3,2,true);
-  board(-9,30,true);bench(-11,28.8);bench(0,27.3);
+  bed(-16.2,26.5,4,2,true);bed(15.7,29,3,2,true);
+  board(-8.5,25.8,true);bench(-11,27);bench(0,27.3);
   // Two solid sloped approaches meet the actual scaled plinth top (.67 * 1.15).
   const ramp=part(root,'entrance-ramp'),r=kit(ramp);
   const slope=(x:number,w:number,end:number)=>{const shape=new THREE.Shape();shape.moveTo(-2.7,0);shape.lineTo(-2.7,.7705);shape.lineTo(end,.18);shape.lineTo(end,0);shape.closePath();const g=new THREE.ExtrudeGeometry(shape,{depth:w,bevelEnabled:false});g.rotateY(-Math.PI/2);r.mesh(g,C.paving,x+w/2,0,0);};
   slope(-5,4,3.5);slope(10.1,9.2,5);
-  root.userData.clearRoutes=[{x:-5,z:16,w:3,d:33},{x:10.1,z:9.5,w:8.8,d:34}];
+  root.userData.clearRoutes=[{x:-5,z:16,w:3,d:33},{x:-8,z:30,w:22,d:2},{x:10.1,z:9.5,w:8.8,d:34}];
  }else{
   // Existing teaching blocks end near z=-11.5; sports pitch begins at z=8.6.
-  walk(0,-3.25,5,16.5);walk(0,2,31,3);walk(-14,18.75,3,30.5);walk(0,31,30,3);
+  walk(0,-3.25,5,16.5);walk(0,-16.2,3.6,10.4);walk(0,-8.9,22.8,2.6);walk(0,2,31,3);walk(-14,18.75,3,30.5);walk(0,31,30,3);
   pergola(-9,-3.5,5,5);bench(-9,-5);bench(-9,-2,Math.PI);
-  bed(-9,3.9,5.2,1.4);bed(8,-6.5,6,2,true);
+  bed(-9,3.9,5.2,1.4);bed(8,-5.2,6,2,true);
   const monument=part(root,'academy-emblem'),m=kit(monument);monument.position.set(8,surface,-.3);
   m.box(3.7,.25,3,C.edge,0,.125,0);m.box(2.5,.4,2,C.cream,0,.45,0);m.box(.75,1.25,.75,C.edge,0,1.25,0);
   // Open book, two sloped pages supported by the central lectern.
@@ -76,8 +77,10 @@ export function createFacilityCourtyard(kind:'hospital'|'campus'){
    for(const z of [15,18.5,22])s.box(.55,.14,2.4,0x438f9b,13+row*.8,.36+row*.35,z);
   }
   bed(-9,29.5,4,2,true);board(-10.5,33);
+  root.userData.doorLinks=[[-10,-10.1],[0,-21.35],[10,-10.1]];
   root.userData.clearRoutes=[{x:0,z:-3.25,w:4,d:16.5},{x:-14,z:18.75,w:2.5,d:30.5}];
  }
+ const union=polygonClipping.union(walks[0] as any,...walks.slice(1) as any[]);for(const polygon of union){const shape=new THREE.Shape(polygon[0].map(([x,z])=>new THREE.Vector2(x,-z)));for(const hole of polygon.slice(1))shape.holes.push(new THREE.Path(hole.map(([x,z])=>new THREE.Vector2(x,-z))));const geo=new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:false});geo.rotateX(-Math.PI/2);geo.translate(0,-.06,0);const mesh=k.mesh(geo,C.paving);mesh.name='continuous-courtyard-paving';}
  root.userData.facility=kind;return root;
 }
 export function buildFacilityCourtyards(){
