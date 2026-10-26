@@ -16,6 +16,8 @@ import {ZONES} from './layout';
 import {roadRibbon,roadMat,walkMat} from './roads';
 import {toon} from './materials';
 import {sign} from './conceptDetails';
+import {createDockMarketSign} from './dockMarketSign';
+import {GROUND_Y} from './config';
 export let motorwayCurve:THREE.CatmullRomCurve3|null=null;
 export interface RailVehicle {mesh:THREE.Group;curve:THREE.CatmullRomCurve3;plan:RailPlan;offset:number;speed:number;terminalDwell:number;dwellRemaining:number;state:RailState;stops:RailStop[]}
 export const transit:RailVehicle[]=[];
@@ -58,5 +60,5 @@ export function buildStreetFurniture(){
   sign(text,x,y+8.3-1.06,z,11,3.5,color);box(12,.35,.6,0xe4c375,x,y+10.3,z);
  }
  buildBusStops();
- const quaySign=ZONES.port;sign('码头市场 · DOCK MARKET',quaySign.x,6,quaySign.z+7,17,3,'#245875');
+ const quaySign=ZONES.port,dockSign=createDockMarketSign();dockSign.position.set(quaySign.x,GROUND_Y+6,quaySign.z+7);world.add(dockSign);
 }
