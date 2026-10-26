@@ -13,6 +13,7 @@ const lot=parkingLots.find(p=>p.z>40)??parkingLots[0];
 const parkingView=(()=>{if(!lot)return {pos:[-64,140,-3],target:[70,42,-126]};const dx=lot.x-lot.serves[0],dz=lot.z-lot.serves[1],length=Math.hypot(dx,dz),y=surfaceHeight(lot.x,lot.z);return {pos:[lot.x+dx/length*33,y+28,lot.z+dz/length*33],target:[lot.x,y+2,lot.z]};})();
 const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sort((a,b)=>b.position.z-a.position.z)[0]?.position;
 export const VIEWS = {
+ police:{pos:[43,26,173],target:[12,7,137]},
  commercial:{pos:[130,69,-39],target:[77,24,-102]},
  commercialStreet:{pos:[122,10,-96],target:[77,10,-102]},
  station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
@@ -25,7 +26,7 @@ export const VIEWS = {
  park:{pos:[-109,76,20],target:[-20,12,-87.4]},market:{pos:[-78,45,70],target:[-18,8,15]},hall2:{pos:[-59,29,100],target:[-18,5,57]},
  fishmarket:{pos:[-42,30,97],target:[-87,3,57]},
  hall1:{pos:[-54,29,18],target:[-20,7,-20]},hall3:{pos:[35,40,-79],target:[ZONES.hall3.x,20,ZONES.hall3.z]},hall4:{pos:[144,34,7],target:[174,12,-32]},hall5:{pos:[143,30,128],target:[112,7,167]},
- hotel:{pos:[-64,49,199],target:[-12,14,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
+ hotel:{pos:[-64,45,187],target:[-17,14,140]},civic:{pos:[-24,78,103],target:[60,14,16]},
  hospital:{pos:[87,52,10],target:[138,13,-48]},cafe:{pos:[22,59,193],target:[93,9,125]},
  promenade:{pos:[-96,29,127],target:[-67,4,98]},
  restaurant:{pos:[62,62,210],target:[141,10,137]},port:{pos:[48,78,279],target:[155,8,182]},

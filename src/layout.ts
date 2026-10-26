@@ -19,7 +19,7 @@ export const ZONES:Record<string,Zone>={
  fishmarket:{x:-82,z:57,w:20,d:24,sx:1,sz:1,level:.51,ry:Math.PI/2},
  hall1:{x:-16,z:-20,w:24,d:24,sx:1,sz:1},hall3:{...COMMERCIAL_HALL,w:12,d:14,sx:.62,sz:.62,level:COMMERCIAL_PLAN.y+COMMERCIAL_PLAN.deck,ry:COMMERCIAL_PLAN.rotation},
  hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
- hotel:{x:-12,z:140,w:51,d:45,sx:1.8,sz:1.7},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
+ hotel:{x:-17,z:140,w:42,d:36,sx:1.5,sz:1.42,level:1.4021704692465167},police:{x:12,z:137,w:15.5,d:28,sx:1,sz:1,level:1.06},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
  cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:137,w:35,d:36,sx:1.3,sz:1.3},
  promenade:{x:westCoast(98)-1,z:98,w:22,d:20,sx:1,sz:1,level:1.06},
