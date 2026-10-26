@@ -1,3 +1,4 @@
+import {createContinentalShelf,continentalDepthGLSL} from './seabed';
 import {twilightProfile} from './twilight';
 import {SEA_PALETTE} from './visualStyle';
 import {SHORE_Z,WEST_X,EAST_X} from './layout';
@@ -9,6 +10,7 @@ export const waterUniforms={
   shallow:{value:new THREE.Color(SEA_PALETTE.shallow)},deep:{value:new THREE.Color(SEA_PALETTE.deep)}
 };
 const material=new THREE.ShaderMaterial({
+  transparent:true,depthWrite:false,
   uniforms:waterUniforms,
   vertexShader:`
     uniform float time;varying vec3 vWorld;
@@ -18,6 +20,7 @@ const material=new THREE.ShaderMaterial({
   fragmentShader:`
     uniform float twilightStrength;uniform vec3 twilightHorizon;uniform vec3 solarDirection;uniform vec3 lightDirection;uniform vec3 lightColor;uniform float lightStrength;uniform vec3 skyReflection;uniform vec3 fogColor;uniform vec2 westShore[12];uniform vec2 eastShore[12];uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
     float surface(vec2 p){p.x+=sin(p.y*.041+time*.22)*2.5;p.y+=sin(p.x*.032-time*.15)*1.7;return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65)+(1.-smoothstep(80.,350.,length(cameraPosition.xz-p)))*(.045*sin(dot(p,vec2(.52,.28))+time*1.5)+.025*sin(dot(p,vec2(-.32,.71))-time*1.8));}
+    ${continentalDepthGLSL}
     void main(){
       vec2 p=vWorld.xz;float e=.12;
       vec3 n=normalize(vec3(surface(p-vec2(e,0.))-surface(p+vec2(e,0.)),2.*e,surface(p-vec2(0.,e))-surface(p+vec2(0.,e))));
@@ -31,8 +34,17 @@ const material=new THREE.ShaderMaterial({
       west-=beachWidth;
       vec2 shoreDistance=vec2(max(west-p.x,p.x-east),max(-200.-p.y,p.y-202.));
       float distanceToCoast=length(max(shoreDistance,vec2(0.)))+min(max(shoreDistance.x,shoreDistance.y),0.);
-      float nearShore=1.-smoothstep(0.,36.,distanceToCoast);
-      vec3 color=mix(deep,shallow,nearShore*.88);
+      vec2 quayDistance=vec2(max(120.-p.x,p.x-190.),max(144.-p.y,p.y-182.));
+      float quay=length(max(quayDistance,vec2(0.)))+min(max(quayDistance.x,quayDistance.y),0.);
+      distanceToCoast=min(distanceToCoast,quay);
+      float depth=continentalDepth(p,distanceToCoast);
+      float nearShore=1.-smoothstep(1.,30.,depth);
+      float lagoon=1.-smoothstep(1.,7.,depth);
+      vec3 middle=mix(deep,shallow,.45);
+      vec3 color=mix(deep,middle,nearShore);
+      color=mix(color,shallow,lagoon*.82);
+      float current=sin(p.x*.055+p.y*.031+sin(p.y*.017)*2.-time*.12);
+      color*=.98+.025*current*nearShore;
       vec2 towardSun=solarDirection.xz/max(length(solarDirection.xz),.0001);
       vec2 towardView=view.xz/max(length(view.xz),.0001);
       float sunsetFacing=pow(max(dot(towardView,towardSun),0.),4.);
@@ -54,14 +66,16 @@ const material=new THREE.ShaderMaterial({
       color=mix(color,mix(vec3(.8,.94,.91),vec3(.16,.31,.42),night),foam*.65);
       float distanceToCamera=length(cameraPosition-vWorld);
       color=mix(color,fogColor,smoothstep(700.,1500.,distanceToCamera));
-      gl_FragColor=vec4(color,1.);
+      // Bottom transmission fades with depth, grazing angle and night.
+      float transmission=(1.-smoothstep(2.,18.,depth))*(1.-fresnel)*(.24-.16*night);
+      gl_FragColor=vec4(color,1.-transmission);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }
   `
 });
 const geo=new THREE.PlaneGeometry(10000,10000,220,220);geo.rotateX(-Math.PI/2);
-export const water=new THREE.Mesh(geo,material);water.name='animated-ocean';water.position.y=-.26;world.add(water);
+export const water=new THREE.Mesh(geo,material);water.name='animated-ocean';water.position.y=-.26;water.renderOrder=-1;world.add(createContinentalShelf());world.add(water);
 export function updateWater(time:number){waterUniforms.time.value=time;}
 const dayShallow=new THREE.Color(SEA_PALETTE.shallow),dayDeep=new THREE.Color(SEA_PALETTE.deep),nightShallow=new THREE.Color('#123a58'),nightDeep=new THREE.Color('#081d3e');
 export function setWaterLighting(night:number,warm:number,direct:number,moon:number,sunDirection:THREE.Vector3,moonDirection:THREE.Vector3,fogColor:THREE.Color,twilight:ReturnType<typeof twilightProfile>){
