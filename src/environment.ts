@@ -49,6 +49,25 @@ for(const edge of [westCoast,eastCoast]){
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.computeVertexNormals();
  const m=new THREE.Mesh(g,toon(palette.rock,{side:THREE.DoubleSide}));m.name='coastal-rock-wall';world.add(m);
 }
+// Close the northern ridge at the actual heightfield vertices, not an open sheet.
+{
+ const verts:number[]=[],colors:number[]=[],idx:number[]=[],levels=5;
+ for(let col=0;col<=cols;col++){
+  const k=col*3,x=terrainPositions[k],top=terrainPositions[k+1],z=terrainPositions[k+2];
+  for(let j=0;j<=levels;j++){const t=j/levels;verts.push(x,-.7+(top+.7)*t,z-Math.sin(Math.PI*t)*.55);
+   const color=new THREE.Color(palette.rock).multiplyScalar(.79+.18*t+.035*Math.sin(x*.24+j*2));colors.push(color.r,color.g,color.b);}
+ }
+ for(let col=0;col<cols;col++)for(let j=0;j<levels;j++){const a=col*(levels+1)+j,b=a+levels+1;idx.push(a,a+1,b+1,a,b+1,b);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(idx);g.computeVertexNormals();
+ const wall=new THREE.Mesh(g,toon(0xffffff,{vertexColors:true}));wall.name='northern-ridge-backwall';wall.castShadow=wall.receiveShadow=true;world.add(wall);
+ // All coastal side walls terminate at the same sealed underside.
+ const ring:THREE.Vector2[]=[];
+ for(let row=0;row<=rows;row++){const k=(row*(cols+1)+cols)*3;ring.push(new THREE.Vector2(terrainPositions[k],terrainPositions[k+2]));}
+ for(let row=rows-1;row>=0;row--){const k=row*(cols+1)*3;ring.push(new THREE.Vector2(terrainPositions[k],terrainPositions[k+2]));}
+ const triangles=THREE.ShapeUtils.triangulateShape(ring,[]),bottom:number[]=[];
+ for(const tri of triangles){const [a,b,c]=tri.map(i=>ring[i]);if((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)<0)tri.reverse();for(const i of tri)bottom.push(ring[i].x,-.7,ring[i].y);}
+ const cap=new THREE.BufferGeometry();cap.setAttribute('position',new THREE.Float32BufferAttribute(bottom,3));cap.computeVertexNormals();const underside=new THREE.Mesh(cap,toon(palette.rock));underside.name='sealed-terrain-underside';world.add(underside);
+}
 // Reclaimed harbor quay joins the natural peninsula and supports the terminal.
 const quay=new THREE.Mesh(new THREE.BoxGeometry(70,1.8,38),toon(palette.quay));quay.name='reclaimed-quay-fill';quay.position.set(155,RECLAIMED_FILL_TOP-.9,163);quay.receiveShadow=true;world.add(quay);
 world.userData.terrain={minimum:1.06,maximum:Math.max(...positions.filter((_,i)=>i%3===1)),rows,cols};

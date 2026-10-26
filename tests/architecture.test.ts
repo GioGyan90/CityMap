@@ -841,3 +841,21 @@ test('tunnel bounds rejection preserves exact reservations and terrain cover',as
   assert.equal(coveredTerrainHeight(x,z,base),expected);
  }
 });
+
+test('northern ridge is sealed at its real top vertices and underside',async()=>{
+ const {terrainPositions,terrainCols}=await import('../src/terrainSurface');
+ const wall=world.getObjectByName('northern-ridge-backwall') as THREE.Mesh,cap=world.getObjectByName('sealed-terrain-underside') as THREE.Mesh;assert.ok(wall&&cap);
+ const p=wall.geometry.attributes.position;
+ for(let col=0;col<=terrainCols;col++){const i=col*6+5;assert.equal(p.getX(i),terrainPositions[col*3]);assert.equal(p.getY(i),terrainPositions[col*3+1]);assert.equal(p.getZ(i),terrainPositions[col*3+2]);}
+ for(let x=-15;x<125;x+=5){const top=surfaceHeight(x,-200);for(const fraction of [.1,.5,.9]){const ray=new THREE.Raycaster(new THREE.Vector3(x,top*fraction,-210),new THREE.Vector3(0,0,1),0,12);assert.ok(ray.intersectObject(wall).length,'north face cannot see into the ridge');}}
+ const below=new THREE.Raycaster(new THREE.Vector3(70,-4,-180),new THREE.Vector3(0,1,0),0,5);assert.ok(below.intersectObject(cap).length,'bottom closes against coastal rock walls');
+});
+
+test('continental shelf stays beneath waves, deepens offshore and has upward faces',async()=>{
+ const {continentalDepth,oceanCoastDistance}=await import('../src/seabed');const {westCoast,eastCoast}=await import('../src/layout');const {beachExtension}=await import('../src/visualStyle');
+ const shelf=world.getObjectByName('submerged-continental-shelf') as THREE.Mesh;assert.ok(shelf);const p=shelf.geometry.attributes.position,n=shelf.geometry.attributes.normal;
+ for(let i=0;i<p.count;i++){assert.ok(p.getY(i)<-.5,'bed cannot pierce the lowest swell');assert.ok(n.getY(i)>0);assert.ok(p.getY(i)>=-31.62);}
+ for(const z of [-110,0,65,120])for(const side of [-1,1]){const edge=side<0?westCoast(z)-beachExtension(z):eastCoast(z);let last=0;for(let d=0;d<=140;d+=2){const depth=continentalDepth(edge+side*d,z);assert.ok(depth>=last-1e-5,'transect deepens out to the shelf break');last=depth;}assert.ok(last>30);}
+ assert.ok(oceanCoastDistance(155,163)<0,'reclaimed working quay participates in the shoreline');
+ const ray=new THREE.Raycaster(new THREE.Vector3(-120,0,0),new THREE.Vector3(0,-1,0),0,40);assert.ok(ray.intersectObject(shelf).length,'visible bottom is real geometry');
+});
