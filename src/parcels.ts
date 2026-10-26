@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import {type BuildingPlan} from './buildingPlans';
 import { makeBuilding } from './buildings';
 import { RES_BASES,ROOF_COLS } from './districts';
-import { rr,pick,rnd } from './random';
+import {seededRandom} from './proceduralGeometry';
 import { isLand,terrainHeight,reserved,roadDistance,railCorridor } from './layout';
 import { toon } from './materials';
 import { world } from './scene';
@@ -16,6 +16,8 @@ import { world } from './scene';
 export const occupied:{x:number;z:number;w:number;d:number}[]=[];
 const officeSites:{x:number;z:number;w:number;d:number;entrance:{x:number;z:number}}[]=[];
 export function buildParcels(){
+ // Placement must not depend on whether facade textures were already cached.
+ const rnd=seededRandom(20261021),rr=(a:number,b:number)=>a+rnd()*(b-a),pick=<T,>(items:readonly T[])=>items[Math.floor(rnd()*items.length)];
  const districts=[
   {name:'skyline',x:[3,123],z:[-150,-88],count:21},
   {name:'harbor',x:[192,220],z:[123,146],count:13}
@@ -34,7 +36,7 @@ export function buildParcels(){
   const base=Math.max(...heights);
   if(base-Math.min(...heights)>4){occupied.pop();made--;continue;}
   const h=tower?rr(skylineHeight(x,z)*.65,skylineHeight(x,z)):district.name==='civic'?rr(8,17):district.name==='hills'?rr(6,11):rr(5,12);
-  const style=tower?pick(['glass','stepped','round','artdeco'] as const):industrial?'warehouse':district.name==='resort'||district.name==='hills'?'villa':pick(['arcade','apartment','pitched','flat'] as const);
+  const style=tower?pick(['glass','stepped','glass','artdeco'] as const):industrial?'warehouse':district.name==='resort'||district.name==='hills'?'villa':pick(['arcade','apartment','pitched','flat'] as const);
   const frontage=nearestRoad(x,z);
   const group=makeBuilding({x,z,w,d,h,style,plan,frontage:[frontage.x,frontage.z],base:pick(district.name==='hills'?['#fff1cf','#ffe1b3','#ffedda']:RES_BASES),roof:pick(district.name==='hills'||district.name==='oldtown'?[0xcc724b,0xdd8b50,0xc46945]:ROOF_COLS),elevation:base});
   group.userData.district=district.name;

@@ -869,3 +869,15 @@ test('ocean volume has a finite optical thickness and shares wave time with its 
  const {boats}=await import('../src/port'),{marineFleet}=await import('../src/marineTraffic');
  for(const root of [...boats.map(b=>b.mesh),...marineFleet.map(b=>b.mesh),world.getObjectByName('cruise-ship')]){let casters=0;root.traverse(o=>{if((o as THREE.Mesh).isMesh&&o.castShadow)casters++;});assert.ok(casters>0,'every operating ship supplies a real shadow silhouette');}
 });
+
+test('commercial bridges preserve a through street and batching retains all five precincts',async()=>{
+ const {createCommercialDistrict}=await import('../src/commercialDistrict');
+ const editable=createCommercialDistrict(),batched=createCommercialDistrict(true);
+ assert.equal(editable.children.length,5);assert.equal(batched.children.length,5);
+ const a=new THREE.Box3().setFromObject(editable),b=new THREE.Box3().setFromObject(batched);
+ assert.ok(a.min.distanceTo(b.min)<1e-4&&a.max.distanceTo(b.max)<1e-4);
+ const route=new THREE.Box3(new THREE.Vector3(-2.9,.3,-15),new THREE.Vector3(2.9,5.95,15));
+ editable.traverse(o=>{if(o instanceof THREE.Mesh)assert.equal(new THREE.Box3().setFromObject(o).intersectsBox(route),false,`street obstruction: ${o.name}`);});
+ const triangles=(g:THREE.Object3D)=>{let n=0;g.traverse(o=>{if(o instanceof THREE.Mesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;};
+ assert.equal(triangles(editable),triangles(batched));
+});

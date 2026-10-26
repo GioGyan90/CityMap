@@ -13,6 +13,8 @@ const lot=parkingLots.find(p=>p.z>40)??parkingLots[0];
 const parkingView=(()=>{if(!lot)return {pos:[-64,140,-3],target:[70,42,-126]};const dx=lot.x-lot.serves[0],dz=lot.z-lot.serves[1],length=Math.hypot(dx,dz),y=surfaceHeight(lot.x,lot.z);return {pos:[lot.x+dx/length*33,y+28,lot.z+dz/length*33],target:[lot.x,y+2,lot.z]};})();
 const hillStation=world.children.filter(o=>o.name==='elevated-rail-station').sort((a,b)=>b.position.z-a.position.z)[0]?.position;
 export const VIEWS = {
+ commercial:{pos:[121,63,-75],target:[73,23,-126]},
+ commercialStreet:{pos:[79,17,-89],target:[77,10,-124]},
  station:{pos:[hillStation.x-48,hillStation.y+32,hillStation.z+50],target:[hillStation.x,hillStation.y+2,hillStation.z]},
  parking:parkingView,
  coaststation:{pos:[STATION_ORIGIN.x-30,STATION_ORIGIN.y+24,STATION_ORIGIN.z+36],target:[STATION_ORIGIN.x+7,STATION_ORIGIN.y+3,STATION_ORIGIN.z-2]},

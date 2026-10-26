@@ -1,3 +1,4 @@
+import {createCommercialDistrict} from './commercialDistrict';
 import {createJunctionSample} from './roadJunctions';
 import {createWorkboat,WORKBOAT_KINDS,WORKBOAT_TITLES} from './workboats';
 import {createFleetVehicle,FLEET_TITLES,FLEET_PART_TITLES,type FleetKind} from './fleetAssets';
@@ -41,6 +42,7 @@ export function initAssetTools(){
  for(const [id,title,source]of [['tunnel-arch','隧道原件 · 实心开孔拱圈',createTunnelArch()],['tunnel-portal','隧道组合 · 洞口与翼墙',createTunnelPortal()],['tunnel-lining','隧道组合 · 连续空心衬砌',createTunnelLining()],['tunnel-complete','货港隧道 · 完整公路连接',createRoadTunnel()]] as const)items.push({id,title,source});
  for(const [id,title]of [['hospital','医院康复庭院'],['campus','学院学习庭院']] as const){const source=world.getObjectByName(id+'-courtyard');if(source){items.push({id:id+'-courtyard',title,source});for(const part of source.children)items.push({id:id+'-courtyard-part-'+source.children.indexOf(part),title:title+' · '+part.name,source:part});}}
  for(const [id,title]of [['tee','丁字路口'],['cross','十字路口'],['gateway','建筑入口接人行道'],['hill-fork','山坡分岔']] as const)items.push({id:'junction-'+id,title:'道路接头 · '+title,source:createJunctionSample(id)});
+ const commercialParts=createCommercialDistrict();for(const part of commercialParts.children)items.push({id:'commercial-'+part.name,title:'商业区 · '+part.name,source:part});
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const plan of RAIL_PLANS){items.push({id:plan.id+'-train-kit',title:plan.name+' · 完整编组',source:createRailTrain(plan)});items.push({id:plan.id+'-cab-kit',title:plan.name+' · 车头原件',source:createRailCar(plan,0)});items.push({id:plan.id+'-coach-kit',title:plan.name+' · 客车原件',source:createRailCar(plan,1)});}
