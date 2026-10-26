@@ -1,3 +1,4 @@
+import {buildFacilityCourtyards} from './facilityCourtyards';
 import {buildMarineFleet} from './marineTraffic';
 import {createRoadTunnel} from './roadTunnels';
 import {buildTrafficInfrastructure} from './trafficInfrastructure';
@@ -88,7 +89,7 @@ buildBilliardsAccess();
 buildHillAccess();
 buildCoastalRealm();
 const residentialCliff=createResidentialCliff();world.add(residentialCliff);
-buildSiteDetails();
+buildSiteDetails();buildFacilityCourtyards();
 buildTransport();
 buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();buildClouds();
 auditPlacedPlants(world);

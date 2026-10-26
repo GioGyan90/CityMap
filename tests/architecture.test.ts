@@ -694,3 +694,31 @@ test('both speedboat cockpits remain above the animated sea throughout ten minut
  }
  assert.ok(margin>.025,'water cannot flash through the cockpit floor during bob/pitch/roll');
 });
+
+test('facility courtyard routes and hospital landing stay clear and connected',async()=>{
+ const {createFacilityCourtyard}=await import('../src/facilityCourtyards');
+ for(const kind of ['hospital','campus'] as const){
+  const root=createFacilityCourtyard(kind);root.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(root,true);
+  assert.ok(box.min.x>=-22&&box.max.x<=18);
+  assert.ok(box.min.z>=-12&&box.max.z<=38);
+  for(const route of root.userData.clearRoutes){
+   const clearance=new THREE.Box3(new THREE.Vector3(route.x-route.w/2,.85,route.z-route.d/2),new THREE.Vector3(route.x+route.w/2,2.5,route.z+route.d/2));
+   for(const part of root.children){if(['walkways','entrance-ramp','ambulance-apron'].includes(part.name))continue;
+    assert.ok(!clearance.intersectsBox(new THREE.Box3().setFromObject(part,true)),kind+' '+part.name+' blocks a clear route');
+   }
+  }
+  for(const pergola of root.children.filter(p=>p.name==='pergola')){
+   const posts=pergola.children.filter(o=>o instanceof THREE.Mesh&&(o.geometry as THREE.BoxGeometry).parameters?.height===2.95);
+   assert.equal(posts.length,4);
+  }
+  const placed=world.getObjectByName(kind+'-courtyard')!;assert.ok(placed);assert.equal(placed.parent?.name,'special-'+kind);
+  assert.ok(placed.getWorldScale(new THREE.Vector3()).distanceTo(new THREE.Vector3(1,1,1))<1e-6);
+  if(kind==='hospital'){
+   const ramp=root.getObjectByName('entrance-ramp')!;
+   for(const x of [-5,10.1]){const ray=new THREE.Raycaster(new THREE.Vector3(x,3,-2.69),new THREE.Vector3(0,-1,0));const hits=ray.intersectObject(ramp,true);assert.ok(hits.length);assert.ok(Math.abs(hits[0].point.y-.7705)<.003);}
+  }else{
+   const stand=new THREE.Box3().setFromObject(root.getObjectByName('pitch-seating')!,true);assert.ok(stand.min.x>11.875);assert.ok(stand.max.x<15.5);
+  }
+ }
+});
