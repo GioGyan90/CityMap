@@ -55,13 +55,13 @@ export function animate() {
   updateWater(t);
   updateClouds(dt);
 
-  /* 帆船 */
+  /* 中型作业船：保留水线以上的干舷，沿原海上走廊往返。 */
   for (const b of boats) {
-    b.mesh.position.y = Math.sin(t * 1.1 + b.phase) * 0.35;
+    b.mesh.position.y = .12 + Math.sin(t * 1.1 + b.phase) * 0.04;
     b.mesh.rotation.z = Math.sin(t * 0.9 + b.phase) * 0.045;
     b.mesh.position.x += b.dir * b.speed * dt;
-    if (b.mesh.position.x > -100) b.dir = -1;
-    if (b.mesh.position.x < -230) b.dir = 1;
+    if (b.mesh.position.x > -155) b.dir = -1;
+    if (b.mesh.position.x < -220) b.dir = 1;
     b.mesh.rotation.y = b.dir > 0 ? 0 : Math.PI;
   }
 

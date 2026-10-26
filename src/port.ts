@@ -1,10 +1,10 @@
+import {createWorkboat,WORKBOAT_KINDS} from './workboats';
 import {kit} from './referenceArchitecture';
 import * as THREE from 'three';
 import { rnd, rr, TAU } from "./random";
-import { gradientMap, toon } from "./materials";
+import { toon } from "./materials";
 import { GROUND_Y } from "./config";
 import { world } from "./scene";
-import { addOutline, makeBuilding, box } from "./buildings";
 
 export const boats = [];
 
@@ -25,12 +25,12 @@ export function buildPort() {
  for(const x of [-12,5]){
   k.box(4,.4,15,0xbf9d6a,x,.3,20);
   for(const z of [15,24])k.box(.6,2,.6,0x876e4f,x,-.6,z);
-  const boat=makeSailboat(x+4.8,22);boat.userData.ambient=false;boat.name='market-fishing-boat';
-  root.attach(boat);boat.position.set(x+4.8,-.8,22);boat.scale.set(.65,.5,.85);
+  const boat=makeWorkboat(x+4.8,22,'fishing');boat.userData.ambient=false;boat.name='market-fishing-boat';
+  root.attach(boat);boat.position.set(x+4.8,-.8,22);boat.scale.set(.65,.65,.65);boat.rotation.y=Math.PI/2;
  }
  for(const x of [-19,19])for(const z of [-10,10])k.mesh(new THREE.CylinderGeometry(.18,.3,.65,8),0x547680,x,.8,z);
  for(let i=0;i<6;i++){
-  const b=makeSailboat(-150-rnd()*70,-60+rnd()*240);
+  const b=makeWorkboat(-165-rnd()*50,-45+i*40,WORKBOAT_KINDS[i%3]);
   boats.push({mesh:b,phase:rnd()*TAU,speed:rr(.08,.22),dir:rnd()>.5?1:-1});
  }
 }
@@ -89,36 +89,6 @@ export function buildLighthouse() {
   }
 }
 
-export function makeSailboat(x, z) {
-  const g = new THREE.Group();
-  g.position.set(x, 0, z);
-  g.userData.ambient = true;
-
-  // Build the hull flat in X/Z, with the bow along +X like the sailing animation.
-  const profile=new THREE.Shape();profile.moveTo(-3.5,-.95);profile.lineTo(1.8,-1.1);
-  profile.quadraticCurveTo(3.3,-.8,4,0);profile.quadraticCurveTo(3.3,.8,1.8,1.1);
-  profile.lineTo(-3.5,.95);profile.quadraticCurveTo(-4,0,-3.5,-.95);
-  const hull=new THREE.Mesh(new THREE.ExtrudeGeometry(profile,{depth:.7,bevelEnabled:true,bevelSize:.12,bevelThickness:.12,bevelSegments:1,steps:1}),toon(0xfbfdff));
-  hull.name='horizontal-sailboat-hull';hull.rotation.x=-Math.PI/2;hull.position.y=-.25;
-  hull.castShadow=true;g.add(hull);
-
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 7, 5), toon(0xe4d6bd));
-  mast.position.y = 4.0;
-  g.add(mast);
-
-  const sailGeo = new THREE.BufferGeometry();
-  sailGeo.setAttribute('position', new THREE.Float32BufferAttribute([
-    0, 1.2, 0,  0, 7.2, 0,  2.9, 1.2, 0
-  ], 3));
-  sailGeo.computeVertexNormals();
-  const sail = new THREE.Mesh(sailGeo, new THREE.MeshToonMaterial({
-    color: 0xffffff, gradientMap, side: THREE.DoubleSide
-  }));
-  sail.position.set(0.1, 0, 0);
-  sail.castShadow = true;
-  g.add(sail);
-
-  world.add(g);
-  return g;
+function makeWorkboat(x:number,z:number,kind:typeof WORKBOAT_KINDS[number]){
+ const g=createWorkboat(kind,true);g.position.set(x,.12,z);g.userData.ambient=true;world.add(g);return g;
 }
-

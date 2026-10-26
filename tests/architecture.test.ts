@@ -129,14 +129,23 @@ test('three ports have separate functions and the cruise hull clears its quay',(
 });
 
 
-test('sailboat hull lies along the water and its bow follows the sailing heading',async()=>{
- const {makeSailboat}=await import('../src/port');
- const boat=makeSailboat(0,0);boat.updateMatrixWorld(true);
- const hull=boat.getObjectByName('horizontal-sailboat-hull')!;
- const size=new THREE.Box3().setFromObject(hull).getSize(new THREE.Vector3());
- assert.ok(size.x>7&&size.z>1.5&&size.y<1.1,'long axis is horizontal and vertical draft stays shallow');
- assert.ok(size.x>size.z*2.5,'bow follows the X axis used by the sailing animation');
- const cafe=world.getObjectByName('old-town-cafe');assert.ok(cafe,'reference cafe is assembled in the full city');
+test('workboats replace sails with supported equipment and retain geometry after batching',async()=>{
+ const {createWorkboat,WORKBOAT_KINDS}=await import('../src/workboats');
+ for(const kind of WORKBOAT_KINDS){
+  const root=createWorkboat(kind),merged=createWorkboat(kind,true);
+  const a=new THREE.Box3().setFromObject(root,true),b=new THREE.Box3().setFromObject(merged,true),size=a.getSize(new THREE.Vector3());
+  assert.ok(size.x>12&&size.x<13&&size.z<4.5,'full ship and attachments fit the navigation envelope');
+  assert.ok(a.min.distanceTo(b.min)<1e-5&&a.max.distanceTo(b.max)<1e-5,'batching preserves the complete ship');
+  const deck=root.getObjectByName('船壳、龙骨与甲板')!;
+  assert.ok(deck,'hull and deck are editable separately from the superstructure');
+  assert.equal(root.userData.forward,'+X');
+  assert.ok(.7+.12-.04-6.1*Math.sin(.045)>.24,'deck stays above the maximum displaced water surface when rolling');
+ }
+ const {boats}=await import('../src/port');assert.equal(boats.length,6);
+ assert.equal(world.getObjectByName('horizontal-sailboat-hull'),undefined);
+ for(const boat of boats){assert.ok(boat.mesh.position.x<=-165&&boat.mesh.position.x>=-215);assert.ok(boat.mesh.position.z>=-45&&boat.mesh.position.z<=155);}
+ const moored:THREE.Object3D[]=[];world.traverse(o=>{if(o.name==='market-fishing-boat')moored.push(o);});assert.equal(moored.length,2);
+ for(const boat of moored)assert.ok(Math.abs(boat.rotation.y-Math.PI/2)<1e-6,'moored boat runs parallel to its pier');
 });
 
 test('market arches are through openings and the carved table has six real pockets',async()=>{
