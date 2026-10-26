@@ -936,3 +936,14 @@ test('dock-market piers clear the plaza with upward thresholds and English geome
  root.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='dock-market-pier-threshold'){const n=o.geometry.attributes.normal;for(let i=0;i<n.count;i++)assert.ok(n.getY(i)>.9);}});
  const {createDockMarketSign}=await import('../src/dockMarketSign');const sign=createDockMarketSign();assert.equal(sign.userData.signText,'DOCK MARKET');assert.ok(sign.children.filter(o=>o.name==='dock-market-letter-pixel').length>100);sign.traverse(o=>{if(o instanceof THREE.Mesh)assert.equal((o.material as THREE.MeshToonMaterial).map,null);});
 });
+
+test('restaurant and dock market leave curved road and sidewalks clear after complete-group resizing',async()=>{
+ const {specialBuildings}=await import('../src/specialBuildings'),{roadEdgeDistance}=await import('../src/roadNetwork');
+ for(const id of ['restaurant','port']){const root=specialBuildings.find(s=>s.id===id)!.group;root.updateWorldMatrix(true,true);let minimum=Infinity,closest:any;
+ root.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const box=new THREE.Box3().setFromObject(o,true);for(let x=box.min.x;x<=box.max.x+.001;x+=.4)for(let z=box.min.z;z<=box.max.z+.001;z+=.4){const d=roadEdgeDistance(x,z);if(d<minimum){minimum=d;closest={name:o.name,x,z};}}});
+ assert.ok(minimum>1.5,id+' complete roof/deck/plant footprint clears road and pavement: '+minimum+JSON.stringify(closest));
+ }
+ const root=specialBuildings.find(s=>s.id==='restaurant')!.group,terrace=new THREE.Box3().setFromObject(root.getObjectByName('restaurant-timber-terrace')!,true),tables:THREE.Object3D[]=[],parasols:THREE.Object3D[]=[];
+ root.traverse(o=>{if(o.name==='restaurant-terrace-table')tables.push(o);if(o.name==='restaurant-terrace-parasol')parasols.push(o);});assert.equal(tables.length,3);assert.equal(parasols.length,3);
+ for(const o of [...tables,...parasols]){const b=new THREE.Box3().setFromObject(o,true);assert.ok(b.min.x>=terrace.min.x&&b.max.x<=terrace.max.x&&b.min.z>=terrace.min.z&&b.max.z<=terrace.max.z,'all dining furniture is over its supporting terrace');}
+});

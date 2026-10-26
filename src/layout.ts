@@ -21,9 +21,9 @@ export const ZONES:Record<string,Zone>={
  hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
  hotel:{x:-17,z:140,w:42,d:36,sx:1.5,sz:1.42,level:1.4021704692465167},police:{x:12,z:137,w:15.5,d:28,sx:1,sz:1,level:1.06},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
- cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:137,w:35,d:36,sx:1.3,sz:1.3},
+ cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:135,w:24,d:24,sx:.95,sz:.95},
  promenade:{x:westCoast(98)-1,z:98,w:22,d:20,sx:1,sz:1,level:1.06},
- port:{x:156,z:167,w:50,d:38,sx:1.15,sz:1.15,level:1.06},
+ port:{x:160,z:170,w:38,d:27,sx:.9,sz:.9,level:1.06},
  commercial:{x:77,z:-102,w:64,d:58,sx:1,sz:1,level:COMMERCIAL_PLAN.y,ry:COMMERCIAL_PLAN.rotation},cruise:{x:-106,z:180,w:75,d:25,sx:1,sz:1,level:0}
 };
 function smooth(a:number,b:number,v:number){const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);}

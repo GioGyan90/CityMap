@@ -60,5 +60,5 @@ export function buildStreetFurniture(){
   sign(text,x,y+8.3-1.06,z,11,3.5,color);box(12,.35,.6,0xe4c375,x,y+10.3,z);
  }
  buildBusStops();
- const quaySign=ZONES.port,dockSign=createDockMarketSign();dockSign.position.set(quaySign.x,GROUND_Y+6,quaySign.z+7);world.add(dockSign);
+ const quaySign=ZONES.port,dockSign=createDockMarketSign();dockSign.scale.set(quaySign.sx,1,quaySign.sz);dockSign.position.set(quaySign.x,GROUND_Y+6,quaySign.z+7*quaySign.sz);world.add(dockSign);
 }
