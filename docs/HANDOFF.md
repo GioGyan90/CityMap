@@ -1,3 +1,5 @@
+> **2026-10-26 动态喷泉：** 先读 [animated-fountains.md](animated-fountains.md)。酒店和政府池体保留，新增抛物线水流、实例水滴、脉动水柱和落水涟漪，随全局暂停/资产查看冻结。115项测试与生产构建/启动检查通过；多时点图和GIF见 `docs/fountain-review/`。
+
 > **2026-10-26 酒店与警局：** 先读 [harbor-police-station.md](harbor-police-station.md)。海滨酒店水平面积缩小约30.4%，东侧新增三层港湾警察署、短款巡逻轿车与长款警用厢车；六分区及车辆原件、镜头/标签/接路已接入。114项测试、生产构建/启动检查通过；酒店同机位前后图、车辆及警署六视角、真实场地近景见 `docs/police-review/`。
 
 > **2026-10-26 第三轮加载优化：** 先读 [loading-geometry-batching.md](loading-geometry-batching.md)。住宅合批/植物烘焙改为直接写入最终缓冲区，减少中间几何复制。前后各4轮串行平均CPU生成3.946→3.333秒（-15.5%），场景几何/基础材质及道路像素哈希完全一致。113项测试与生产构建/启动检查通过；证据 `docs/loading3-review/`。

@@ -1,3 +1,4 @@
+import {updateFountains} from './fountains';
 import {updateMarineFleet} from './marineTraffic';
 import {updateTrafficInfrastructure} from './trafficInfrastructure';
 import {updateClouds} from './clouds';
@@ -53,6 +54,7 @@ export function animate() {
 
   /* 海浪 */
   updateWater(t);
+  updateFountains(dt);
   updateClouds(dt);
 
   /* 中型作业船：保留水线以上的干舷，沿原海上走廊往返。 */
