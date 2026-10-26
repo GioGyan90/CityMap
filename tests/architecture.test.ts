@@ -859,3 +859,13 @@ test('continental shelf stays beneath waves, deepens offshore and has upward fac
  assert.ok(oceanCoastDistance(155,163)<0,'reclaimed working quay participates in the shoreline');
  const ray=new THREE.Raycaster(new THREE.Vector3(-120,0,0),new THREE.Vector3(0,-1,0),0,40);assert.ok(ray.intersectObject(shelf).length,'visible bottom is real geometry');
 });
+
+test('ocean volume has a finite optical thickness and shares wave time with its surface',async()=>{
+ const {water,waterUniforms}=await import('../src/water'),{WATER_THICKNESS,WATER_LEVEL}=await import('../src/waterVolume');
+ const volume=world.getObjectByName('thin-ocean-volume') as THREE.Mesh;assert.ok(volume);assert.ok(WATER_THICKNESS>.24&&WATER_THICKNESS<1);
+ const p=volume.geometry.attributes.position,edge=volume.geometry.attributes.surfaceEdge;
+ for(let i=0;i<p.count;i++)assert.ok(Math.abs(p.getY(i)-(edge.getX(i)?WATER_LEVEL:WATER_LEVEL-WATER_THICKNESS))<1e-6);
+ assert.equal((volume.material as THREE.ShaderMaterial).uniforms.time,waterUniforms.time);assert.equal(water.receiveShadow,true);assert.equal((water.material as THREE.ShaderMaterial).lights,true);assert.ok(volume.renderOrder<water.renderOrder);
+ const {boats}=await import('../src/port'),{marineFleet}=await import('../src/marineTraffic');
+ for(const root of [...boats.map(b=>b.mesh),...marineFleet.map(b=>b.mesh),world.getObjectByName('cruise-ship')]){let casters=0;root.traverse(o=>{if((o as THREE.Mesh).isMesh&&o.castShadow)casters++;});assert.ok(casters>0,'every operating ship supplies a real shadow silhouette');}
+});

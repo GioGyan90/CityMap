@@ -1,0 +1,14 @@
+{
+  "cruise-top": {
+    "changedPixels": 12827,
+    "maxDelta": 39
+  },
+  "workboat-top": {
+    "changedPixels": 5316,
+    "maxDelta": 22
+  },
+  "speedboat-top": {
+    "changedPixels": 3547,
+    "maxDelta": 23
+  }
+}
