@@ -1,3 +1,4 @@
+import {createFountainWater} from './fountains';
 import {buildReferenceCafe} from './cafeArchitecture';
 import {addBuildingEntrance} from './buildingAccess';
 import * as THREE from 'three';
@@ -62,11 +63,7 @@ export function buildGovernment(cx, cz) {
   mesh(new THREE.CylinderGeometry(2.4,2.4,.1,24),0x4cc5e6,0,.64,fountainZ);
   mesh(new THREE.CylinderGeometry(.36,.55,.7,10),0xf4e5c6,0,1,fountainZ);
   mesh(new THREE.CylinderGeometry(1, .55,.22,16),0xf6eddb,0,1.48,fountainZ);
-  mesh(new THREE.CylinderGeometry(.13,.24,1.55,8),0xc4f4ff,0,2.28,fountainZ);
-  for(let i=0;i<8;i++){
-    const angle=i*TAU/8;
-    mesh(new THREE.SphereGeometry(.12,6,4),0xd9f9ff,Math.sin(angle)*.65,1.9,fountainZ+Math.cos(angle)*.65);
-  }
+  const waterFX=createFountainWater({id:'civic',waterY:.69,nozzleY:1.61,radius:1.8,rise:1.65});waterFX.position.set(cx,GROUND_Y,cz+fountainZ);world.add(waterFX);
   // Side paths remain open between planting beds, flagpoles and the entrance.
   for(const side of [-1,1]){
     block(2.6,.45,3.4,0xd8c9a8,side*10, .35,8.8);

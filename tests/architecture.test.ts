@@ -917,3 +917,12 @@ test('police precinct keeps its long van under the canopy and leaves a real driv
  const smaller=ZONES.hotel.sx*ZONES.hotel.sz/(1.8*1.7);assert.ok(smaller<.72&&smaller>.66,'hotel horizontal area reduced about thirty percent');
  const batched=createPoliceStation(true),a=new THREE.Box3().setFromObject(root),b=new THREE.Box3().setFromObject(batched);assert.ok(a.min.distanceTo(b.min)<1e-4&&a.max.distanceTo(b.max)<1e-4);
 });
+
+test('fountains follow supported ballistic jets, stay in their basins and freeze when paused',async()=>{
+ const {createFountainWater,fountainStates,updateFountains,fountainJetPoint}=await import('../src/fountains');const before=fountainStates.length;
+ const root=createFountainWater({id:'regression',waterY:.7,nozzleY:1.6,radius:1.8,rise:1.65}),state=fountainStates.at(-1)!;assert.equal(root.getObjectsByProperty('name','arched-water-jet').length,8);
+ for(let i=0;i<=100;i++){const p=fountainJetPoint(state.options,.7,i/100);assert.ok(Math.hypot(p.x,p.z)<=1.800001);assert.ok(p.y>=.7-1e-8);}
+ const end=fountainJetPoint(state.options,0,1);assert.ok(Math.abs(end.y-.7)<1e-8);const original=Array.from(state.drops.instanceMatrix.array);updateFountains(.25);assert.notDeepEqual(Array.from(state.drops.instanceMatrix.array),original);const stopped=Array.from(state.drops.instanceMatrix.array),time=state.time;updateFountains(0);assert.deepEqual(Array.from(state.drops.instanceMatrix.array),stopped);assert.equal(state.time,time);
+ for(const ripple of state.ripples)assert.ok(Math.hypot(ripple.mesh.position.x,ripple.mesh.position.z)+ripple.mesh.scale.x<2.1);
+ fountainStates.splice(before);
+});

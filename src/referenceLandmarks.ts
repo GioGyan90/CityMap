@@ -1,3 +1,4 @@
+import {createFountainWater} from './fountains';
 import {createVehicle} from './vehicles';
 import * as THREE from 'three';
 import {world} from './scene';
@@ -28,7 +29,7 @@ export function referenceHotel(cx:number,cz:number){
  for(let i=0;i<4;i++)k.box(5.8,.22,1.25,C.cream,0,.78-i*.12,5.6+i*.8);
  // Fountain and gardens stay within the clipped plaza, away from the corner surrendered to traffic.
  k.mesh(new THREE.CylinderGeometry(2.2,2.4,.45,24),C.cream,-5.4,.9,6.2);k.mesh(new THREE.CylinderGeometry(1.95,1.95,.15,24),0x36b7d1,-5.4,1.17,6.2);
- k.mesh(new THREE.CylinderGeometry(.27,.5,2.1,12),C.white,-5.4,2.1,6.2);k.mesh(new THREE.CylinderGeometry(1.15,.55,.35,20),C.white,-5.4,2.75,6.2);k.ball(.32,0x65d9ef,-5.4,3.55,6.2);
+ k.mesh(new THREE.CylinderGeometry(.27,.5,2.1,12),C.white,-5.4,2.1,6.2);k.mesh(new THREE.CylinderGeometry(1.15,.55,.35,20),C.white,-5.4,2.75,6.2);const waterFX=createFountainWater({id:'hotel',waterY:1.245,nozzleY:2.94,radius:1.6,rise:1.7});waterFX.position.set(-5.4,0,6.2);root.add(waterFX);
  garden(root,7.8,6.6,2.5);garden(root,-10,-6,1.7);palm(root,-11,-8);palm(root,9,-7);palm(root,10,3,5.8);
  return root;
 }
