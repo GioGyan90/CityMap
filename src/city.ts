@@ -88,6 +88,8 @@ for(const entry of specialBuildings){
  entry.pick.geometry.dispose();entry.group.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(entry.group);
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(entry.id==='hall3'?9:25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
+ // The harbor's projecting piers belong to the same selectable, resized group.
+ if(entry.id==='port'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
 }
 world.add(createRoadTunnel());
 buildMarineFleet();

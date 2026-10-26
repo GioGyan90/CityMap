@@ -208,7 +208,7 @@ export function buildRestaurant(cx, cz) {
   /* 面向海的木平台 */
   const deck = new THREE.Mesh(new THREE.BoxGeometry(22, 0.35, 18), toon(0xd3a675));
   deck.position.set(cx, GROUND_Y + 0.14, cz);
-  deck.receiveShadow = true;
+  deck.receiveShadow = true;deck.name='restaurant-timber-terrace';
   world.add(deck);
 
   makeBuilding({
@@ -224,13 +224,16 @@ export function buildRestaurant(cx, cz) {
   // Replaced by striped awnings in conceptDetails.ts.
 
   /* 海边桌椅 */
-  for (let i = 0; i < 6; i++) {
-    const tx = cx - 8 + (i % 3) * 6;
-    const tz = cz + 8 + Math.floor(i / 3) * 4.5;
+  for (let i = 0; i < 3; i++) {
+    const tx = cx - 7 + i * 6;
+    const tz = cz + 7;
     const table = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.16, 10), toon(0xfaf3e6));
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,.555,8),toon(0xf3e9d6));leg.name='restaurant-table-pedestal';leg.position.set(tx,GROUND_Y+.5925,tz);world.add(leg);
+    table.name='restaurant-terrace-table';
     table.position.set(tx, GROUND_Y + 0.95, tz);
     world.add(table);
     const umb = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.75, 8), toon(i % 2 ? 0xef476f : 0x118ab2));
+    umb.name='restaurant-terrace-parasol';
     umb.position.set(tx, GROUND_Y + 3.2, tz);
     umb.castShadow = true;
     world.add(umb);
