@@ -1,3 +1,4 @@
+import {createWorkboat,WORKBOAT_KINDS,WORKBOAT_TITLES} from './workboats';
 import {createFleetVehicle,FLEET_TITLES,FLEET_PART_TITLES,type FleetKind} from './fleetAssets';
 import {createTunnelArch,createTunnelPortal,createTunnelLining,createRoadTunnel} from './roadTunnels';
 import {RAIL_PLANS} from './railNetworkPlan';
@@ -40,7 +41,7 @@ export function initAssetTools(){
  const styleNames:Record<string,string>={flat:'平顶',pitched:'坡顶',glass:'玻璃楼',stepped:'退台',artdeco:'装饰塔楼',round:'圆塔',arcade:'骑楼',apartment:'公寓',villa:'别墅',warehouse:'仓库'};
  for(const [id,source] of ordinaryAssetSamples)items.push({id:'ordinary-'+id,title:'普通建筑 · '+(styleNames[id.split('-')[0]]??id)+' '+id.split('-')[1],source});
  for(const plan of RAIL_PLANS){items.push({id:plan.id+'-train-kit',title:plan.name+' · 完整编组',source:createRailTrain(plan)});items.push({id:plan.id+'-cab-kit',title:plan.name+' · 车头原件',source:createRailCar(plan,0)});items.push({id:plan.id+'-coach-kit',title:plan.name+' · 客车原件',source:createRailCar(plan,1)});}
- for(const [name,title] of [['horizontal-sailboat-hull','帆船']] as const){const found=world.getObjectByName(name);if(found)items.push({id:name,title:'交通 · '+title,source:name==='horizontal-sailboat-hull'?found.parent!:found});}
+ for(const kind of WORKBOAT_KINDS){const source=createWorkboat(kind);items.push({id:'workboat-'+kind,title:'作业船 · '+WORKBOAT_TITLES[kind],source});for(const part of source.children)items.push({id:'workboat-'+kind+'-'+part.name,title:WORKBOAT_TITLES[kind]+' · '+part.name,source:part});}
  items.push({id:'palm-cluster',title:'景观组合 · 三棵椰树与沙丘',source:createPalmCluster()});
  const cliff=world.getObjectByName('residential-coastal-cliff');if(cliff){items.push({id:'residential-cliff',title:'地貌组合 · 临海住宅低崖',source:cliff});for(const [name,title] of [['continuous-rock-core','连续岩体'],['fractured-cliff-blocks','错层岩块'],['nearshore-reef-clusters','近岸礁石']] as const){const source=cliff.getObjectByName(name);if(source)items.push({id:'cliff-'+name,title:'地貌分组 · '+title,source});}}
  for(const [kind,title] of [['towering','厚积云'],['broken','碎积云'],['veil','高层薄云']] as const)items.push({id:'cloud-'+kind,title:'云团组合 · '+title,source:createCloud(kind,83017,54)});
