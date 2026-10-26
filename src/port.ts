@@ -1,3 +1,5 @@
+import {plantingBoxClear} from './plantPlacement';
+import {ZONES} from './layout';
 import {createWorkboat,WORKBOAT_KINDS} from './workboats';
 import {kit} from './referenceArchitecture';
 import * as THREE from 'three';
@@ -46,8 +48,9 @@ export function buildLighthouse() {
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rr(1.2, 2.6), 0), toon(0x9aa4b4));
     rock.position.set(lx + rr(-5, 5), 0.6, lz + rr(-5, 5));
     rock.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
-    rock.castShadow = rock.receiveShadow = true;
-    world.add(rock);
+    rock.castShadow = rock.receiveShadow = true;rock.name='lighthouse-ground-rock';rock.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(rock,true).translate(new THREE.Vector3(ZONES.lighthouse.x,0,ZONES.lighthouse.z));
+    if(plantingBoxClear(bounds,.5))world.add(rock);
   }
 
   const towerSegs = [

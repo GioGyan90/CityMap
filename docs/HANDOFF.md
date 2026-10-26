@@ -1,3 +1,5 @@
+> **2026-10-26 道路交汇专项修正：** 先读 [road-junction-details.md](road-junction-details.md)。已用小圆角丁字/十字接头替代圆盘，修复步道断口、高架侧坡穿路、别墅挡墙堵门及灯塔分岔护栏；四类接头样件可单独查看。前后图、像素连续性和净空证据见 `docs/junction-review/`。上一轮载入压缩与回折道路方案见 [road-continuity.md](road-continuity.md)。
+
 > **2026-10-23 四类交通工具已完成：** 下一轮先读 [fleet-vehicles.md](fleet-vehicles.md)。新增卡车、快艇、出租车、警车的原件与组合；道路接入 2/4/2 辆新车，两艘快艇在货港西侧巡航，新增“快艇航线”镜头。六角度、合批及场景离屏证据见 `docs/fleet-review/`；90 项测试与生产构建通过。浏览器 WebGL 验证边界见专题文档。以下保留隧道历史交接。
 
 > **隧道第二轮复查已修正：** 新增 `src/tunnelAprons.ts`，车辆高度与实际接路板共用三角形；基础板不再穿出沥青；两个直洞口与弯曲衬砌之间增加实体过渡段。最新复查证据为 `docs/tunnel-review/contact-fix.jpg`，可用 `node scripts/review/tunnel-contact.mjs` 在 Mesa EGL 环境复现。详情见 `docs/road-tunnels.md` 的第二轮复查章节。

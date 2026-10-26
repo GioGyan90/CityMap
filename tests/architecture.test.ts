@@ -746,3 +746,28 @@ test('junction anchors share elevations and private roads avoid steep terrain st
  for(const n of junctionAnchors){const values=roadProfiles.filter(r=>n.roads.includes(r.id)).map(r=>r.curve.getPoint(r.points.findIndex(p=>Math.hypot(p[0]-n.x,p[1]-n.z)<.1)/(r.points.length-1)).y);assert.ok(Math.max(...values)-Math.min(...values)<.015,'junction height agrees');}
  for(const road of hillApproaches){const p=road.curve.getSpacedPoints(1000);let max=0;for(let i=1;i<p.length;i++)max=Math.max(max,Math.abs(surfaceHeight(p[i].x,p[i].z)-surfaceHeight(p[i-1].x,p[i-1].z))/Math.hypot(p[i].x-p[i-1].x,p[i].z-p[i-1].z));assert.ok(max<.22,'actual terrain grade '+road.id+' '+max);}
 });
+
+test('junction fillets stay close to actual arms and do not create oversized circular bulbs',async()=>{
+ const {junctionOutline}=await import('../src/roadJunctions');
+ const arms=[{x:-1,z:0,width:8},{x:1,z:0,width:8},{x:0,z:1,width:6}];
+ for(const [x,z]of junctionOutline(arms)){
+  const distance=Math.min(...arms.map(a=>{const t=Math.max(0,x*a.x+z*a.z);return Math.hypot(x-a.x*t,z-a.z*t)-a.width/2;}));assert.ok(distance<=.7,'fillet extends too far outside lane silhouette');
+ }
+ const turn=junctionOutline([{x:0,z:-1,width:3.6},{x:.75,z:.66,width:3.6}]);assert.ok(turn.length>8,'a bend includes inner and outer corners rather than a triangular shortcut');
+});
+test('decorative mountain and lighthouse rocks clear their complete road footprints',async()=>{
+ const {plantingBoxClear}=await import('../src/plantPlacement');let count=0;world.updateMatrixWorld(true);
+ world.traverse(o=>{if(['coastal-ridge-rock','lighthouse-ground-rock'].includes(o.name)){assert.ok(plantingBoxClear(new THREE.Box3().setFromObject(o,true),.35));count++;}});assert.ok(count>0);
+});
+test('elevated motorway clears the actual hillside across its whole ten-metre deck',async()=>{
+ const {motorwayCurve}=await import('../src/transport');assert.ok(motorwayCurve);let minimum=Infinity;
+ for(let i=0;i<=600;i++){const p=motorwayCurve!.getPointAt(i/600),t=motorwayCurve!.getTangentAt(i/600),n=new THREE.Vector3(-t.z,0,t.x).normalize();for(const offset of [-5,-2.5,0,2.5,5]){const q=p.clone().addScaledVector(n,offset);minimum=Math.min(minimum,p.y+.1-surfaceHeight(q.x,q.z));}}
+ assert.ok(minimum>.3,'terrain intersects bridge deck: '+minimum);
+});
+test('villa wall, foundation piers and hillside guardrails leave the entry and branch open',async()=>{
+ const {ZONES}=await import('../src/layout'),{hillRailClear}=await import('../src/hillAccess'),{hillApproaches}=await import('../src/roadNetwork');const site=world.getObjectByName('hill-access-and-foundations')!;world.updateMatrixWorld(true);
+ const gate=new THREE.Box3(new THREE.Vector3(ZONES.villa.x-1.8,surfaceHeight(ZONES.villa.x,36)+.05,35.75),new THREE.Vector3(ZONES.villa.x+1.8,surfaceHeight(ZONES.villa.x,36)+.7,36.25));
+ for(const mesh of site.children.filter(o=>o instanceof THREE.Mesh&&(o.geometry as THREE.BoxGeometry).type==='BoxGeometry'))assert.ok(!gate.intersectsBox(new THREE.Box3().setFromObject(mesh,true)),'foundation blocks villa entry');
+ for(const id of ['villa','lighthouse']){const points=hillApproaches.find(r=>r.id===id)!.points;assert.ok(points.length>30);}
+ let posts=0;for(const o of site.children.filter(o=>o.name.endsWith('-grounded-rail-post'))){const p=o.position,id=o.name.startsWith('villa')?'villa':'lighthouse';assert.ok(hillRailClear(p.x,p.z,id));posts++;}assert.ok(posts>30);
+});
