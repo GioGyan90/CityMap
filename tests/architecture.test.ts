@@ -947,3 +947,18 @@ test('restaurant and dock market leave curved road and sidewalks clear after com
  root.traverse(o=>{if(o.name==='restaurant-terrace-table')tables.push(o);if(o.name==='restaurant-terrace-parasol')parasols.push(o);});assert.equal(tables.length,3);assert.equal(parasols.length,3);
  for(const o of [...tables,...parasols]){const b=new THREE.Box3().setFromObject(o,true);assert.ok(b.min.x>=terrace.min.x&&b.max.x<=terrace.max.x&&b.min.z>=terrace.min.z&&b.max.z<=terrace.max.z,'all dining furniture is over its supporting terrace');}
 });
+
+test('punk hall and its garden retreat from the sea, face the cruise and retain grounded vegetation',async()=>{
+ const {specialBuildings}=await import('../src/specialBuildings'),{ZONES,eastCoast}=await import('../src/layout'),{roadEdgeDistance}=await import('../src/roadNetwork');
+ const entry=specialBuildings.find(s=>s.id==='hall5')!,root=entry.group;root.updateWorldMatrix(true,true);
+ const forward=new THREE.Vector3(0,0,1).transformDirection(root.matrixWorld),ship=new THREE.Vector3(ZONES.cruise.x-root.position.x,0,ZONES.cruise.z-root.position.z).normalize();assert.ok(forward.dot(ship)>.999,'front sculpture points toward cruise berth');
+ root.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const b=new THREE.Box3().setFromObject(o,true);const nx=Math.max(1,Math.ceil((b.max.x-b.min.x)/.5)),nz=Math.max(1,Math.ceil((b.max.z-b.min.z)/.5));for(let i=0;i<=nx;i++)for(let j=0;j<=nz;j++){const x=THREE.MathUtils.lerp(b.min.x,b.max.x,i/nx),z=THREE.MathUtils.lerp(b.min.z,b.max.z,j/nz);assert.ok(eastCoast(z)-x>6,'full structure and foliage stays inside the coast');assert.ok(roadEdgeDistance(x,z)>3,'garden and hall leave street clear');}});
+ const garden=root.getObjectByName('punk-hall-coastal-garden')!;assert.equal(garden.children.filter(o=>o.name==='punk-garden-tree').length,4);for(const o of garden.children){const p=o.getWorldPosition(new THREE.Vector3());assert.ok(Math.abs(p.y-surfaceHeight(p.x,p.z)+.035)<1e-5,'vegetation roots remain on real terrain');}
+});
+
+test('seafood crab is an editable supported sculpture with eight connected legs and two true open pincers',async()=>{
+ const {createSeafoodCrab,CRAB_PARTS}=await import('../src/seafoodCrab');const crab=createSeafoodCrab();for(const name of Object.keys(CRAB_PARTS))assert.ok(crab.getObjectByName(name));
+ const legs=crab.getObjectByName('crab-walking-legs')!;assert.equal(legs.children.filter(o=>o.name==='crab-leg-upper').length,8);assert.equal(legs.children.filter(o=>o.name==='crab-leg-tip').length,8);
+ const claws=crab.getObjectByName('crab-claws')!.children.filter(o=>o.name==='open-crab-pincer') as THREE.Mesh[];assert.equal(claws.length,2);for(const o of claws){const g=o.geometry as THREE.ExtrudeGeometry;assert.ok(g.parameters.shapes instanceof THREE.Shape);const ray=new THREE.Raycaster(new THREE.Vector3(0,.55,2).applyMatrix4(o.matrix),new THREE.Vector3(0,0,-1),0,4);o.updateMatrixWorld(true);ray.ray.origin.set(0,.55,2).applyMatrix4(o.matrixWorld);assert.equal(ray.intersectObject(o).length,0,'the pincer bite is open geometry');}
+ const {specialBuildings}=await import('../src/specialBuildings');const restaurant=specialBuildings.find(s=>s.id==='restaurant')!.group;assert.ok(restaurant.getObjectByName('seafood-crab-sculpture'));
+});

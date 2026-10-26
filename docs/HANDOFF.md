@@ -1,3 +1,5 @@
+> **2026-10-26 黑铆与螃蟹：** 先读 [punk-hall-and-crab.md](punk-hall-and-crab.md)。球厅内移到(100,164)，正面转向邮轮；四树四灌木整体分组，含绿植距海岸至少10.98米。海鲜餐厅换完整独立螃蟹雕塑，五组原件、屋檐支架与资产入口；119项测试及构建通过，六视角原件/八视角实景见 `docs/punk-crab-review/`。
+
 > **2026-10-26 餐厅与市场退路：** 先读 [harbor-setbacks.md](harbor-setbacks.md)。餐厅/码头市场水平面积约缩小47%/39%，餐厅北退2米、市场向海侧退让，外排3组餐桌移除，入口/招牌/拾取范围同步；117项测试及生产构建通过，真实几何八视角见 `docs/harbor-setback-review/`。
 
 > **2026-10-26 码头市场：** 栈桥顶面较广场抬高8厘米并增加入口斜接，消除共面闪烁；招牌改为纯英文立体像素 DOCK MARKET。116项测试、构建通过，实际场景八视角见 `docs/dock-market-review/scene.jpg`；说明见 [dock-market-fix.md](dock-market-fix.md)。
