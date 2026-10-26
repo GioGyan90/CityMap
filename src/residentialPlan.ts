@@ -30,11 +30,12 @@ function roadConnection(gate:Point,ring:Point[],occupied:Poly[]){let best:{road:
 export let lastResidentialPlanKey='',lastResidentialPlanSource:'baked'|'computed'='computed';
 export function residentialPlanningKey(occupied:{x:number;z:number;w:number;d:number}[]){
  // Both geometry inputs and append-only reservations participate in invalidation.
- const input=JSON.stringify({version:1,occupied,paths:parkingAccessPaths,zones:ZONES,station:STATION_RESERVATION,roads:roadProfiles.map(r=>({id:r.id,width:r.width,points:r.points})),rails:RAIL_PLANS});
+ const input=JSON.stringify({version:2,occupied,paths:parkingAccessPaths,zones:ZONES,station:STATION_RESERVATION,roads:roadProfiles.map(r=>({id:r.id,width:r.width,points:r.points})),rails:RAIL_PLANS},(_key,value)=>typeof value==='number'?Math.round(value*1e4)/1e4:value);
  let a=2166136261,b=5381;
  const update=(v:number)=>{a=Math.imul(a^v,16777619);b=Math.imul(b,33)^v;};
  for(let i=0;i<input.length;i++)update(input.charCodeAt(i));
- const bytes=new Uint8Array(terrainPositions.buffer,terrainPositions.byteOffset,terrainPositions.byteLength);for(const v of bytes)update(v);
+ // Ignore sub-0.1 mm floating-point noise across JS engines; these are world metres.
+ for(const v of terrainPositions)update(Math.round(v*1e4));
  return (a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');
 }
 export function planResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
