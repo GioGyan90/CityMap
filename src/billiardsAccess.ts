@@ -16,7 +16,7 @@ export function buildBilliardsAccess(){
  for(let x=road.x-edge+.3;x<road.x+edge;x+=.8)paintGroundPath([[x,shore.z-1.2],[x,shore.z+1.2]],.32,'line');
  parkingAccessPaths.push({points:[a,b],width:2.6});
 
- for(const id of ['market','hall1','hall2','hall3','hall4','hall5']){
+ for(const id of ['market','hall1','hall2','hall4','hall5']){
   const s=ZONES[id],front=s.z+Math.cos(s.ry??0)*(id==='market'?14:10.5)*s.sz,side=s.x+s.w/2+2,road=nearestRoad(side,front);
   const near=nearestRoad(s.x,front);
   const points:[number,number][]=id==='hall5'?[[s.x,front],[near.x,near.z]]:[[s.x,front],[side,front],[road.x,road.z]];

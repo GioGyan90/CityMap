@@ -1,3 +1,5 @@
+> **2026-10-26 商业区第二轮：** 先读 [commercial-district.md](commercial-district.md)。已迁到真实医院环路上方，保留双向车辆通行；蓝序厅缩到62%上二层平台，穹顶楼上酒店屋顶，塔冠改为不重叠退台。112项测试通过，四张问题专项近景、188采样净高和太阳射线证据见 `docs/commercial-review/`。
+
 > **2026-10-26 商业区重构：** 先读 [commercial-district.md](commercial-district.md)。新增五分区商业街、跨街花园桥、科技办公与酒店公寓，商业街接公路及蓝序台球厅步行连接；专用镜头与分区原件已接入。111项测试、生产构建/启动检查通过，实际几何多角度证据见 `docs/commercial-review/`。
 
 > **2026-10-26 薄水层与船影：** 先读 [water-volume-shadows.md](water-volume-shadows.md)。海水增加平均 .65 m 的透明体层，浪面接入原生太阳软阴影；沿用2048²贴图并扩展覆盖范围。110 项测试及生产构建/启动检查通过，真实几何+shadowmap GLSL 的多角度、厚度样件及阴影开关对照见 `docs/water-depth-review/`。

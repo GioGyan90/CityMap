@@ -36,7 +36,7 @@ export function buildParcels(){
   const base=Math.max(...heights);
   if(base-Math.min(...heights)>4){occupied.pop();made--;continue;}
   const h=tower?rr(skylineHeight(x,z)*.65,skylineHeight(x,z)):district.name==='civic'?rr(8,17):district.name==='hills'?rr(6,11):rr(5,12);
-  const style=tower?pick(['glass','stepped','glass','artdeco'] as const):industrial?'warehouse':district.name==='resort'||district.name==='hills'?'villa':pick(['arcade','apartment','pitched','flat'] as const);
+  const style=tower?pick(['glass','stepped','glass','stepped'] as const):industrial?'warehouse':district.name==='resort'||district.name==='hills'?'villa':pick(['arcade','apartment','pitched','flat'] as const);
   const frontage=nearestRoad(x,z);
   const group=makeBuilding({x,z,w,d,h,style,plan,frontage:[frontage.x,frontage.z],base:pick(district.name==='hills'?['#fff1cf','#ffe1b3','#ffedda']:RES_BASES),roof:pick(district.name==='hills'||district.name==='oldtown'?[0xcc724b,0xdd8b50,0xc46945]:ROOF_COLS),elevation:base});
   group.userData.district=district.name;

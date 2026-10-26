@@ -70,7 +70,7 @@ registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与
 const ship=buildCruiseShip();
 world.attach(ship);
 registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
-const commercial=createCommercialDistrict(true);world.add(commercial);registerGroup('commercial','蓝序城市商业区','跨街花园连廊、餐饮露台、科技办公楼与酒店公寓',commercial,[0,0],[44,70,31]);
+const commercial=createCommercialDistrict(true);commercial.userData.companions=['hall3'];world.add(commercial);registerGroup('commercial','蓝序城市商业区','跨街花园连廊、餐饮露台、科技办公楼与酒店公寓',commercial,[0,0],[64,65,58]);
 registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
 registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);
 buildMountains();
@@ -80,10 +80,10 @@ for(const entry of specialBuildings){
  const zone=ZONES[entry.id];if(!zone)continue;
  const source=entry.group.position.clone();entry.group.userData.sourceCenter=source.toArray();
  const base=zone.level??terrainHeight(zone.x,zone.z);
- entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
+ entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hall3'?.62:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
  entry.group.scale.set(zone.sx,sy,zone.sz);entry.group.rotation.y=zone.ry??0;
  entry.pick.geometry.dispose();entry.group.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(entry.group);
- entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(25,bounds.max.y-base+3),zone.d);
+ entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(entry.id==='hall3'?9:25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
 }
 world.add(createRoadTunnel());

@@ -876,8 +876,21 @@ test('commercial bridges preserve a through street and batching retains all five
  assert.equal(editable.children.length,5);assert.equal(batched.children.length,5);
  const a=new THREE.Box3().setFromObject(editable),b=new THREE.Box3().setFromObject(batched);
  assert.ok(a.min.distanceTo(b.min)<1e-4&&a.max.distanceTo(b.max)<1e-4);
- const route=new THREE.Box3(new THREE.Vector3(-2.9,.3,-15),new THREE.Vector3(2.9,5.95,15));
+ const route=new THREE.Box3(new THREE.Vector3(-29,.3,-8.4),new THREE.Vector3(29,8.29,8.4));
  editable.traverse(o=>{if(o instanceof THREE.Mesh)assert.equal(new THREE.Box3().setFromObject(o).intersectsBox(route),false,`street obstruction: ${o.name}`);});
  const triangles=(g:THREE.Object3D)=>{let n=0;g.traverse(o=>{if(o instanceof THREE.Mesh)n+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});return n;};
  assert.equal(triangles(editable),triangles(batched));
+});
+
+test('commercial skywalk straddles the real city road and the small hall rests on its upper platform',async()=>{
+ const {COMMERCIAL_PLAN:p}=await import('../src/commercialPlan');const {roadProfiles}=await import('../src/roadNetwork');const {specialBuildings}=await import('../src/specialBuildings');const {createCommercialDistrict}=await import('../src/commercialDistrict');
+ const district=specialBuildings.find(s=>s.id==='commercial')!,hall=specialBuildings.find(s=>s.id==='hall3')!;
+ district.group.updateMatrixWorld(true);hall.group.updateMatrixWorld(true);const inverse=district.group.matrixWorld.clone().invert(),road=roadProfiles.find(r=>r.id==='hospital-ring')!;let samples=0,minClearance=Infinity,maxOffset=0;
+ for(const point of road.curve.getSpacedPoints(1500)){
+  const q=point.clone().applyMatrix4(inverse);if(Math.abs(q.x)>28)continue;samples++;maxOffset=Math.max(maxOffset,Math.abs(q.z));assert.ok(Math.abs(q.z)+road.width/2<8.2,'both real traffic lanes remain between the occupied podiums');minClearance=Math.min(minClearance,p.y+8.3-surfaceHeight(point.x,point.z));
+ }
+ assert.ok(samples>100);assert.ok(minClearance>6.5,'carriageway has real vertical headroom');
+ const hallLocal=hall.group.position.clone().applyMatrix4(inverse);assert.ok(Math.abs(hallLocal.x-p.hall.x)<1e-5&&Math.abs(hallLocal.z-p.hall.z)<1e-5);assert.ok(Math.abs(hallLocal.y-p.deck)<1e-5);assert.equal(hall.group.scale.x,.62);assert.equal(hall.group.scale.y,.62);
+ const editable=createCommercialDistrict();editable.updateMatrixWorld(true);const a=editable.getObjectByName('lower-crown-tier')!,b=editable.getObjectByName('upper-crown-tier')!;const overlap=new THREE.Box3().setFromObject(a).intersect(new THREE.Box3().setFromObject(b));assert.ok(overlap.isEmpty(),'crown tiers do not interpenetrate');
+ world.userData.commercialRoadAudit={road:'hospital-ring',samples,minClearance,maxOffset,hallLocal:hallLocal.toArray()};
 });

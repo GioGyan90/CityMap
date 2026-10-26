@@ -1,3 +1,4 @@
+import {commercialGroundOccupied} from './commercialPlan';
 import * as THREE from 'three';
 import {roadProfiles,roadEdgeDistance,nearestRoad} from './roadNetwork';
 import {isLand,ZONES,westCoast} from './layout';
@@ -41,7 +42,7 @@ export function baseClear(x:number,z:number,r=.4){
  for(const dx of [-r,0,r])for(const dz of [-r,0,r]){const px=x+dx,pz=z+dz;
   if(!isLand(px,pz)||roadEdgeDistance(px,pz)<.65)return false;
   if(pz>=-154&&pz<=78&&Math.abs(px-(westCoast(pz)+20))<3.35)return false;
-  if(Object.entries(ZONES).some(([id,s])=>id!=='cruise'&&Math.abs(px-s.x)<s.w/2+.5&&Math.abs(pz-s.z)<s.d/2+.5))return false;
+  if(Object.entries(ZONES).some(([id,s])=>id!=='cruise'&&id!=='hall3'&&!(id==='commercial'&&!commercialGroundOccupied(px,pz))&&Math.abs(px-s.x)<s.w/2+.5&&Math.abs(pz-s.z)<s.d/2+.5))return false;
  }return true;
 }
 export function planTrafficFixtures(blocked:(x:number,z:number)=>boolean=()=>false){
@@ -49,7 +50,7 @@ export function planTrafficFixtures(blocked:(x:number,z:number)=>boolean=()=>fal
  const add=(kind:FixtureSite['kind'],road:number,p:THREE.Vector3,heading:number,junction?:number)=>{sites.push({id:kind+'-'+String(sites.filter(s=>s.kind===kind).length+1).padStart(3,'0'),kind,x:p.x,y:surfaceHeight(p.x,p.z)-.03,z:p.z,heading,grid:gridCell(p.x,p.z).id,road,junction});};
  const clear=(p:THREE.Vector3)=>baseClear(p.x,p.z)&&!blocked(p.x,p.z);
  for(const ji of controlledJunctions){const j=junctionPlan[ji];for(const ri of j.routes){const r=roadProfiles[ri],n=Math.ceil(r.curve.getLength());let nearest=0,dist=Infinity;for(let k=0;k<=n;k++){const p=r.curve.getPointAt(k/n),d=p.distanceTo(j.position);if(d<dist){dist=d;nearest=k/n;}}
-  for(const approach of [-1,1]){for(const setback of [0,5,10]){const distance=j.radius+4.2+setback,u=nearest+approach*distance/r.curve.getLength();if(u<.012||u>.988)continue;
+  for(const approach of [-1,1]){for(const setback of [0,5,10,15,20]){const distance=j.radius+4.2+setback,u=nearest+approach*distance/r.curve.getLength();if(u<.012||u>.988)continue;
    const p=r.curve.getPointAt(u),v=r.curve.getTangentAt(u).multiplyScalar(-approach);v.y=0;v.normalize();const normal=new THREE.Vector3(-v.z,0,v.x);
    // Incoming lane is the left offset of its heading in the existing traffic model.
    for(const curbSide of [1,-1]){for(const extra of [1.25,1.9,2.5]){const q=p.clone().addScaledVector(normal,curbSide*(r.width/2+extra));if(clear(q)&&sites.every(s=>Math.hypot(q.x-s.x,q.z-s.z)>3)){add('signal',ri,q,Math.atan2(-v.x,-v.z),ji);sites[sites.length-1].curbSide=curbSide;break;}}
