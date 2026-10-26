@@ -1,3 +1,5 @@
+> **启动故障热修复：** 已撤销统一 runtime 入口，恢复 scene→environment→city→night→focus→labels→camera 的逐阶段加载。保留铁路索引和遮罩缓存。`npm run build` 现包含生产启动依赖检查，对上一故障版产物确实失败、修复版通过；勿再次用静态导入合并带初始化副作用的模块。
+
 > **2026-10-26 启动性能：** 先读 [loading-performance.md](loading-performance.md)。铁路预约空间索引、步道遮罩小块缓存、统一 runtime 预加载；同环境两轮平均构建 8.28→5.44 s（约 -34%），几何/基础材质/道路遮罩校验值一致，104 项测试通过。证据 `docs/loading-review/`。
 
 > **2026-10-26 教学楼出口与医院车行出口：** 先读 [facility-exits-and-turns.md](facility-exits-and-turns.md)。弯道仅加局部圆角，不再叠加长直臂；庭院铺地合并，三处教学楼门口接通；新增医院 6 m 双向车道及 7 m 半径转弯接公路，并修正救护车叠加放大。103 项测试与同机位前后证据见 `docs/access-turn-review/`。

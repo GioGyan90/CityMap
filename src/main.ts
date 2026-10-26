@@ -5,7 +5,12 @@ async function boot() {
   try {
     const began=performance.now(),clouds=preloadCloudDensity();
     const {world}=await import('./scene');world.userData.deferClouds=true;
-    await import('./runtime');
+    await import('./environment');
+    await import('./city');
+    await import('./night');
+    await import('./focus');
+    await import('./labels');
+    await import('./camera');
     const launch=document.createElement('button');launch.id='asset-lazy-launch';launch.className='asset-launch';launch.textContent='资产查看 / 网格规划';document.body.appendChild(launch);
     let tools:Promise<void>|undefined;
     const openTools=()=>tools??=(async()=>{launch.disabled=true;launch.textContent='正在打开资产…';try{const {initAssetTools}=await import('./assetTools');initAssetTools();launch.disabled=false;launch.click();}catch(error){tools=undefined;launch.disabled=false;launch.textContent='重试打开资产';console.error(error);}})();
@@ -21,7 +26,9 @@ async function boot() {
   } catch (error) {
     console.error(error);
     const loading = document.getElementById('loading')!;
-    loading.textContent = '地图加载失败，请刷新重试，并确认浏览器已启用 WebGL / 硬件加速。';
+    loading.textContent = error instanceof Error&&/webgl context/i.test(error.message)
+      ? '浏览器无法创建 3D 画面，请检查 WebGL / 硬件加速设置后重试。'
+      : '地图初始化失败，请刷新重试。';
   }
 }
 void boot();
