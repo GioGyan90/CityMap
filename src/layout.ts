@@ -35,15 +35,15 @@ function rawHeight(x:number,z:number){
  const base=1.06+Math.max(0,terraces+hills+north+east)*inland;
  return base+Math.min(residentialCliffLift(x,z,eastCoast),Math.max(0,6-base));
 }
+const terrainZones=Object.entries(ZONES).filter(([id])=>!['cruise','port','cargo','passenger','fishmarket'].includes(id)).map(([,s])=>({...s,level:s.level??rawHeight(s.x,s.z)}));
 export function terrainHeight(x:number,z:number){
  let h=rawHeight(x,z);
  const quayDistance=Math.max(120-x,x-190,145-z,z-181);
  if(quayDistance<=0)return 1.06;
  if(quayDistance<10)h=1.06+(h-1.06)*smooth(0,10,quayDistance);
- for(const [id,s] of Object.entries(ZONES)){
-  if(['cruise','port','cargo','passenger','fishmarket'].includes(id))continue;
+ for(const s of terrainZones){
   const distance=Math.max(Math.abs(x-s.x)-s.w/2,Math.abs(z-s.z)-s.d/2);
-  if(distance<5){const level=s.level??rawHeight(s.x,s.z);h=h+(level-h)*(1-smooth(0,5,distance));}
+  if(distance<5){const level=s.level;h=h+(level-h)*(1-smooth(0,5,distance));}
  }
  return h;
 }

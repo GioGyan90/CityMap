@@ -1,3 +1,5 @@
+import {residentialPlanKey,residentialPlanData} from './generated/residentialPlans';
+import {terrainPositions} from './terrainSurface';
 import {RAIL_PLANS,railCircuit} from './railNetworkPlan';
 import {STATION_RESERVATION} from './coastalStationPlan';
 import polygonClipping from 'polygon-clipping';
@@ -25,7 +27,23 @@ function roadConnection(gate:Point,ring:Point[],occupied:Poly[]){let best:{road:
   if(clear&&Math.abs(surfaceHeight(...gate)-surfaceHeight(...end))<1.2)best={road:end,distance};
  }return best?.road;
 }
+export let lastResidentialPlanKey='',lastResidentialPlanSource:'baked'|'computed'='computed';
+export function residentialPlanningKey(occupied:{x:number;z:number;w:number;d:number}[]){
+ // Both geometry inputs and append-only reservations participate in invalidation.
+ const input=JSON.stringify({version:1,occupied,paths:parkingAccessPaths,zones:ZONES,station:STATION_RESERVATION,roads:roadProfiles.map(r=>({id:r.id,width:r.width,points:r.points})),rails:RAIL_PLANS});
+ let a=2166136261,b=5381;
+ const update=(v:number)=>{a=Math.imul(a^v,16777619);b=Math.imul(b,33)^v;};
+ for(let i=0;i<input.length;i++)update(input.charCodeAt(i));
+ const bytes=new Uint8Array(terrainPositions.buffer,terrainPositions.byteOffset,terrainPositions.byteLength);for(const v of bytes)update(v);
+ return (a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');
+}
 export function planResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
+ lastResidentialPlanKey=residentialPlanningKey(occupied);
+ if(!(globalThis as any).__citymapBakePlans&&lastResidentialPlanKey===residentialPlanKey){lastResidentialPlanSource='baked';return JSON.parse(residentialPlanData) as CourtPlan[];}
+ lastResidentialPlanSource='computed';
+ return computeResidentialCourts(occupied);
+}
+export function computeResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
  const obstacles:Poly[]=[rectangle(STATION_RESERVATION.x,STATION_RESERVATION.z,STATION_RESERVATION.w,STATION_RESERVATION.d),...roadProfiles.map(r=>strip(r.curve,r.width+4.8)),...Object.values(ZONES).map(s=>rectangle(s.x,s.z,s.w+6,s.d+6)),...occupied.map(s=>rectangle(s.x,s.z,s.w+3,s.d+3))];
  for(const plan of RAIL_PLANS)obstacles.push(strip(railCircuit(plan),10));
  for(const path of parkingAccessPaths){const [a,b]=path.points;obstacles.push(strip(new THREE.LineCurve3(new THREE.Vector3(a[0],0,a[1]),new THREE.Vector3(b[0],0,b[1])),path.width+3));}
