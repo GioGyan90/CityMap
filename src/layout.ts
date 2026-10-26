@@ -18,7 +18,7 @@ export const ZONES:Record<string,Zone>={
  park:{x:-13,z:-91.4,w:36,d:36,sx:1.15,sz:1.15,level:3.5974665423},market:{x:-9,z:15,w:45,d:42,sx:1.4,sz:1.25},hall2:{x:-13,z:57,w:24,d:28,sx:1.25,sz:1.25},
  fishmarket:{x:-82,z:57,w:20,d:24,sx:1,sz:1,level:.51,ry:Math.PI/2},
  hall1:{x:-16,z:-20,w:24,d:24,sx:1,sz:1},hall3:{...COMMERCIAL_HALL,w:12,d:14,sx:.62,sz:.62,level:COMMERCIAL_PLAN.y+COMMERCIAL_PLAN.deck,ry:COMMERCIAL_PLAN.rotation},
- hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:112,z:167,w:21,d:24,sx:1,sz:1,level:1.06,ry:Math.PI},
+ hall4:{x:174,z:-32,w:20,d:24,sx:1,sz:1},hall5:{x:100,z:164,w:25,d:25,sx:1,sz:1,level:1.06,ry:Math.atan2(-206,16)},
  hotel:{x:-17,z:140,w:42,d:36,sx:1.5,sz:1.42,level:1.4021704692465167},police:{x:12,z:137,w:15.5,d:28,sx:1,sz:1,level:1.06},civic:{x:60,z:16,w:48,d:47,sx:1.75,sz:1.7},
  hospital:{x:138,z:-40,w:45,d:74,sx:1.65,sz:1.35},campus:{x:156,z:48,w:36,d:68,sx:1.25,sz:1.15},
  cafe:{x:93,z:125,w:31,d:29,sx:1.2,sz:1.2},restaurant:{x:141,z:135,w:24,d:24,sx:.95,sz:.95},

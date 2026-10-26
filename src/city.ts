@@ -1,3 +1,4 @@
+import {addPunkHallGarden} from './punkHallGarden';
 import {createPoliceStation} from './policeStation';
 import {buildPoliceAccess} from './policeAccess';
 import {buildCommercialAccess} from './commercialAccess';
@@ -85,11 +86,12 @@ for(const entry of specialBuildings){
  const base=zone.level??terrainHeight(zone.x,zone.z);
  entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hall3'?.62:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
  entry.group.scale.set(zone.sx,sy,zone.sz);entry.group.rotation.y=zone.ry??0;
+ if(entry.id==='hall5')addPunkHallGarden(entry.group);
  entry.pick.geometry.dispose();entry.group.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(entry.group);
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(entry.id==='hall3'?9:25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
- // The harbor's projecting piers belong to the same selectable, resized group.
- if(entry.id==='port'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
+ // Include projecting piers and the relocated hall garden in their selectable groups.
+ if(entry.id==='port'||entry.id==='hall5'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
 }
 world.add(createRoadTunnel());
 buildMarineFleet();

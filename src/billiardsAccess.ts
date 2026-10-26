@@ -18,8 +18,10 @@ export function buildBilliardsAccess(){
 
  for(const id of ['market','hall1','hall2','hall4','hall5']){
   const s=ZONES[id],front=s.z+Math.cos(s.ry??0)*(id==='market'?14:10.5)*s.sz,side=s.x+s.w/2+2,road=nearestRoad(side,front);
-  const near=nearestRoad(s.x,front);
-  const points:[number,number][]=id==='hall5'?[[s.x,front],[near.x,near.z]]:[[s.x,front],[side,front],[road.x,road.z]];
+  const rotatedGate=new THREE.Vector3(0,0,10.5*s.sz).applyAxisAngle(new THREE.Vector3(0,1,0),s.ry??0).add(new THREE.Vector3(s.x,0,s.z));
+  const hallRoad=nearestRoad(s.x+20,s.z-15);
+  const approach=new THREE.Vector2(111-hallRoad.x,151.5-hallRoad.z).normalize().multiplyScalar(hallRoad.width/2+.05);
+  const points:[number,number][]=id==='hall5'?[[rotatedGate.x,rotatedGate.z],[rotatedGate.x,151.5],[111,151.5],[hallRoad.x+approach.x,hallRoad.z+approach.y]]:[[s.x,front],[side,front],[road.x,road.z]];
   paintGroundPath(points,2.4,'walk');
   for(let i=1;i<points.length;i++)parkingAccessPaths.push({points:[points[i-1],points[i]],width:2.4});
  }

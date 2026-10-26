@@ -1,3 +1,4 @@
+import {createSeafoodCrab} from './seafoodCrab';
 import {billiardEmblem} from './marketEmblem';
 import * as THREE from 'three';
 import { world } from './scene';
@@ -94,12 +95,7 @@ export function hotelDetails(cx:number,cz:number) {
 export function restaurantDetails(cx:number,cz:number) {
   awning(cx-2,4.6,cz+3.4,15.5,4.5,0xc84b43);
   sign('海鲜料理',cx-2,7,cz+1.2,10,2.4,'#fff1d6','#b63c34');
-  const crab=new THREE.Mesh(new THREE.SphereGeometry(.85,10,6),toon(0xde5141));
-  crab.scale.set(1.8,.7,.5);crab.position.set(cx+7,GROUND_Y+8,cz+1.25);world.add(crab);
-  for(const dx of [-2,2]) {
-    const claw=new THREE.Mesh(new THREE.TorusGeometry(.55,.14,5,10,Math.PI*1.5),toon(0xde5141));
-    claw.position.set(cx+7+dx,GROUND_Y+8.5,cz+1.25);world.add(claw);
-  }
+  const crab=createSeafoodCrab();crab.scale.setScalar(.85);crab.position.set(cx-2,GROUND_Y+8.1,cz+2.4);world.add(crab);
 }
 export function cafeDetails(cx:number,cz:number) {
   awning(cx-4,4.9,cz+3.5,13.2,4.5,0x247aa9);

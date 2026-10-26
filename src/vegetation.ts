@@ -1,3 +1,4 @@
+import {inPunkGarden} from './punkHallGarden';
 import {roadEdgeDistance} from './roadNetwork';
 import {plantingBoxClear} from './plantPlacement';
 import {bakePalm,palmSamples} from './palm';
@@ -15,7 +16,7 @@ export function palmGeometry(){return bakePalm(palmSamples()[0]);}
 export function roundTreeGeometry(leafColor:number){return bakePalm(createTree(leafColor===0x9cc752?'slender':'shade',leafColor));}
 export const treeMat=plantBatchMaterial;
 export function blocked(x:number,z:number,radius=0){
- if(coastalPublicSpace(x,z,2+radius)||parkingAccessBlocked(x,z))return true;
+ if(inPunkGarden(x,z,radius)||coastalPublicSpace(x,z,2+radius)||parkingAccessBlocked(x,z))return true;
  if(buildingFootprints.some(b=>Math.abs(x-b.x)<b.w/2+1.5+radius&&Math.abs(z-b.z)<b.d/2+1.5+radius))return true;
  if(roadEdgeDistance(x,z)<3+radius||reserved(x,z,2+radius*2,2+radius*2))return true;
  return [[0,0],[-radius,0],[radius,0],[0,-radius],[0,radius]].some(([dx,dz])=>railCorridor(x+dx,z+dz)||parkingAccessBlocked(x+dx,z+dz));
