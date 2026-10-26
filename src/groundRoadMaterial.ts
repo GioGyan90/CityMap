@@ -9,6 +9,14 @@ const bounds={x:-130,z:-220,w:470,d:470},resolution=3072;
 const canvas=document.createElement('canvas');canvas.width=canvas.height=resolution;
 const ctx=canvas.getContext('2d')!;ctx.fillStyle='#000';ctx.fillRect(0,0,resolution,resolution);
 let asphaltStencil:HTMLCanvasElement|undefined;
+const stencilTiles=new Map<string,HTMLCanvasElement>(),tileSize=128;
+function invalidateStencil(){stencilTiles.clear();}
+function cutAsphalt(draw:CanvasRenderingContext2D,minX:number,minY:number,w:number,h:number){
+ const source=stencil();
+ for(let x=Math.max(0,Math.floor(minX/tileSize));x<=Math.min(Math.ceil(resolution/tileSize)-1,Math.floor((minX+w)/tileSize));x++)for(let y=Math.max(0,Math.floor(minY/tileSize));y<=Math.min(Math.ceil(resolution/tileSize)-1,Math.floor((minY+h)/tileSize));y++){
+  const key=x+','+y;let tile=stencilTiles.get(key);if(!tile){tile=document.createElement('canvas');tile.width=tile.height=tileSize;tile.getContext('2d')!.putImageData(source.getContext('2d')!.getImageData(x*tileSize,y*tileSize,tileSize,tileSize),0,0);stencilTiles.set(key,tile);}draw.drawImage(tile,x*tileSize-minX,y*tileSize-minY);
+ }
+}
 const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.NoColorSpace;texture.anisotropy=8;
 const project=(x:number,z:number)=>[(x-bounds.x)/bounds.w*resolution,(z-bounds.z)/bounds.d*resolution];
 function path(curve:THREE.Curve<THREE.Vector3>,width:number,color:string){
@@ -35,7 +43,7 @@ for(const road of roadProfiles){const count=Math.floor(road.curve.getLength()/7)
 // Rounded outdoor stroke caps must not paint asphalt on the ridge behind a mouth.
 for(const f of tunnelPortals){ctx.beginPath();for(const [i,[s,side]]of [[.02,-1],[8,-1],[8,1],[.02,1]].entries()){const p=f.p.clone().addScaledVector(f.into,s).addScaledVector(f.right,side*7.2),q=project(p.x,p.z);if(i)ctx.lineTo(q[0],q[1]);else ctx.moveTo(q[0],q[1]);}ctx.closePath();ctx.fillStyle='#000';ctx.fill();}
 export function paintGroundRect(x:number,z:number,w:number,d:number,color:'asphalt'|'walk'|'line'){
- const [px,pz]=project(x-w/2,z-d/2);ctx.fillStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.fillRect(px,pz,w/bounds.w*resolution,d/bounds.d*resolution);if(color==='asphalt'&&asphaltStencil){const target=asphaltStencil.getContext('2d')!;target.fillStyle='#fff';target.fillRect(px,pz,w/bounds.w*resolution,d/bounds.d*resolution);}texture.needsUpdate=true;
+ const [px,pz]=project(x-w/2,z-d/2);ctx.fillStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';ctx.fillRect(px,pz,w/bounds.w*resolution,d/bounds.d*resolution);if(color==='asphalt'&&asphaltStencil){invalidateStencil();const target=asphaltStencil.getContext('2d')!;target.fillStyle='#fff';target.fillRect(px,pz,w/bounds.w*resolution,d/bounds.d*resolution);}texture.needsUpdate=true;
 }
 export function createGroundMaterial(){
  const material=toon(0xffffff,{vertexColors:true});
@@ -69,8 +77,8 @@ export function paintGroundPath(points:[number,number][],width:number,color:'asp
  if(points.length<2)return;const projected=points.map(([x,z])=>project(x,z)),pad=width/bounds.w*resolution/2+3,minX=Math.floor(Math.min(...projected.map(p=>p[0]))-pad),minY=Math.floor(Math.min(...projected.map(p=>p[1]))-pad),w=Math.ceil(Math.max(...projected.map(p=>p[0]))+pad-minX),h=Math.ceil(Math.max(...projected.map(p=>p[1]))+pad-minY);
  const scratch=document.createElement('canvas');scratch.width=w;scratch.height=h;const draw=scratch.getContext('2d')!;
  draw.beginPath();projected.forEach(([x,y],i)=>{if(i)draw.lineTo(x-minX,y-minY);else draw.moveTo(x-minX,y-minY);});draw.lineWidth=width/bounds.w*resolution;draw.lineCap=draw.lineJoin='round';draw.strokeStyle=color==='asphalt'?'#ff0000':color==='walk'?'#00ff00':'#0000ff';draw.stroke();
- if(color==='walk'){draw.globalCompositeOperation='destination-out';draw.drawImage(stencil(),minX,minY,w,h,0,0,w,h);draw.globalCompositeOperation='source-over';}
- ctx.drawImage(scratch,minX,minY);if(color==='asphalt'&&asphaltStencil)asphaltStencil.getContext('2d')!.drawImage(scratch,minX,minY);texture.needsUpdate=true;
+ if(color==='walk'){draw.globalCompositeOperation='destination-out';cutAsphalt(draw,minX,minY,w,h);draw.globalCompositeOperation='source-over';}
+ ctx.drawImage(scratch,minX,minY);if(color==='asphalt'&&asphaltStencil){invalidateStencil();asphaltStencil.getContext('2d')!.drawImage(scratch,minX,minY);}texture.needsUpdate=true;
 }
 
 export function paintGroundPolygon(points:[number,number][],color:'asphalt'|'walk'|'line'){
