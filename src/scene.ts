@@ -38,12 +38,12 @@ export const sun = new THREE.DirectionalLight(DAY_LIGHTING.sun.color, DAY_LIGHTI
 sun.position.fromArray(DAY_LIGHTING.sun.position);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = -230;
-sun.shadow.camera.right = 330;
-sun.shadow.camera.top = 230;
-sun.shadow.camera.bottom = -230;
+sun.shadow.camera.left = -400;
+sun.shadow.camera.right = 400;
+sun.shadow.camera.top = 400;
+sun.shadow.camera.bottom = -400;
 sun.shadow.camera.near = 1;
-sun.shadow.camera.far = 850;
+sun.shadow.camera.far = 1000;
 sun.shadow.bias = -0.00035;
 sun.shadow.normalBias = 0.2;
 scene.add(sun);

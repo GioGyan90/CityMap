@@ -1,3 +1,4 @@
+import {createWaterVolume,waterSwellGLSL} from './waterVolume';
 import {createContinentalShelf,continentalDepthGLSL} from './seabed';
 import {twilightProfile} from './twilight';
 import {SEA_PALETTE} from './visualStyle';
@@ -10,14 +11,23 @@ export const waterUniforms={
   shallow:{value:new THREE.Color(SEA_PALETTE.shallow)},deep:{value:new THREE.Color(SEA_PALETTE.deep)}
 };
 const material=new THREE.ShaderMaterial({
-  transparent:true,depthWrite:false,
-  uniforms:waterUniforms,
+  transparent:true,depthWrite:false,lights:true,
+  uniforms:{...THREE.UniformsUtils.clone(THREE.UniformsLib.lights),...waterUniforms},
   vertexShader:`
+    #include <common>
+    #include <shadowmap_pars_vertex>
     uniform float time;varying vec3 vWorld;
-    float swell(vec2 p){return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65);}
-    void main(){vec3 p=position;p.y+=swell(p.xz);vec4 wp=modelMatrix*vec4(p,1.);vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}
+    ${waterSwellGLSL}
+    void main(){vec3 p=position;p.y+=swell(p.xz);vec4 wp=modelMatrix*vec4(p,1.);vWorld=wp.xyz;vec4 worldPosition=wp;vec3 transformedNormal=normalize(normalMatrix*vec3(0.,1.,0.));
+    #include <shadowmap_vertex>
+    gl_Position=projectionMatrix*viewMatrix*wp;}
   `,
   fragmentShader:`
+    #include <common>
+    #include <packing>
+    #include <shadowmap_pars_fragment>
+    uniform bool receiveShadow;
+    #include <shadowmask_pars_fragment>
     uniform float twilightStrength;uniform vec3 twilightHorizon;uniform vec3 solarDirection;uniform vec3 lightDirection;uniform vec3 lightColor;uniform float lightStrength;uniform vec3 skyReflection;uniform vec3 fogColor;uniform vec2 westShore[12];uniform vec2 eastShore[12];uniform float time;uniform float night;uniform vec3 shallow;uniform vec3 deep;varying vec3 vWorld;
     float surface(vec2 p){p.x+=sin(p.y*.041+time*.22)*2.5;p.y+=sin(p.x*.032-time*.15)*1.7;return .15*sin(dot(p,vec2(.025,.016))+time*.8)+.09*sin(dot(p,vec2(-.017,.04))-time*.65)+(1.-smoothstep(80.,350.,length(cameraPosition.xz-p)))*(.045*sin(dot(p,vec2(.52,.28))+time*1.5)+.025*sin(dot(p,vec2(-.32,.71))-time*1.8));}
     ${continentalDepthGLSL}
@@ -64,6 +74,8 @@ const material=new THREE.ShaderMaterial({
       float foam=smoothstep(.64,.97,crest)*(1.-smoothstep(.3,2.6,abs(distanceToCoast)));
       foam*=1.-smoothstep(197.,205.,abs(p.y));
       color=mix(color,mix(vec3(.8,.94,.91),vec3(.16,.31,.42),night),foam*.65);
+      float boatShadow=getShadowMask();
+      color*=mix(vec3(.50,.60,.72),vec3(1.),boatShadow);
       float distanceToCamera=length(cameraPosition-vWorld);
       color=mix(color,fogColor,smoothstep(700.,1500.,distanceToCamera));
       // Bottom transmission fades with depth, grazing angle and night.
@@ -75,7 +87,7 @@ const material=new THREE.ShaderMaterial({
   `
 });
 const geo=new THREE.PlaneGeometry(10000,10000,220,220);geo.rotateX(-Math.PI/2);
-export const water=new THREE.Mesh(geo,material);water.name='animated-ocean';water.position.y=-.26;water.renderOrder=-1;world.add(createContinentalShelf());world.add(water);
+export const water=new THREE.Mesh(geo,material);water.name='animated-ocean';water.position.y=-.26;water.renderOrder=-1;water.receiveShadow=true;world.add(createContinentalShelf());world.add(createWaterVolume(waterUniforms.time,waterUniforms.deep));world.add(water);
 export function updateWater(time:number){waterUniforms.time.value=time;}
 const dayShallow=new THREE.Color(SEA_PALETTE.shallow),dayDeep=new THREE.Color(SEA_PALETTE.deep),nightShallow=new THREE.Color('#123a58'),nightDeep=new THREE.Color('#081d3e');
 export function setWaterLighting(night:number,warm:number,direct:number,moon:number,sunDirection:THREE.Vector3,moonDirection:THREE.Vector3,fogColor:THREE.Color,twilight:ReturnType<typeof twilightProfile>){
