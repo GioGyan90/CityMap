@@ -894,3 +894,15 @@ test('commercial skywalk straddles the real city road and the small hall rests o
  const editable=createCommercialDistrict();editable.updateMatrixWorld(true);const a=editable.getObjectByName('lower-crown-tier')!,b=editable.getObjectByName('upper-crown-tier')!;const overlap=new THREE.Box3().setFromObject(a).intersect(new THREE.Box3().setFromObject(b));assert.ok(overlap.isEmpty(),'crown tiers do not interpenetrate');
  world.userData.commercialRoadAudit={road:'hospital-ring',samples,minClearance,maxOffset,hallLocal:hallLocal.toArray()};
 });
+
+test('streamed geometry batching matches legacy transforms and colours without mutating source buffers',async()=>{
+ const {mergeGeometryBatch}=await import('../src/geometryBatch'),{mergeGeometries}=await import('three/addons/utils/BufferGeometryUtils.js');
+ const sphere=new THREE.SphereGeometry(1,8,6),box=new THREE.BoxGeometry(2,3,1).toNonIndexed();box.deleteAttribute('uv');const sourceColors=new Float32Array(sphere.attributes.position.count*3);for(let i=0;i<sourceColors.length;i++)sourceColors[i]=.2+(i%7)*.1;sphere.setAttribute('color',new THREE.BufferAttribute(sourceColors,3));
+ const parts=[sphere,box].map((geometry,i)=>{const mesh=new THREE.Mesh(geometry,new THREE.MeshToonMaterial({color:i?0xffb670:0x53a98b,vertexColors:i===0}));mesh.position.set(3+i,-2,7);mesh.rotation.set(.2,.6,-.1);mesh.scale.set(1.2,.7,2.1);mesh.updateMatrixWorld(true);return {mesh,matrix:mesh.matrixWorld.clone(),count:geometry.index?.count??geometry.attributes.position.count};});
+ const before=parts.map(p=>Array.from(p.mesh.geometry.attributes.position.array));
+ for(const [uv,bake]of [[true,false],[false,true]]){
+  const legacy=parts.map(({mesh,matrix})=>{const g=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();g.applyMatrix4(matrix);if(uv&&!g.attributes.uv)g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));if(!uv)g.deleteAttribute('uv');const color=new Float32Array(g.attributes.position.count*3),m=mesh.material as THREE.MeshToonMaterial;for(let i=0;i<color.length;i++){const a=g.attributes.color,j=Math.floor(i/3),c=i%3;const v=a?[a.getX(j),a.getY(j),a.getZ(j)][c]:1;color[i]=bake?(m.vertexColors?v:1)*[m.color.r,m.color.g,m.color.b][c]:v;}g.setAttribute('color',new THREE.BufferAttribute(color,3));return g;});
+  const expected=mergeGeometries(legacy,false)!,actual=mergeGeometryBatch(parts,uv,bake);assert.deepEqual(Object.keys(actual.attributes).sort(),Object.keys(expected.attributes).sort());for(const key of Object.keys(expected.attributes))assert.deepEqual(Array.from(actual.attributes[key].array),Array.from(expected.attributes[key].array),key);legacy.forEach(g=>g.dispose());expected.dispose();actual.dispose();
+ }
+ parts.forEach((p,i)=>assert.deepEqual(Array.from(p.mesh.geometry.attributes.position.array),before[i]));
+});
