@@ -13,7 +13,9 @@ try{
    build.onResolve({filter:/\/scene$/},()=>({path:'scene',namespace:'test'}));
    build.onLoad({filter:/.*/,namespace:'test'},()=>({contents:"import * as THREE from 'three';export const world=new THREE.Group();",resolveDir:process.cwd()}));
   }}]});
+ const immersive=join(directory,'immersive.mjs');
+ await build({entryPoints:['tests/immersive.test.ts'],bundle:true,platform:'node',format:'esm',outfile:immersive});
  const solar=join(directory,'solar.mjs');
  await build({entryPoints:['tests/solarCycle.test.ts'],bundle:true,platform:'node',format:'esm',outfile:solar});
- const result=spawnSync(process.execPath,['--test',output,architecture,solar],{stdio:'inherit'});process.exitCode=result.status??1;
+ const result=spawnSync(process.execPath,['--test',output,architecture,solar,immersive],{stdio:'inherit'});process.exitCode=result.status??1;
 }finally{await rm(directory,{recursive:true,force:true});}

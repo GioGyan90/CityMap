@@ -1,6 +1,7 @@
 import './styles.css';
 import './assetTools.css';
 import {preloadCloudDensity} from './cloudCache';
+import {initImmersive} from './immersive';
 async function boot() {
   try {
     const began=performance.now(),clouds=preloadCloudDensity();
@@ -11,6 +12,7 @@ async function boot() {
     await import('./focus');
     await import('./labels');
     await import('./camera');
+    initImmersive();
     const launch=document.createElement('button');launch.id='asset-lazy-launch';launch.className='asset-launch';launch.textContent='资产查看 / 网格规划';document.body.appendChild(launch);
     let tools:Promise<void>|undefined;
     const openTools=()=>tools??=(async()=>{launch.disabled=true;launch.textContent='正在打开资产…';try{const {initAssetTools}=await import('./assetTools');initAssetTools();launch.disabled=false;launch.click();}catch(error){tools=undefined;launch.disabled=false;launch.textContent='重试打开资产';console.error(error);}})();
