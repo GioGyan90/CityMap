@@ -1061,3 +1061,21 @@ test('hospital helicopter rests on the pad with a ring and separate parts',async
  assert.ok(Math.abs(platform.min.y-roof.max.y)<1e-4);assert.ok(Math.abs(landing.min.y-platform.max.y)<1e-4);assert.ok(landing.min.x>platform.min.x&&landing.max.x<platform.max.x&&landing.min.z>platform.min.z&&landing.max.z<platform.max.z);
  assert.ok(new THREE.Box3().setFromObject(letter).min.y>=platform.max.y);hospital.removeFromParent();
 });
+
+test('vehicle glazing follows helicopter shell and coast train sidewalls',async()=>{
+ const {createMedicalHelicopter}=await import('../src/medicalHelicopter');const h=createMedicalHelicopter();h.updateMatrixWorld(true);
+ const shell=h.getObjectByName('fuselage')!.children[0] as THREE.Mesh,center=shell.position.clone();
+ for(const name of ['curved-windscreen','curved-side-window-left','curved-side-window-right']){
+  const pane=h.getObjectByName(name) as THREE.Mesh,geo=pane.geometry,p=geo.attributes.position,idx=geo.index!;const point=new THREE.Vector3();
+  for(let j=0;j<3;j++)point.add(new THREE.Vector3().fromBufferAttribute(p,idx.getX(j)));point.multiplyScalar(1/3);pane.localToWorld(point);
+  const direction=point.clone().sub(center).normalize(),ray=new THREE.Raycaster(center.clone().addScaledVector(direction,5),direction.clone().negate());
+  const glass=ray.intersectObject(pane)[0],body=ray.intersectObject(shell)[0];assert.ok(glass&&body,name);assert.ok(body.distance-glass.distance>0&&body.distance-glass.distance<.02,name);
+ }
+ const {RAIL_PLANS}=await import('../src/railNetworkPlan');const {createRailCar}=await import('../src/railVehicles');
+ for(const plan of RAIL_PLANS)for(const index of [0,1]){const car=createRailCar(plan,index,false);car.updateMatrixWorld(true);const body=car.getObjectByName('extruded-bevelled-car-shell') as THREE.Mesh;
+  for(const pane of car.children.filter(o=>o.name==='recessed-passenger-glass'||o.name==='recessed-sliding-door') as THREE.Mesh[]){
+   const side=Math.sign(pane.position.x);for(const dz of [-.22,0,.22]){const ray=new THREE.Raycaster(new THREE.Vector3(side*4,pane.position.y,pane.position.z+dz),new THREE.Vector3(-side,0,0));
+   const window=ray.intersectObject(pane)[0],wall=ray.intersectObject(body)[0];assert.ok(window&&wall,plan.id+' '+pane.name);const gap=wall.distance-window.distance;assert.ok(gap>=0&&gap<.16,plan.id+' '+pane.name+' gap '+gap);}
+  }
+ }
+});

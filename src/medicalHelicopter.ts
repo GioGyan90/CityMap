@@ -11,8 +11,12 @@ export function createMedicalHelicopter(){
  const box=(g:THREE.Group,w:number,h:number,d:number,material:THREE.Material,x:number,y:number,z:number)=>mesh(g,new THREE.BoxGeometry(w,h,d),material,x,y,z);
  const fuselage=part('fuselage');const body=mesh(fuselage,new THREE.SphereGeometry(1,16,10),white,0,1.32,.15);body.scale.set(1.15,1,2.05);
  for(const side of [-1,1]){const stripe=box(fuselage,.045,.16,1.25,red,side*1.08,1.12,-.35);stripe.name='rescue-red-stripe';}
- const cockpit=part('cockpit');const windscreen=mesh(cockpit,new THREE.SphereGeometry(1,16,10),glass,0,1.55,1.31);windscreen.scale.set(.94,.58,.77);
- for(const s of [-1,1]){box(cockpit,.055,.65,.85,glass,s*1.08,1.67,-.35);box(cockpit,.065,.66,.065,white,s*1.12,1.67,-.33);}
+ const cockpit=part('cockpit');
+ // Match the fuselage sphere's 16 longitude and 10 latitude segments exactly.
+ // Each pane uses the same triangles, offset slightly to avoid z-fighting.
+ const pane=(name:string,phi:number,width:number)=>{const m=mesh(cockpit,new THREE.SphereGeometry(1.004,width,2,phi,width*Math.PI/8,3*Math.PI/10,2*Math.PI/10),glass,0,1.32,.15);m.scale.set(1.15,1,2.05);m.name=name;};
+ pane('curved-windscreen',2*Math.PI/8,4);
+ pane('curved-side-window-left',-Math.PI/8,3);pane('curved-side-window-right',7*Math.PI/8,3);
  const tail=part('tail');const boom=mesh(tail,new THREE.CylinderGeometry(.22,.52,3.1,10),white,0,1.5,-2.8);boom.rotation.x=-Math.PI/2;
  box(tail,.18,1.08,.8,blue,0,2,-4.13);box(tail,2.15,.12,.5,white,0,1.62,-3.72);
  const rotors=part('rotors');mesh(rotors,new THREE.CylinderGeometry(.10,.13,.65,10),metal,0,2.46,-.05);
