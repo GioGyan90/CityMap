@@ -1,4 +1,4 @@
-import {airlinerPass,createAirliner} from '../src/airliner';
+import {airlinerPass,createAirliner,FLIGHT_SCHEDULE,FLIGHT_ROUTES} from '../src/airliner';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SolarClock,civilTimestamp,civilParts,formatTime,directionFromAngles,sampleSolar,solarEvents} from '../src/solarCycle';
@@ -38,9 +38,12 @@ test('twilight persists below the horizon, clears by full day/night and remains 
 });
 
 
-test('airliner has exactly two daily timed passes and a shadow-casting assembly',()=>{
-  for(let m=0;m<1440;m++) assert.equal(airlinerPass(m)!==null,(m>=540&&m<576)||(m>=900&&m<936));
-  assert.equal(airlinerPass(558),.5);assert.equal(airlinerPass(918),.5);
+test('six daily flights use three lower triangular routes and cast shadows',()=>{
+  assert.equal(FLIGHT_SCHEDULE.length,6);
+  for(let m=0;m<1440;m++) assert.equal(airlinerPass(m)!==null,FLIGHT_SCHEDULE.some(f=>m>=f.start&&m<f.start+36));
+  for(const route of FLIGHT_ROUTES){assert.equal(FLIGHT_SCHEDULE.filter(f=>FLIGHT_ROUTES[f.route].id===route.id).length,2);assert.ok(route.height<145);}
+  for(let i=0;i<3;i++) assert.deepEqual(FLIGHT_ROUTES[i].to,FLIGHT_ROUTES[(i+1)%3].from);
+  assert.ok(airlinerPass(558)!.heading<0);assert.ok(airlinerPass(918)!.heading<0);
   const plane=createAirliner();assert.deepEqual(plane.children.map(c=>c.name),['fuselage','wings','engines','tail','details']);
   let meshes=0;plane.traverse(o=>{if('isMesh' in o){meshes++;assert.equal((o as any).castShadow,true);}});assert.ok(meshes>0);
 });

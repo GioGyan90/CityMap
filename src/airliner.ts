@@ -24,8 +24,26 @@ export function createAirliner() {
  const details=part('details');for(const side of [-1,1])for(let z=-5;z<=5;z+=1.2){const w=add(details,new THREE.SphereGeometry(.19,8,6),dark,side*2.03,.35,z);w.scale.set(.35,1,1.3);}const stripe=add(details,new THREE.BoxGeometry(3.3,.22,3),coral,0,.85,-7);stripe.rotation.x=.1;
  return root;
 }
-// Each pass occupies 36 simulated minutes. The aircraft is outside the map at both endpoints.
+// Three sides of a triangle around the city, extended beyond its vertices so the
+// aircraft enters and leaves outside the built-up area. Two flights share each side.
+export const FLIGHT_ROUTES = [
+ {id:'north',from:[230,-125],to:[-210,-145],height:130},
+ {id:'west',from:[-210,-145],to:[20,210],height:117},
+ {id:'east',from:[20,210],to:[230,-125],height:105},
+] as const;
+export const FLIGHT_SCHEDULE = [
+ {start:540,route:0}, {start:630,route:1}, {start:720,route:2},
+ {start:840,route:2}, {start:900,route:0}, {start:990,route:1},
+] as const;
+export const FLIGHT_DURATION=36;
 export function airlinerPass(minutes:number) {
- for(const start of [9*60,15*60]){const p=(minutes-start)/36;if(p>=0&&p<1)return p;}
+ for(const flight of FLIGHT_SCHEDULE){
+  const progress=(minutes-flight.start)/FLIGHT_DURATION;
+  if(progress>=0&&progress<1){
+   const route=FLIGHT_ROUTES[flight.route],t=-.45+progress*1.9;
+   const dx=route.to[0]-route.from[0],dz=route.to[1]-route.from[1];
+   return {progress,route:route.id,x:route.from[0]+dx*t,z:route.from[1]+dz*t,height:route.height,heading:Math.atan2(dx,dz)};
+  }
+ }
  return null;
 }
