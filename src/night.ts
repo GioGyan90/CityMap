@@ -14,7 +14,7 @@ export const solarClock=new SolarClock();
 const nightGroup=new THREE.Group();nightGroup.name='night-lighting';nightGroup.visible=false;world.add(nightGroup);
 const meshMaterials=new Set<THREE.Material>();
 world.traverse(object=>{if(object instanceof THREE.Mesh && object.name.indexOf('pick-')!==0){const ms=Array.isArray(object.material)?object.material:[object.material];ms.forEach(m=>meshMaterials.add(m));}});
-const residentialGlazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial&&m.userData.lightingRole==='residential-glass'&&m.userData.inhabited);
+const residentialGlazingMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial&&(m.userData.lightingRole==='residential-glass'&&m.userData.inhabited||m.userData.lightingRole==='office-glass'));
 const stationLightMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial&&m.userData.lightingRole==='station-light');
 const vehicleLightMaterials=[...meshMaterials].filter((m):m is THREE.MeshToonMaterial=>m instanceof THREE.MeshToonMaterial&&m.userData.lightingRole==='vehicle-light');
 const litMaterials:THREE.MeshToonMaterial[]=[];

@@ -14,18 +14,43 @@ function planter(g:THREE.Group,x:number,y:number,z:number,w=2.4){box(g,w,.65,1.3
 function table(g:THREE.Group,x:number,y:number,z:number){mesh(g,new THREE.CylinderGeometry(.65,.65,.12,12),C.wood,x,y+1,z);box(g,.15,1,.15,C.blue,x,y+.5,z);for(const s of [-1,1]){box(g,.6,.12,.6,C.coral,x+s,y+.55,z);box(g,.6,.7,.12,C.coral,x+s,y+.85,z-.3);for(const dx of [-.2,.2])box(g,.08,.5,.45,C.blue,x+s+dx,y+.25,z);}}
 function group(root:THREE.Group,name:string){const g=new THREE.Group();g.name=name;root.add(g);return g;}
 function shop(g:THREE.Group,x:number,z:number,w:number,color:number){box(g,w,5.6,7,C.stone,x,3,z);box(g,w-.8,3,.18,C.glass,x,2.1,z+3.55);box(g,2.2,2.65,.1,C.blue,x,1.63,z+3.67,'retail-entry');for(const dx of [-.51,.51])box(g,.92,2.4,.06,C.glass,x+dx,1.67,z+3.75);box(g,2.5,.12,.42,C.stone,x,.1,z+3.72,'retail-threshold');for(const dx of [-w/2+.5,0,w/2-.5])box(g,.18,3.2,.35,C.blue,x+dx,2,z+3.65);box(g,w+.5,.22,2,color,x,3.9,z+4);box(g,w-.6,.7,.25,color,x,4.65,z+3.6);box(g,w+.4,.25,7.4,C.trim,x,5.95,z);}
+const officeLit=toon(C.glass);officeLit.userData.lightingRole='office-glass';
+function officeFacade(g:THREE.Group,x:number,z:number,h:number,base:number){
+ const facade=group(g,'office-facade-window-grid');
+ const window=(xpos:number,y:number,zpos:number,side:boolean,lit:boolean)=>{
+  const m=box(facade,side?.12:.94,2.08,side?.94:.12,C.glass,xpos,y,zpos,'office-window');
+  if(lit)m.material=officeLit;
+ };
+ // The chamfered polygon has different usable widths on each elevation.
+ for(let floor=0;floor<Math.floor(h/3);floor++){
+  const y=base+floor*3+1.65;
+  for(const [side,columns] of [[1,[-4,-2.8,-1.6,-.4,.8,2]],[-1,[-4,-2.8,-1.6,-.4,.8,1.6]]] as const)
+   columns.forEach((dx,i)=>{if(side===1&&floor===0&&dx>-.8&&dx<1.4)return;window(x+dx,y,z+side*5.07,false,(floor*7+i+(side===1?1:4))%4===0);});
+  for(const [side,columns] of [[-1,[-4,-2.8,-1.6,-.4,.8,2,3.2,4.4]],[1,[-2.2,-1.1,0,1.1,2.2]]] as const)
+   columns.forEach((dz,i)=>window(x+side*5.07,y,z+dz,true,(floor*5+i+(side===1?2:0))%4===0));
+ }
+ // A small entrance faces the occupied upper platform; posts stop on the deck.
+ const entry=group(g,'office-entry');
+ box(entry,2.5,2.7,.18,C.blue,x,base+1.35,z+5.09,'office-door-frame');
+ for(const dx of [-.58,.58])box(entry,1.05,2.35,.14,C.glass,x+dx,base+1.25,z+5.21,'office-door');
+ box(entry,3.6,.22,1.8,C.trim,x,base+3.18,z+5.75,'office-entry-canopy');
+ for(const dx of [-1.55,1.55])box(entry,.14,3.07,.14,C.stone,x+dx,base+1.535,z+6.45,'office-canopy-post');
+ box(entry,2.5,.38,.17,C.blue,x,base+3.68,z+5.12,'office-entry-sign');
+}
 function tower(g:THREE.Group,x:number,z:number,h:number,hotel=false){
  const base=9,p=[[-5,-5],[3,-5],[5,-3],[5,3],[2,5],[-5,5]];
- const body=polygon(g,p,h,C.blue,x,base,z);body.name='single-continuous-tower-body';
+ const body=polygon(g,p,h,hotel?C.blue:C.stone,x,base,z);body.name='single-continuous-tower-body';
  for(let y=3;y<h;y+=3){polygon(g,p.map(([a,b])=>[a*1.025,b*1.025]),.16,C.trim,x,base+y,z);if(hotel)for(const dx of [-2.3,2.3]){box(g,3.6,.18,1.2,C.stone,x+dx,base+y,z+5.3);box(g,3.6,.6,.12,C.glass,x+dx,base+y+.35,z+5.85);}}
- for(const side of [-1,1])for(const dz of [-1.8,0,1.8]){box(g,.18,h-.6,1.3,C.glass,x+side*5.02,base+h/2,z+dz);box(g,.3,h,.13,C.stone,x+side*5.1,base+h/2,z+dz+.9);}
- for(const dx of [-4.5,-2,0,1.6])for(const side of [-1,1])box(g,.14,h,.18,C.glass,x+dx,base+h/2,z+side*5.02);
+ if(!hotel)officeFacade(g,x,z,h,base);
+ if(hotel)for(const side of [-1,1])for(const dz of [-1.8,0,1.8]){box(g,.18,h-.6,1.3,C.glass,x+side*5.02,base+h/2,z+dz);box(g,.3,h,.13,C.stone,x+side*5.1,base+h/2,z+dz+.9);}
+ if(hotel)for(const dx of [-4.5,-2,0,1.6])for(const side of [-1,1])box(g,.14,h,.18,C.glass,x+dx,base+h/2,z+side*5.02);
  polygon(g,p,.3,C.stone,x,base+h,z);
  if(!hotel){
   // One closed stepped crown: tiers touch only at horizontal support planes.
   box(g,6,5,6,C.glass,x,base+h+2.8,z,'lower-crown-tier');box(g,6.3,.22,6.3,C.trim,x,base+h+5.41,z);
   for(let y=1;y<5;y+=2)box(g,6.12,.13,6.12,C.trim,x,base+h+.3+y,z);
   box(g,3.4,3,4,C.glass,x-1,base+h+7.02,z,'upper-crown-tier');box(g,3.7,.22,4.3,C.stone,x-1,base+h+8.63,z);
+  box(g,1.2,.6,1.1,C.trim,x-1,base+h+9.04,z,'office-roof-equipment');
  }
 }
 function roofPavilion(g:THREE.Group,x:number,y:number,z:number){

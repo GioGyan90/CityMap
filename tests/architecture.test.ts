@@ -1023,3 +1023,13 @@ test('resort palette keeps distinct ocean depths and varied residential roof col
  assert.ok(colors.size>=4,'seeded homes retain varied roof colours');
  assert.notEqual(RESORT_ACCENTS.magenta,RESORT_ACCENTS.lavender);
 });
+
+test('office facade has individual bounded windows and a supported entrance',async()=>{
+ const {createCommercialDistrict}=await import('../src/commercialDistrict');
+ const district=createCommercialDistrict(false,true),facade=district.getObjectByName('office-facade-window-grid')!,entry=district.getObjectByName('office-entry')!;
+ assert.ok(facade&&entry);const windows=facade.children.filter(o=>o.name==='office-window') as THREE.Mesh[];
+ assert.ok(windows.length>200);assert.ok(windows.some(w=>w.material instanceof THREE.MeshToonMaterial&&w.material.userData.lightingRole==='office-glass'));
+ for(const w of windows){const b=new THREE.Box3().setFromObject(w),size=b.getSize(new THREE.Vector3());assert.ok(size.y<2.2&&Math.max(size.x,size.z)<1);}
+ const canopy=entry.getObjectByName('office-entry-canopy')!,posts=entry.children.filter(o=>o.name==='office-canopy-post');assert.equal(posts.length,2);
+ const c=new THREE.Box3().setFromObject(canopy);for(const p of posts){const b=new THREE.Box3().setFromObject(p);assert.ok(Math.abs(b.min.y-9)<.001&&Math.abs(b.max.y-c.min.y)<.01);}
+});
