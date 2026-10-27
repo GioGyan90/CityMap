@@ -1,3 +1,5 @@
+> **2026-10-27 地标立面第一批：** 先读 [landmark-facades.md](landmark-facades.md)。海岸学院按教室与中央公共空间重新规划窗位、入口雨棚和公告栏；后续医院、政府、酒店、商业区及球厅仍待逐批设计。
+
 > **2026-10-27 学院屋顶已优化：** 先读 [campus-roof-redesign.md](campus-roof-redesign.md)。学院塔楼改为独立四坡冠顶及承托檐口，通用 Art Deco 保持不变；120 项测试、构建与实际几何多角度检查通过。
 
 > **历史交接：海岸学院屋顶优化。** 新窗口先读 [campus-roof-handoff.md](campus-roof-handoff.md) 与 [问题截图](campus-roof-reference.png)。用户认为半球顶与矩形退台衔接生硬；本轮仅整理交接，尚未修改学院。包含仓库、源码入口、建模方法及验证发布流程。

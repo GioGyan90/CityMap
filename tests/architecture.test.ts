@@ -977,3 +977,16 @@ test('academy crown is supported by the tower and leaves ordinary art deco roofs
  const countSpheres=(g:THREE.Object3D)=>{let n=0;g.traverse(o=>{if(o instanceof THREE.Mesh && o.geometry instanceof THREE.SphereGeometry)n++;});return n;};
  assert.equal(countSpheres(ordinary),1);assert.equal(countSpheres(academy),0);world.remove(ordinary,academy);
 });
+
+test('academy facade windows follow floors and do not occupy the entrance',async()=>{
+ const {campusWindowLayout}=await import('../src/campusFacade');
+ for(const [w,h,b,tower] of [[7,12,0,false],[11,8.84,0,true],[8.58,5.1,8.84,true],[5.83,3.06,13.94,true]] as const){
+  for(const side of ['end','long'] as const)for(const front of [false,true]){
+   const windows=campusWindowLayout(w,h,b,side,tower,front);
+   assert.ok(windows.length>0);
+   for(const p of windows){assert.ok(p.y>=b && p.y+p.h<=b+h);assert.ok(Math.abs(p.x)+p.w/2<w/2);if(front&&p.y<1)assert.ok(Math.abs(p.x)-p.w/2>=1.2,'entrance does not overlap glazing');}
+  }
+ }
+ const end=campusWindowLayout(7,12,0,'end',false,false),long=campusWindowLayout(16,12,0,'long',false,false);
+ assert.ok(long.length>end.length,'long classroom elevations get more bays than the end wall');
+});
