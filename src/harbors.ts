@@ -22,6 +22,12 @@ export function buildCargoHarbor(){
   k.rod(new THREE.Vector3(x,18.5,-2),new THREE.Vector3(x,8,-2),.07,0x66777b);
  }
  k.box(8,4.5,6,C.cream,21,2.75,-9);k.box(8.7,.3,6.6,C.blue,21,5.15,-9);
+ // Small dispatch office: door and clerestory loading-side windows face the yard.
+ k.box(1.5,2.65,.1,C.glass,19.1,1.83,-5.96).name='cargo-office-door';
+ k.box(.08,.5,.12,C.gold,19.48,1.7,-5.88);
+ for(const x of [21.4,23.3]){k.box(1.35,1.4,.1,C.glass,x,2.85,-5.96);k.box(.08,1.4,.14,C.cream,x,2.85,-5.87);k.box(1.5,.1,.25,C.stone,x,2.08,-5.87);}
+ k.box(.1,1.1,1.8,C.glass,25.04,3.35,-9);
+
  for(const x of [-27,27])k.box(.35,1.1,32,0xf0d48c,x,1.1,0);
 }
 export function buildPassengerHarbor(){

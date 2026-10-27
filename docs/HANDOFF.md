@@ -1,3 +1,5 @@
+> **2026-10-27 城市立面第一轮：** 先读 [city-facades-round-one.md](city-facades-round-one.md)。按用途处理普通楼体、医院、酒店、政府、球厅、港区和灯塔，并核对已有特色地标；123 项测试、构建及实景几何多角度离屏检查通过。
+
 > **2026-10-27 地标立面第一批：** 先读 [landmark-facades.md](landmark-facades.md)。海岸学院按教室与中央公共空间重新规划窗位、入口雨棚和公告栏；后续医院、政府、酒店、商业区及球厅仍待逐批设计。
 
 > **2026-10-27 学院屋顶已优化：** 先读 [campus-roof-redesign.md](campus-roof-redesign.md)。学院塔楼改为独立四坡冠顶及承托檐口，通用 Art Deco 保持不变；120 项测试、构建与实际几何多角度检查通过。

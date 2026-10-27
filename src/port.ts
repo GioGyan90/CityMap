@@ -17,6 +17,12 @@ export function buildPort() {
  for(const x of [-13,-4,5])for(const z of [-7,3]){
   k.box(7,3.4,5,0xffedc7,x,2.2,z);
   const roof=k.mesh(new THREE.ConeGeometry(1,1,4),z<0?0x2d92ac:0xd67e50,x,4.6,z);roof.rotation.y=Math.PI/4;roof.scale.set(5.5,1.5,4.1);
+  // A serving counter is paired with a broad glazed opening under the awning.
+  k.box(1.15,2.2,.08,0x487d87,x-1.75,1.65,z-2.55).name='stall-staff-door';
+  k.box(1.45,1,.08,0x6599a1,x+1.1,2.35,z-2.55).name='stall-rear-window';
+  k.box(4.8,1.35,.08,0x4d8793,x,2.3,z+2.55);
+  for(const dx of [-2.42,0,2.42])k.box(.09,1.45,.12,0xe8d7ad,x+dx,2.3,z+2.61);
+  k.box(4.95,.09,.14,0xe8d7ad,x,3.01,z+2.61);
   k.box(6.4,.16,1.8,0x3d94a7,x,3.2,z+3);
   k.box(5.5,.85,1.2,0xb4cbd0,x,1.05,z+2.7);
   for(let i=-1;i<=1;i++){
@@ -69,6 +75,12 @@ export function buildLighthouse() {
     seg.castShadow = true;
     world.add(seg);
   }
+  // Narrow stairwell slits follow the tapered tower wall, away from the entry.
+  for(const [baseY,radius] of [[5.4,1.9],[8.9,1.64],[12.1,1.42]])for(const angle of [-1.05,0,1.05,Math.PI]){
+    const slit=new THREE.Mesh(new THREE.BoxGeometry(.32,1.05,.08),toon(0x38788d));
+    slit.name='lighthouse-stair-window';slit.position.set(Math.sin(angle)*(radius+.045),GROUND_Y+baseY,Math.cos(angle)*(radius+.045));slit.rotation.y=angle;world.add(slit);
+  }
+
   /* 灯室 */
   const lamp = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 1.8, 10), toon(0xffe066));
   lamp.position.set(lx, GROUND_Y + 15.2, lz);

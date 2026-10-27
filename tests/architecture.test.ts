@@ -72,7 +72,7 @@ test('upward faces of ordinary building boxes never use window facade textures',
   root.traverse(o=>{if(!(o instanceof THREE.Mesh))return;
    const geometry=o.geometry,materials=Array.isArray(o.material)?o.material:[o.material],normal=geometry.attributes.normal;
    for(const group of geometry.groups){const material=Array.isArray(o.material)?materials[group.materialIndex??0]:o.material;
-    if(!material.map||![...facadeCache.values()].includes(material.map))continue;
+    if(!material.map||material.userData.lightingRole!=='window-facade')continue;
     for(let i=group.start;i<group.start+group.count;i++){
      const index=geometry.index?geometry.index.getX(i):i;
      assert.ok(normal.getY(index)<.5,`${style}: facade appears on an upward face`);
@@ -259,9 +259,9 @@ test('all tree crowns stay green and flower petals vary in size, angle and curl'
 test('batched facade textures never cover upward roof faces and roof samples have independent groups',async()=>{
  const {ordinaryAssetSamples}=await import('../src/buildings');let checked=0;
  world.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const mats=Array.isArray(o.material)?o.material:[o.material],groups=Array.isArray(o.material)?o.geometry.groups:[{start:0,count:o.geometry.index?.count??o.geometry.attributes.position.count,materialIndex:0}];
-  for(const group of groups){const material=mats[group.materialIndex??0];if(!material.map||![...facadeCache.values()].includes(material.map))continue;const normals=o.geometry.attributes.normal;for(let i=group.start;i<group.start+group.count;i++){const at=o.geometry.index?o.geometry.index.getX(i):i;assert.ok(normals.getY(at)<.05,'facade batch has no roof triangles');checked++;}}
+  for(const group of groups){const material=mats[group.materialIndex??0];if(!material.map||material.userData.lightingRole!=='window-facade')continue;const normals=o.geometry.attributes.normal;for(let i=group.start;i<group.start+group.count;i++){const at=o.geometry.index?o.geometry.index.getX(i):i;assert.ok(normals.getY(at)<.05,'facade batch has no roof triangles');checked++;}}
  });assert.ok(checked>0,'remaining textured office facades are actually inspected');
- for(const sample of ordinaryAssetSamples.values()){const roof=sample.getObjectByName('building-roof');assert.ok(roof&&roof.children.length,'roof is independently modelled');roof.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])assert.ok(!m.map||![...facadeCache.values()].includes(m.map));});}
+ for(const sample of ordinaryAssetSamples.values()){const roof=sample.getObjectByName('building-roof');assert.ok(roof&&roof.children.length,'roof is independently modelled');roof.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])assert.ok(!m.map||m.userData.lightingRole!=='window-facade');});}
 });
 test('all planted footprints clear the real curved road edge after placement',async()=>{
  const {plantingBoxClear}=await import('../src/plantPlacement');world.updateMatrixWorld(true);let count=0;
@@ -989,4 +989,26 @@ test('academy facade windows follow floors and do not occupy the entrance',async
  }
  const end=campusWindowLayout(7,12,0,'end',false,false),long=campusWindowLayout(16,12,0,'long',false,false);
  assert.ok(long.length>end.length,'long classroom elevations get more bays than the end wall');
+});
+
+test('district facade layouts distinguish uses while reserving the ground-floor entry',async()=>{
+ const {districtFacadeWindows,districtFacadeTexture}=await import('../src/districtFacade');
+ const styles=['flat','pitched','villa','arcade','apartment','glass','stepped','artdeco','warehouse'] as const;
+ for(const style of styles){
+  const front=districtFacadeWindows(style,4,3,true),other=districtFacadeWindows(style,4,3,false);
+  assert.ok(front.length<other.length,style+' reserves a door bay');
+  for(const p of front){assert.ok(p.x>=0&&p.y>=0&&p.x+p.w<=128&&p.y+p.h<=128);}
+  const tex=districtFacadeTexture('#fff1d9','#456b8d',4,3,style,true);assert.ok(tex.userData.windowEmission,'night mask exists');
+ }
+ const panes=(style:typeof styles[number])=>districtFacadeWindows(style,4,3,false);
+ assert.ok(panes('warehouse').length<panes('apartment').length,'storage walls use sparse clerestory windows');
+ assert.notEqual(panes('glass')[0].w,panes('villa')[0].w,'office and house glazing use different widths');
+});
+
+
+test('hospital entrance canopy stays clear of patient-room front windows',async()=>{
+ const hospital=world.getObjectByName('reference-hospital')!;hospital.updateWorldMatrix(true,true);
+ const canopy=hospital.getObjectByName('hospital-entry-canopy')!,canopyBounds=new THREE.Box3().setFromObject(canopy,true);let count=0;
+ hospital.traverse(o=>{if(o.name!=='hospital-patient-front-window')return;count++;assert.ok(!canopyBounds.intersectsBox(new THREE.Box3().setFromObject(o,true)),'window must not cross the entry canopy');});
+ assert.ok(count>5);
 });

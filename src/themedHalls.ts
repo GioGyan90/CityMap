@@ -53,14 +53,23 @@ export function createThemedHall(theme:HallTheme){
  const structural=group(shell,'hall-structural-shell');
  for(let i=0;i<plan.length-1;i++){
   const a=plan[i],b=plan[i+1],length=Math.hypot(b[0]-a[0],b[1]-a[1]),segment=group(structural,'pierced-side-panel');segment.position.set((a[0]+b[0])/2,.35,(a[1]+b[1])/2);segment.rotation.y=Math.atan2(a[1]-b[1],b[0]-a[0]);const sk=kit(segment);
-  const count=length>3?Math.floor(length/3.1):theme==='science'&&i%2===1?1:0,windows=Array.from({length:count},(_,j)=>({x:-length/2+length*(j+1)/(count+1),y:theme==='punk'?3.5:2,w:Math.min(1.8,length/(count+1)*.6),h:theme==='punk'?1.5:2.8}));
+  // Each hall's side room has a distinct glazing rhythm and sill height.
+  const spacing=theme==='order'?3.6:theme==='punk'?3.4:theme==='fire'?3.8:3.1;
+  const count=length>3?Math.floor(length/spacing):theme==='science'&&i%2===1?1:0;
+  const windows=Array.from({length:count},(_,j)=>({x:-length/2+length*(j+1)/(count+1),
+   y:theme==='punk'?3.65:theme==='fire'?1.7:theme==='order'?2.15:1.85,
+   w:Math.min(theme==='science'?2.15:theme==='order'?1.45:theme==='fire'?1.25:1.6,length/(count+1)*.6),
+   h:theme==='punk'?1.15:theme==='fire'?3.15:theme==='order'?2.3:2.8}));
   sk.mesh(theme==='fire'?cutFacade(length+.04,6.8,.42,windows):rectWall(length+.04,6.8,.42,windows),wall).name='subtractively-windowed-wall';
   for(const w of windows){sk.box(w.w-.12,w.h-.15,.09,0x4e8693,w.x,w.y+w.h/2,.2);sk.box(w.w+.2,.12,.54,accent,w.x,w.y-.04,.2);sk.box(.08,w.h,.1,accent,w.x,w.y+w.h/2,-.04);}
  }
  
- const holes=[{x:0,y:.25,w:3.8,h:4.9},{x:-4.65,y:1.6,w:2.1,h:2.8},{x:4.65,y:1.6,w:2.1,h:2.8}];
+ const frontWidth=theme==='punk'?1.35:theme==='fire'?1.55:theme==='science'?2.55:2.1;
+ const frontHeight=theme==='punk'?1.35:theme==='fire'?3.1:theme==='science'?2.3:2.8;
+ const frontBottom=theme==='punk'?3.35:theme==='fire'?1.5:theme==='science'?1.8:1.6;
+ const holes=[{x:0,y:.25,w:3.8,h:4.9},...[-4.65,4.65].map(x=>({x,y:frontBottom,w:frontWidth,h:frontHeight}))];
  k.mesh(theme==='fire'?cutFacade(13,6.8,.45,holes):rectWall(13,6.8,.45,holes),wall,0,.35,-1.65).name='hall-pierced-front';
- for(const x of [-4.65,4.65])k.box(1.98,2.55,.12,0x4e8693,x,3.25,-1.72);
+ for(const x of [-4.65,4.65]){k.box(frontWidth-.12,frontHeight-.15,.12,0x4e8693,x,.35+frontBottom+frontHeight/2,-1.72);k.box(.08,frontHeight-.2,.13,accent,x,.35+frontBottom+frontHeight/2,-1.8);}
  const portal=createHallEntrance(accent);portal.position.set(0,.6,-1.03);entrance.add(portal);
  b.mesh(extrudedPlan(roundPlan(4.5,1.2,.15),.2),C.cream,0,.35,-.05);
  b.mesh(extrudedPlan(roundPlan(4.1,.65,.1),.2),C.white,0,.55,-.45);
