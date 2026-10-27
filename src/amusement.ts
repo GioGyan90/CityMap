@@ -19,7 +19,7 @@ const offset=(p:{x:number;z:number})=>({x:p.x/PARK_CENTER.scale,z:p.z/PARK_CENTE
 function rideRoot(cx:number,cz:number,p:{x:number;z:number},name:string){const g=new THREE.Group(),q=offset(p);g.name=name;g.position.set(cx+q.x,GROUND_Y,cz+q.z);world.add(g);return g;}
 
 function createWheel(cx:number,cz:number){
- const root=rideRoot(cx,cz,PARK_RIDES.wheel,'park-ferris-wheel');const R=5.2,hubY=7.8;
+ const root=rideRoot(cx,cz,PARK_RIDES.wheel,'park-ferris-wheel');root.scale.y=PARK_CENTER.scale/PARK_CENTER.verticalScale;const R=5.2,hubY=7.8;
  const platform=group(root,'wheel-platform');cylinder(platform,5.9,.24,cream,.12);box(platform,2.5,.18,1.3,blue,0,.33,4.7,'wheel-entry-platform');
  const support=group(root,'wheel-support');for(const side of [-1,1])for(const foot of [-1,1])tube(support,new THREE.Vector3(foot*3.6,.25,side*2.4),new THREE.Vector3(0,hubY,side*.8),.19,white,'wheel-leg');
  const rotor=group(root,'ferris-rotor');rotor.position.y=hubY;const cabins:THREE.Group[]=[];spinWheels.push({rotor,axis:'z',speed:.18,cabins});
