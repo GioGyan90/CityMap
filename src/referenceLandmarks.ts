@@ -1,3 +1,4 @@
+import {createMedicalHelicopter,createHospitalHelipadMark} from './medicalHelicopter';
 import {createFountainWater} from './fountains';
 import {createVehicle} from './vehicles';
 import * as THREE from 'three';
@@ -63,16 +64,15 @@ export function referenceHospital(cx:number,cz:number){
     k.box(.18,wh,.1,C.white,x+side*(w/2+.1),y,z+dz);
    }
   }
-  k.rounded(w+.3,d+.3,.35,x,h+.7,z,C.cream,1.1);k.rounded(w-.8,d-.8,.12,x,h+1.08,z,0xf4edd9,1);
+  k.rounded(w+.3,d+.3,.35,x,h+.7,z,C.cream,1.1);k.rounded(w-.8,d-.8,.12,x,h+1.08,z,0xf4edd9,1).name=patient?'hospital-main-roof':'hospital-clinic-roof';
  }
  const cross=(x:number,y:number,z:number,s:number)=>{k.box(s*.34,s,.22,0xf14523,x,y,z);k.box(s,s*.34,.24,0xf14523,x,y,z+.02);};
  k.box(5,4.8,.2,C.white,-3,13.9,4.15);cross(-3,14,4.32,3.2);
  // Main roof is a clear landing deck; the lower wing is an accessible terrace.
- k.rounded(11.6,10.6,.28,-3,17.85,-2,0x647e88,1).name='hospital-helipad';
- const ring=k.mesh(new THREE.RingGeometry(3.65,3.82,48),0xffe4a0,-3,18.145,-2);ring.rotation.x=-Math.PI/2;
- for(const x of [-4.15,-1.85])k.box(.42,.035,3.3,C.white,x,18.16,-2);
- k.box(2.3,.035,.42,C.white,-3,18.16,-2);
- for(let i=0;i<8;i++){const a=i*Math.PI/4;k.ball(.12,0xffbc55,-3+Math.cos(a)*4.65,18.24,-2+Math.sin(a)*4.15);}
+ k.rounded(11.6,10.6,.28,-3,18.20,-2,0x647e88,1).name='hospital-helipad';
+ const mark=createHospitalHelipadMark();mark.position.set(-3,18.48,-2);root.add(mark);
+ const helicopter=createMedicalHelicopter();helicopter.position.set(-3,18.48,-2);helicopter.scale.set(1/1.65,1/1.15,1/1.35);root.add(helicopter);
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;k.ball(.12,0xffbc55,-3+Math.cos(a)*4.65,18.59,-2+Math.sin(a)*4.15);}
  k.rounded(7.4,10.4,.18,6,14.12,-3,0xd5dfd9,.65).name='hospital-roof-terrace';
  // Parapets stay below the landing surface, with a separate stair head on the terrace.
  for(const z of [-8.1,2.1])k.box(7.5,.8,.18,C.white,6,14.65,z);

@@ -1,3 +1,4 @@
+import {createMedicalHelicopter,createHospitalHelipadMark,HELICOPTER_PARTS} from './medicalHelicopter';
 import {createAirliner,AIRLINER_PARTS} from './airliner';
 import {createSeafoodCrab,CRAB_PARTS} from './seafoodCrab';
 import {createCampusRoof,CAMPUS_ROOF_PARTS} from './campusRoof';
@@ -38,6 +39,7 @@ type Item={id:string;title:string;source:THREE.Object3D;placement?:typeof specia
 const STORE='citymap-layout-draft-v1',NOTE_STORE='citymap-position-notes-v1';
 export function initAssetTools(){
  const items:Item[]=specialBuildings.map(s=>({id:s.id,title:s.name,source:s.id==='commercial'?createCommercialDistrict(false,true):s.id==='coaststation'&&coastalStationPreview?coastalStationPreview:s.group,placement:s}));
+ const heli=createMedicalHelicopter();items.push({id:'medical-helicopter',title:'医院 · 急救直升机组合',source:heli},{id:'hospital-helipad-mark',title:'医院原件 · H 与圆环标记',source:createHospitalHelipadMark()});for(const part of heli.children)items.push({id:'medical-helicopter-'+part.name,title:'急救直升机原件 · '+HELICOPTER_PARTS[part.name],source:part});
  const plane=createAirliner();items.push({id:'airliner',title:'民航飞机 · 完整组合',source:plane});for(const part of plane.children)items.push({id:'airliner-'+part.name,title:'民航飞机原件 · '+AIRLINER_PARTS[part.name],source:part});
  for(const kind of ['truck','speedboat','taxi','police'] as FleetKind[]){const source=createFleetVehicle(kind);items.push({id:'fleet-'+kind,title:'交通工具 · '+FLEET_TITLES[kind],source});for(const part of source.children)items.push({id:'fleet-part-'+part.name,title:FLEET_TITLES[kind]+'原件 · '+(FLEET_PART_TITLES[part.name]??part.name),source:part});}
  for(const [kind,title] of [['sedan','轿车'],['bus','公交车'],['ambulance','救护车']] as const)items.push({id:'vehicle-'+kind,title:'车辆 · '+title,source:createVehicle(kind)});

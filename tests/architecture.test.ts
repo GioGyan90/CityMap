@@ -1049,3 +1049,15 @@ test('glass facade varies window width and height without lighting the wall',asy
  const windows=districtFacadeWindows('glass',12,8,false);assert.ok(new Set(windows.map(w=>w.w)).size>1);assert.ok(new Set(windows.map(w=>w.h)).size>1);
  const tex=districtFacadeTexture('#edf5f8','#3d7e9e',12,8,'glass',false),mask=tex.userData.windowEmission.image.data as Uint8Array;let lit=0;for(let i=0;i<mask.length;i+=4)if(mask[i])lit++;assert.ok(lit>0&&lit<128*128*.3);
 });
+
+test('hospital helicopter rests on the pad with a ring and separate parts',async()=>{
+ const {createMedicalHelicopter,createHospitalHelipadMark}=await import('../src/medicalHelicopter');
+ const aircraft=createMedicalHelicopter(),mark=createHospitalHelipadMark();
+ assert.deepEqual(aircraft.children.map(o=>o.name),['fuselage','cockpit','tail','rotors','landing','medical']);assert.equal(mark.children.length,4);
+ const skids=new THREE.Box3().setFromObject(aircraft.getObjectByName('landing')!);assert.ok(Math.abs(skids.min.y)<1e-6);
+ const {referenceHospital}=await import('../src/referenceLandmarks');const hospital=referenceHospital(0,0);
+ const heli=hospital.getObjectByName('medical-helicopter')!,pad=hospital.getObjectByName('hospital-helipad')!,letter=hospital.getObjectByName('hospital-helipad-marking')!;
+ hospital.updateMatrixWorld(true);const platform=new THREE.Box3().setFromObject(pad),roof=new THREE.Box3().setFromObject(hospital.getObjectByName('hospital-main-roof')!),landing=new THREE.Box3().setFromObject(heli.getObjectByName('landing')!);
+ assert.ok(Math.abs(platform.min.y-roof.max.y)<1e-4);assert.ok(Math.abs(landing.min.y-platform.max.y)<1e-4);assert.ok(landing.min.x>platform.min.x&&landing.max.x<platform.max.x&&landing.min.z>platform.min.z&&landing.max.z<platform.max.z);
+ assert.ok(new THREE.Box3().setFromObject(letter).min.y>=platform.max.y);hospital.removeFromParent();
+});
