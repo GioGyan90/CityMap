@@ -1,4 +1,5 @@
 import {windowLightMask,type WindowLightRect} from './facadeLighting';
+import {campusFacadeTexture} from './campusFacade';
 import {entranceWall,addBuildingEntrance} from './buildingAccess';
 import {createMassing,massingGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
@@ -104,7 +105,7 @@ export function facadeMaterial(tex) {
 export type BuildingStyle = 'flat' | 'pitched' | 'glass' | 'stepped' | 'artdeco' | 'round' | 'arcade' | 'apartment' | 'villa' | 'warehouse';
 export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
-  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan; frontage?: [number,number]; omitArtdecoCrown?: boolean;
+  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan; frontage?: [number,number]; omitArtdecoCrown?: boolean; campusFacade?: 'wing'|'tower';
 }
 export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0, entrances: [] as {x:number;z:number;kind:string;height:number}[] };
 const buildingGroups: THREE.Group[] = [];
@@ -146,9 +147,18 @@ export function makeBuilding(o: BuildingOptions) {
     g.add(m);
     return m;
   };
-  const block = (bw: number, bh: number, bd: number, py: number, material = sideMat, px = 0, pz = 0) =>
-    solid(new THREE.BoxGeometry(bw, bh, bd),
-      material===sideMat?[sideMat,sideMat,roofMat,trim,sideMat,sideMat]:material,px,py,pz);
+  const block = (bw: number, bh: number, bd: number, py: number, material = sideMat, px = 0, pz = 0) => {
+    let faces:THREE.Material|THREE.Material[]=material;
+    if(material===sideMat){
+      faces=[sideMat,sideMat,roofMat,trim,sideMat,sideMat];
+      if(o.campusFacade){
+        const tower=o.campusFacade==='tower',bottom=py-bh/2;
+        const make=(span:number,side:'end'|'long',front:boolean)=>facadeMaterial(campusFacadeTexture(span,bh,bottom,side,tower,front,base));
+        faces=[make(bd,'long',false),make(bd,'long',false),roofMat,trim,make(bw,'end',true),make(bw,'end',false)];
+      }
+    }
+    return solid(new THREE.BoxGeometry(bw,bh,bd),faces,px,py,pz);
+  };
 
   const roofSolid=(geo:THREE.BufferGeometry,material:THREE.Material,px:number,py:number,pz:number)=>{const m=solid(geo,material,px,py,pz);roofGroup.add(m);return m;};
   const roofBox=(bw:number,bh:number,bd:number,py:number,material:THREE.Material=roofMat,px=0,pz=0)=>roofSolid(new THREE.BoxGeometry(bw,bh,bd),material,px,py,pz);
@@ -235,11 +245,19 @@ export function makeBuilding(o: BuildingOptions) {
       flatRoof(w,d,h);
     } else if (style === 'arcade') {
       flatRoof(w,d,h);
-      block(w+1,.5,d+.6,h*.64,trim);
-      for (const xx of [-w*.37,w*.37]) block(.55,h*.32,.65,h*.16,trim,xx,d/2+.5);
-      const awning=solid(new THREE.BoxGeometry(w*.9,.35,2.3),accent(roof),0,h*.35,d/2+.9);
-      awning.rotation.x=.15;
-      block(w*.7,.9,.2,h*.48,accent(0xe8be59),0,d/2+.13);
+      if(o.campusFacade==='wing'){
+        // The projecting entrance canopy is supported at its two ends, leaving the doorway clear.
+        roofBox(3.4,.18,1.25,3.18,roofMat,0,d/2+.58);
+        for(const xx of [-1.53,1.53]) block(.18,3.12,.18,1.56,trim,xx,d/2+1.04);
+        const board=solid(new THREE.BoxGeometry(.52,.78,.10),accent(0x396d7a),1.2,1.95,d/2+.07);board.name='campus-noticeboard';
+        for(const y of [1.77,1.94,2.11])solid(new THREE.BoxGeometry(.34,.07,.025),trim,1.2,y,d/2+.14);
+      }else{
+        block(w+1,.5,d+.6,h*.64,trim);
+        for (const xx of [-w*.37,w*.37]) block(.55,h*.32,.65,h*.16,trim,xx,d/2+.5);
+        const awning=solid(new THREE.BoxGeometry(w*.9,.35,2.3),accent(roof),0,h*.35,d/2+.9);
+        awning.rotation.x=.15;
+        block(w*.7,.9,.2,h*.48,accent(0xe8be59),0,d/2+.13);
+      }
     } else {
       flatRoof(w,d,h,0,0,detail);
     }

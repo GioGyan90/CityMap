@@ -27,8 +27,8 @@ export function buildUrbanDetails() {
 
 export function buildCampus() {
   // Low-rise blue-roofed academy plus a sports ground, a distinct landmark in the east.
-  for (const x of [136,152]) makeBuilding({x,z:24,w:7,d:16,h:12,style:'arcade',base:'#ecdcbc',roof:0x355a7a});
-  const tower=makeBuilding({x:144,z:19,w:11,d:7,h:17,style:'artdeco',base:'#f2e3c8',roof:0x355a7a,omitArtdecoCrown:true});
+  for (const x of [136,152]) makeBuilding({x,z:24,w:7,d:16,h:12,style:'arcade',base:'#ecdcbc',roof:0x355a7a,campusFacade:'wing'});
+  const tower=makeBuilding({x:144,z:19,w:11,d:7,h:17,style:'artdeco',base:'#f2e3c8',roof:0x355a7a,omitArtdecoCrown:true,campusFacade:'tower'});
   const crown=createCampusRoof();crown.position.y=17;tower.add(crown);
   flatQuad(144,60,19,21,GROUND_Y+.1,toon(0xb46e64));
   flatQuad(144,60,12,15,GROUND_Y+.16,toon(0x88b568));
