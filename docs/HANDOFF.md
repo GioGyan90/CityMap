@@ -1,3 +1,5 @@
+> **当前待办：海岸学院屋顶优化。** 新窗口先读 [campus-roof-handoff.md](campus-roof-handoff.md) 与 [问题截图](campus-roof-reference.png)。用户认为半球顶与矩形退台衔接生硬；本轮仅整理交接，尚未修改学院。包含仓库、源码入口、建模方法及验证发布流程。
+
 > **2026-10-26 黑铆与螃蟹：** 先读 [punk-hall-and-crab.md](punk-hall-and-crab.md)。球厅内移到(100,164)，正面转向邮轮；四树四灌木整体分组，含绿植距海岸至少10.98米。海鲜餐厅换完整独立螃蟹雕塑，五组原件、屋檐支架与资产入口；119项测试及构建通过，六视角原件/八视角实景见 `docs/punk-crab-review/`。
 
 > **2026-10-26 餐厅与市场退路：** 先读 [harbor-setbacks.md](harbor-setbacks.md)。餐厅/码头市场水平面积约缩小47%/39%，餐厅北退2米、市场向海侧退让，外排3组餐桌移除，入口/招牌/拾取范围同步；117项测试及生产构建通过，真实几何八视角见 `docs/harbor-setback-review/`。
