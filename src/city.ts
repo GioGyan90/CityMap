@@ -91,7 +91,7 @@ for(const entry of specialBuildings){
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(entry.id==='hall3'?9:25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
  // Include projecting piers and the relocated hall garden in their selectable groups.
- if(entry.id==='port'||entry.id==='hall5'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
+ if(entry.id==='port'||entry.id==='hall5'||entry.id==='park'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
 }
 world.add(createRoadTunnel());
 buildMarineFleet();

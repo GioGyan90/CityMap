@@ -57,7 +57,7 @@ export function animate() {
     const source=c.mesh.parent.userData.sourceCenter;
     if(source)c.mesh.position.sub(new THREE.Vector3().fromArray(source));
     const tan = c.curve.getTangentAt(c.offset);
-    c.mesh.rotation.y = Math.atan2(tan.x, tan.z);
+    c.mesh.rotation.set(-Math.atan2(tan.y,Math.hypot(tan.x,tan.z)),Math.atan2(tan.x,tan.z),0,'YXZ');
   }
 
   /* 海浪 */
