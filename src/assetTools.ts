@@ -1,3 +1,4 @@
+import {createAirliner,AIRLINER_PARTS} from './airliner';
 import {createSeafoodCrab,CRAB_PARTS} from './seafoodCrab';
 import {createCampusRoof,CAMPUS_ROOF_PARTS} from './campusRoof';
 import {createPoliceStation,POLICE_STATION_PARTS} from './policeStation';
@@ -37,6 +38,7 @@ type Item={id:string;title:string;source:THREE.Object3D;placement?:typeof specia
 const STORE='citymap-layout-draft-v1',NOTE_STORE='citymap-position-notes-v1';
 export function initAssetTools(){
  const items:Item[]=specialBuildings.map(s=>({id:s.id,title:s.name,source:s.id==='commercial'?createCommercialDistrict(false,true):s.id==='coaststation'&&coastalStationPreview?coastalStationPreview:s.group,placement:s}));
+ const plane=createAirliner();items.push({id:'airliner',title:'民航飞机 · 完整组合',source:plane});for(const part of plane.children)items.push({id:'airliner-'+part.name,title:'民航飞机原件 · '+AIRLINER_PARTS[part.name],source:part});
  for(const kind of ['truck','speedboat','taxi','police'] as FleetKind[]){const source=createFleetVehicle(kind);items.push({id:'fleet-'+kind,title:'交通工具 · '+FLEET_TITLES[kind],source});for(const part of source.children)items.push({id:'fleet-part-'+part.name,title:FLEET_TITLES[kind]+'原件 · '+(FLEET_PART_TITLES[part.name]??part.name),source:part});}
  for(const [kind,title] of [['sedan','轿车'],['bus','公交车'],['ambulance','救护车']] as const)items.push({id:'vehicle-'+kind,title:'车辆 · '+title,source:createVehicle(kind)});
  for(const [id,title,source] of [['street-lamp','交通 · 路侧灯组合',createStreetLamp()],['traffic-signal','交通 · 三色信号灯组合',createSignalPost()],['rail-gate','交通 · 电车道口栏杆组合',createCrossingGate()],['guide-fence','交通 · 道口导向栏杆',createGuideFence()]] as const)items.push({id,title,source});

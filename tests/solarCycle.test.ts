@@ -1,3 +1,4 @@
+import {airlinerPass,createAirliner} from '../src/airliner';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SolarClock,civilTimestamp,civilParts,formatTime,directionFromAngles,sampleSolar,solarEvents} from '../src/solarCycle';
@@ -34,4 +35,12 @@ test('twilight persists below the horizon, clears by full day/night and remains 
    assert.ok(Math.abs(p.glow-previous)<.06,'no one-minute flashes at colour boundaries');previous=p.glow;
   }
  }
+});
+
+
+test('airliner has exactly two daily timed passes and a shadow-casting assembly',()=>{
+  for(let m=0;m<1440;m++) assert.equal(airlinerPass(m)!==null,(m>=540&&m<576)||(m>=900&&m<936));
+  assert.equal(airlinerPass(558),.5);assert.equal(airlinerPass(918),.5);
+  const plane=createAirliner();assert.deepEqual(plane.children.map(c=>c.name),['fuselage','wings','engines','tail','details']);
+  let meshes=0;plane.traverse(o=>{if('isMesh' in o){meshes++;assert.equal((o as any).castShadow,true);}});assert.ok(meshes>0);
 });

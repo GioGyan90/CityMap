@@ -1,3 +1,6 @@
+import {createAirliner,airlinerPass} from './airliner';
+import {solarClock} from './night';
+import {civilParts} from './solarCycle';
 import {updateFountains} from './fountains';
 import {updateMarineFleet} from './marineTraffic';
 import {updateTrafficInfrastructure} from './trafficInfrastructure';
@@ -14,6 +17,8 @@ import { updateTransport } from './transport';
 import { labelRenderer } from "./labels";
 import { updateCamera } from "./camera";
 
+const airliner=createAirliner();
+world.add(airliner);
 let motionPaused = false;
 let simulationTime = 0;
 document.getElementById('toggleMotion')!.addEventListener('click', (event) => {
@@ -34,6 +39,9 @@ export function animate() {
   simulationTime += dt;
   const t = simulationTime;
 
+  const flight=airlinerPass(civilParts(solarClock.timestamp).minutes+(solarClock.timestamp%1000)/60000);
+  airliner.visible=flight!==null && !world.userData.assetView;
+  if(flight!==null){airliner.position.set(-340+flight*680,145,-55+flight*110);airliner.rotation.y=Math.atan2(680,110);}
   updateCamera(frameDt);
   /* 摩天轮 & 旋转木马 */
   for (const ride of spinWheels) {
