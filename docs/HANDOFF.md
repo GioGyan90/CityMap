@@ -1,4 +1,6 @@
-> **当前待办：海岸学院屋顶优化。** 新窗口先读 [campus-roof-handoff.md](campus-roof-handoff.md) 与 [问题截图](campus-roof-reference.png)。用户认为半球顶与矩形退台衔接生硬；本轮仅整理交接，尚未修改学院。包含仓库、源码入口、建模方法及验证发布流程。
+> **2026-10-27 学院屋顶已优化：** 先读 [campus-roof-redesign.md](campus-roof-redesign.md)。学院塔楼改为独立四坡冠顶及承托檐口，通用 Art Deco 保持不变；120 项测试、构建与实际几何多角度检查通过。
+
+> **历史交接：海岸学院屋顶优化。** 新窗口先读 [campus-roof-handoff.md](campus-roof-handoff.md) 与 [问题截图](campus-roof-reference.png)。用户认为半球顶与矩形退台衔接生硬；本轮仅整理交接，尚未修改学院。包含仓库、源码入口、建模方法及验证发布流程。
 
 > **2026-10-26 黑铆与螃蟹：** 先读 [punk-hall-and-crab.md](punk-hall-and-crab.md)。球厅内移到(100,164)，正面转向邮轮；四树四灌木整体分组，含绿植距海岸至少10.98米。海鲜餐厅换完整独立螃蟹雕塑，五组原件、屋檐支架与资产入口；119项测试及构建通过，六视角原件/八视角实景见 `docs/punk-crab-review/`。
 

@@ -962,3 +962,18 @@ test('seafood crab is an editable supported sculpture with eight connected legs 
  const claws=crab.getObjectByName('crab-claws')!.children.filter(o=>o.name==='open-crab-pincer') as THREE.Mesh[];assert.equal(claws.length,2);for(const o of claws){const g=o.geometry as THREE.ExtrudeGeometry;assert.ok(g.parameters.shapes instanceof THREE.Shape);const ray=new THREE.Raycaster(new THREE.Vector3(0,.55,2).applyMatrix4(o.matrix),new THREE.Vector3(0,0,-1),0,4);o.updateMatrixWorld(true);ray.ray.origin.set(0,.55,2).applyMatrix4(o.matrixWorld);assert.equal(ray.intersectObject(o).length,0,'the pincer bite is open geometry');}
  const {specialBuildings}=await import('../src/specialBuildings');const restaurant=specialBuildings.find(s=>s.id==='restaurant')!.group;assert.ok(restaurant.getObjectByName('seafood-crab-sculpture'));
 });
+
+test('academy crown is supported by the tower and leaves ordinary art deco roofs intact',async()=>{
+ const {createCampusRoof}=await import('../src/campusRoof');
+ const roof=createCampusRoof();roof.updateMatrixWorld(true);
+ const bounds=(name:string)=>new THREE.Box3().setFromObject(roof.getObjectByName(name)!,true);
+ const curb=bounds('cornice'),slope=bounds('hip-roof');
+ assert.ok(Math.abs(curb.min.y-.18)<1e-5,'curb meets the existing flat roof');
+ assert.ok(Math.abs(curb.max.y-slope.min.y)<1e-5,'roof meets the supporting curb');
+ assert.ok(curb.min.x>=-11*.53/2 && curb.max.x<=11*.53/2 && curb.min.z>=-7*.53/2 && curb.max.z<=7*.53/2,'crown remains inside upper tower parapet');
+ const face=(roof.getObjectByName('hip-roof')!.children[0] as THREE.Mesh).geometry;
+ const normals=face.getAttribute('normal');for(let i=0;i<normals.count-6;i++)assert.ok(normals.getY(i)>0,'visible roof faces point upward');
+ const ordinary=makeBuilding({x:0,z:0,w:11,d:7,h:17,style:'artdeco'}),academy=makeBuilding({x:0,z:0,w:11,d:7,h:17,style:'artdeco',omitArtdecoCrown:true});
+ const countSpheres=(g:THREE.Object3D)=>{let n=0;g.traverse(o=>{if(o instanceof THREE.Mesh && o.geometry instanceof THREE.SphereGeometry)n++;});return n;};
+ assert.equal(countSpheres(ordinary),1);assert.equal(countSpheres(academy),0);world.remove(ordinary,academy);
+});

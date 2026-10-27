@@ -104,7 +104,7 @@ export function facadeMaterial(tex) {
 export type BuildingStyle = 'flat' | 'pitched' | 'glass' | 'stepped' | 'artdeco' | 'round' | 'arcade' | 'apartment' | 'villa' | 'warehouse';
 export interface BuildingOptions {
   x: number; z: number; w?: number; d?: number; h?: number; ry?: number;
-  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan; frontage?: [number,number];
+  base?: string; win?: string; roof?: number; lit?: number; style?: BuildingStyle; detail?: boolean; elevation?: number; plan?: BuildingPlan; frontage?: [number,number]; omitArtdecoCrown?: boolean;
 }
 export const buildingStats = { count: 0, plans: {} as Record<string,number>, samples: [] as {plan:BuildingPlan;x:number;z:number;w:number;d:number;h:number;wings?:ReturnType<typeof createMassing>}[], styles: {} as Record<string, number>, batches: 0, originalDrawCalls: 0, entrances: [] as {x:number;z:number;kind:string;height:number}[] };
 const buildingGroups: THREE.Group[] = [];
@@ -203,8 +203,10 @@ export function makeBuilding(o: BuildingOptions) {
     for (const [scale, y] of [[1.0,h*.52],[.78,h*.82],[.53,h]]) flatRoof(w*scale,d*scale,y,0,0,scale===.53&&style!=='artdeco');
     if (style === 'artdeco') {
       for (const xx of [-w*.35,w*.35]) block(.55,h*.5,.6,h*.26,trim,xx,d*.5+.2);
-      roofSolid(new THREE.SphereGeometry(w*.27,12,8,0,Math.PI*2,0,Math.PI/2), roofMat, 0,h,0);
-      roofSolid(new THREE.CylinderGeometry(.12,.23,7,6),accent(0xe8be59),0,h+w*.27+3.5,0);
+      if (!o.omitArtdecoCrown) {
+        roofSolid(new THREE.SphereGeometry(w*.27,12,8,0,Math.PI*2,0,Math.PI/2), roofMat, 0,h,0);
+        roofSolid(new THREE.CylinderGeometry(.12,.23,7,6),accent(0xe8be59),0,h+w*.27+3.5,0);
+      }
     }
   } else {
     const glass = style === 'glass';
