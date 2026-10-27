@@ -1,5 +1,6 @@
 import {windowLightMask,type WindowLightRect} from './facadeLighting';
 import {campusFacadeTexture} from './campusFacade';
+import {districtFacadeTexture} from './districtFacade';
 import {entranceWall,addBuildingEntrance} from './buildingAccess';
 import {createMassing,massingGeometry,type BuildingPlan} from './buildingPlans';
 import * as THREE from 'three';
@@ -139,7 +140,13 @@ export function makeBuilding(o: BuildingOptions) {
   const roofGroup=new THREE.Group();roofGroup.name='building-roof';roofGroup.userData.style=style;g.add(roofGroup);
   const roofMat = accent(roof), trim = accent(0xf4e8ce), blue = accent(0x3987aa);
   const floors = clamp(Math.round(h / 3), 2, 22);
-  const sideMat = facadeMaterial(getFacadeTex(base, win, floors, clamp(Math.round(w / 2.5), 2, 8), lit));
+  // Keep the legacy texture request for its established seeded-random sequence; the
+  // visible facade below is a deterministic, purpose-specific floor layout.
+  const cols=clamp(Math.round(w/2.5),2,8);
+  const legacySide=facadeMaterial(getFacadeTex(base,win,floors,cols,lit));
+  const earlyTarget=o.frontage?{x:(o.frontage[0]-x)*Math.cos(ry)-(o.frontage[1]-z)*Math.sin(ry),z:(o.frontage[0]-x)*Math.sin(ry)+(o.frontage[1]-z)*Math.cos(ry)}:undefined;
+  const entryFace=entranceWall(w,d,h,undefined,earlyTarget);
+  const sideMat=o.campusFacade?legacySide:facadeMaterial(districtFacadeTexture(base,win,floors,cols,style,false));
   const solid = (geo: THREE.BufferGeometry, material: THREE.Material | THREE.Material[], px: number, py: number, pz: number) => {
     const m = new THREE.Mesh(geo, material);
     m.position.set(px, py, pz);
@@ -150,7 +157,9 @@ export function makeBuilding(o: BuildingOptions) {
   const block = (bw: number, bh: number, bd: number, py: number, material = sideMat, px = 0, pz = 0) => {
     let faces:THREE.Material|THREE.Material[]=material;
     if(material===sideMat){
-      faces=[sideMat,sideMat,roofMat,trim,sideMat,sideMat];
+      const blockFloors=clamp(Math.round(bh/3),2,22),isGround=py-bh/2<.05;
+      const wallMat=(span:number,isEntry:boolean)=>o.campusFacade?sideMat:facadeMaterial(districtFacadeTexture(base,win,blockFloors,clamp(Math.round(span/2.5),2,8),style,isEntry&&isGround));
+      faces=[wallMat(bd,entryFace.nx===1),wallMat(bd,entryFace.nx===-1),roofMat,trim,wallMat(bw,entryFace.nz===1),wallMat(bw,entryFace.nz===-1)];
       if(o.campusFacade){
         const tower=o.campusFacade==='tower',bottom=py-bh/2;
         const make=(span:number,side:'end'|'long',front:boolean)=>facadeMaterial(campusFacadeTexture(span,bh,bottom,side,tower,front,base));
@@ -178,7 +187,8 @@ export function makeBuilding(o: BuildingOptions) {
     buildingStats.samples.push({plan,x,z,w,d,h,wings});
     g.userData.massing=wings;
     const {geometry,rims}=massingGeometry(wings,w,d,h);
-    const wingFacade=style==='glass'?facadeMaterial(getFacadeTex('#598ea5','#254f6c',floors,clamp(Math.round(w/2.5),2,8),lit)):sideMat;
+    if(style==='glass')getFacadeTex('#598ea5','#254f6c',floors,cols,lit); // preserve the existing seeded stream
+    const wingFacade=style==='glass'?facadeMaterial(districtFacadeTexture('#598ea5','#254f6c',floors,cols,style,false)):sideMat;
     const walls=geometry.groups[0],tops=geometry.groups[1];solid(extractGeometryPart(geometry,walls.start,walls.count),wingFacade,0,0,0);roofSolid(extractGeometryPart(geometry,tops.start,tops.count),roofMat,0,0,0);geometry.dispose();
     for(const {a,b,height} of rims){
       const edge=roofBox(Math.hypot(b[0]-a[0],b[1]-a[1])+.08,.28,.17,height+.14,trim,(a[0]+b[0])/2,(a[1]+b[1])/2);

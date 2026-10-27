@@ -34,6 +34,13 @@ export function buildGovernment(cx, cz) {
   prism(21.4,3.2,4.4,0xf7efdd,cx,GROUND_Y+11.2,cz+3);
   const entranceRoot=new THREE.Group();entranceRoot.position.set(cx,GROUND_Y,cz);world.add(entranceRoot);
   addBuildingEntrance(entranceRoot,{x:0,z:1.54,nx:0,nz:1,length:6,ceiling:8},true,'office',2.2,false);
+  // Public-hall glazing sits between the portico columns, clear of the central door.
+  for(const side of [-1,1])for(const [y,h] of [[4.55,2.55],[7.7,1.65]]){
+    const x=side*6.7;block(1.8,h,.14,0xd8c69e,x,y,1.56);
+    block(1.48,h-.3,.08,0x62a6c4,x,y,1.66);
+    block(.09,h-.3,.09,0xf1e0bc,x,y,1.72);
+    block(1.95,.12,.25,0xf1e0bc,x,y-h/2-.08,1.68);
+  }
   // Rear and side elevations have the same two-storey window rhythm.
   for(const x of [-7.5,-3.75,0,3.75,7.5])for(const y of [4.3,7.5]){
     block(2.25,2.3,.22,0xd8c69e,x,y,-10.58);
