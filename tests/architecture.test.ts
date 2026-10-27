@@ -1033,3 +1033,19 @@ test('office facade has individual bounded windows and a supported entrance',asy
  const canopy=entry.getObjectByName('office-entry-canopy')!,posts=entry.children.filter(o=>o.name==='office-canopy-post');assert.equal(posts.length,2);
  const c=new THREE.Box3().setFromObject(canopy);for(const p of posts){const b=new THREE.Box3().setFromObject(p);assert.ok(Math.abs(b.min.y-9)<.001&&Math.abs(b.max.y-c.min.y)<.01);}
 });
+
+test('glass office has a lower L-shaped wrap and window-only lighting',async()=>{
+ const {makeBuilding}=await import('../src/buildings');
+ const tower=makeBuilding({x:0,z:0,w:12,d:10,h:45,style:'glass',plan:'rect',detail:false});
+ const core=tower.getObjectByName('glass-office-core') as THREE.Mesh,side=tower.getObjectByName('glass-office-side-wing') as THREE.Mesh,rear=tower.getObjectByName('glass-office-rear-wing') as THREE.Mesh;
+ assert.ok(core&&side&&rear);const a=new THREE.Box3().setFromObject(core),b=new THREE.Box3().setFromObject(side),c=new THREE.Box3().setFromObject(rear);
+ assert.ok(b.max.y<a.max.y&&c.max.y<b.max.y);assert.ok(Math.abs(a.min.x-b.max.x)<1e-5&&Math.abs(a.min.z-c.max.z)<1e-5);assert.ok(Math.abs(b.min.x+6)<1e-5&&Math.abs(c.min.z+5)<1e-5);
+ for(const part of [core,side,rear]){assert.ok(Array.isArray(part.material));for(const mat of [part.material[0],part.material[1],part.material[4],part.material[5]]){assert.equal(mat.userData.lightingRole,'window-facade');assert.ok((mat as THREE.MeshToonMaterial).emissiveMap);}}
+ tower.removeFromParent();
+});
+
+test('glass facade varies window width and height without lighting the wall',async()=>{
+ const {districtFacadeWindows,districtFacadeTexture}=await import('../src/districtFacade');
+ const windows=districtFacadeWindows('glass',12,8,false);assert.ok(new Set(windows.map(w=>w.w)).size>1);assert.ok(new Set(windows.map(w=>w.h)).size>1);
+ const tex=districtFacadeTexture('#edf5f8','#3d7e9e',12,8,'glass',false),mask=tex.userData.windowEmission.image.data as Uint8Array;let lit=0;for(let i=0;i<mask.length;i+=4)if(mask[i])lit++;assert.ok(lit>0&&lit<128*128*.3);
+});

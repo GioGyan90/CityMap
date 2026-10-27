@@ -158,7 +158,7 @@ export function makeBuilding(o: BuildingOptions) {
     let faces:THREE.Material|THREE.Material[]=material;
     if(material===sideMat){
       const blockFloors=clamp(Math.round(bh/3),2,22),isGround=py-bh/2<.05;
-      const wallMat=(span:number,isEntry:boolean)=>o.campusFacade?sideMat:facadeMaterial(districtFacadeTexture(base,win,blockFloors,clamp(Math.round(span/2.5),2,8),style,isEntry&&isGround));
+      const wallMat=(span:number,isEntry:boolean)=>o.campusFacade?sideMat:facadeMaterial(districtFacadeTexture(base,win,blockFloors,clamp(Math.round(span/(style==='glass'?1.55:2.5)),2,style==='glass'?12:8),style,isEntry&&isGround));
       faces=[wallMat(bd,entryFace.nx===1),wallMat(bd,entryFace.nx===-1),roofMat,trim,wallMat(bw,entryFace.nz===1),wallMat(bw,entryFace.nz===-1)];
       if(o.campusFacade){
         const tower=o.campusFacade==='tower',bottom=py-bh/2;
@@ -230,13 +230,29 @@ export function makeBuilding(o: BuildingOptions) {
     }
   } else {
     const glass = style === 'glass';
-    block(w,h,d,h/2, glass ? blue : sideMat);
-    addOutline(new THREE.BoxGeometry(w,h,d),x,elevation+h/2,z,ry);
     if (glass) {
-      for (let y=3; y<h; y+=4) block(w+.25,.45,d+.25,y,trim);
-      for (const xx of [-w*.45,0,w*.45]) block(.36,h,.38,h/2,trim,xx,d/2+.12);
-      flatRoof(w,d,h);
-
+      // Three touching volumes fit the original parcel: a high glazed core and
+      // a lower L-shaped wrap. No overlapping solid faces or enlarged footprint.
+      const mass=new THREE.Group();mass.name='glass-office-l-shaped-massing';g.add(mass);
+      const coreW=w*.68,coreD=d*.68,coreX=w*.16,coreZ=d*.16;
+      const core=block(coreW,h,coreD,h/2,sideMat,coreX,coreZ);core.name='glass-office-core';
+      const variation=(Math.sin(x*12.41+z*5.73)+1)/2;
+      const sideH=h*(.65+variation*.1),backH=h*(.41+variation*.1);
+      const side=block(w*.32,sideH,d,sideH/2,sideMat,-w*.34,0);side.name='glass-office-side-wing';
+      const back=block(w*.68,backH,d*.32,backH/2,sideMat,w*.16,-d*.34);back.name='glass-office-rear-wing';
+      // Reparent while preserving local transforms so assets remain inspectable.
+      mass.add(core,side,back);
+      for(const [bw,bd,top,px,pz] of [[coreW,coreD,h,coreX,coreZ],[w*.32,d,sideH,-w*.34,0],[w*.68,d*.32,backH,w*.16,-d*.34]])
+        flatRoof(bw,bd,top,px,pz,false);
+      const pier=block(.25,sideH,.25,sideH/2,trim,-w*.48,d*.48);pier.name='glass-wing-corner-pier';mass.add(pier);
+      const roofGarden=roofBox(w*.20,.15,d*.36,sideH+.2,accent(0x568263),-w*.34,0);roofGarden.name='glass-wing-roof-garden';
+      addOutline(new THREE.BoxGeometry(coreW,h,coreD),x+coreX*Math.cos(ry)+coreZ*Math.sin(ry),elevation+h/2,z-coreX*Math.sin(ry)+coreZ*Math.cos(ry),ry);
+    } else {
+      block(w,h,d,h/2,sideMat);
+      addOutline(new THREE.BoxGeometry(w,h,d),x,elevation+h/2,z,ry);
+    }
+    if (glass) {
+      // Shape, roof and facade are constructed above.
     } else if (style === 'pitched' || style === 'villa' || style === 'warehouse') {
       const rh = Math.min(w,d) * (style === 'warehouse' ? .28 : .48);
       const rm = roofSolid(new THREE.ConeGeometry(.7072,1,4),roofMat,0,h+rh/2,0);

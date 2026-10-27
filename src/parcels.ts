@@ -46,8 +46,8 @@ export function buildParcels(){
   if(district.name==='hills'||base-low>.6)buildParcelTerrace(group,w,d,group.userData.entranceWall,occupied);
   if(base-low>.12){const foundation=new THREE.Mesh(new THREE.BoxGeometry(w+.2,base-low+.3,d+.2),toon(0xc6b590));foundation.position.y=-(base-low)/2;group.add(foundation);}
   if(plan==='rect'&&tower&&rnd()>.5){
-   const wing=new THREE.Mesh(new THREE.BoxGeometry(w*.38,h*.52,d*.7),toon(0x7babc1));wing.position.set(w*.22,h*.26,d*.16);group.add(wing);
-   const bridge=new THREE.Mesh(new THREE.BoxGeometry(w*.8,1.2,2.2),toon(0xc5d6d8));bridge.position.set(0,h*.55,0);group.add(bridge);
+   if(style!=='glass'){const wing=new THREE.Mesh(new THREE.BoxGeometry(w*.38,h*.52,d*.7),toon(0x7babc1));wing.position.set(w*.22,h*.26,d*.16);group.add(wing);
+   const bridge=new THREE.Mesh(new THREE.BoxGeometry(w*.8,1.2,2.2),toon(0xc5d6d8));bridge.position.set(0,h*.55,0);group.add(bridge);}
   }else if(plan==='rect'&&district.name==='civic'&&rnd()>.5){
    const glass=new THREE.Mesh(new THREE.CylinderGeometry(w*.36,w*.36,d*.7,12,1,false,0,Math.PI),toon(0x74a6b5));glass.rotation.z=Math.PI/2;glass.position.set(0,h+.7,0);group.add(glass);
   }

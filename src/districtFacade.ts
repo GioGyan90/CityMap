@@ -9,7 +9,7 @@ export function districtFacadeWindows(style:BuildingStyle,floors:number,cols:num
   const ground=row===floors-1;
   let wf=.61,hf=.58;
   if(style==='warehouse'){if(!ground && row!==0)continue;wf=.52;hf=.30;}
-  else if(style==='glass'){wf=.86;hf=.72;}
+  else if(style==='glass'){wf=col%4===0?.62:col%4===1?.9:.76;hf=row%5===0?.56:.73;}
   else if(style==='arcade'){wf=ground?.83:.56;hf=ground?.72:.57;}
   else if(style==='apartment'){wf=.58;hf=.69;}
   else if(style==='villa'||style==='pitched'){wf=.49;hf=.57;}
