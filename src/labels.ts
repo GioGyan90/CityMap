@@ -5,6 +5,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 import { scene,world } from "./scene";
 
 export const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.id = 'map-label-layer';
 labelRenderer.setSize(innerWidth, innerHeight);
 labelRenderer.domElement.style.position = 'fixed';
 labelRenderer.domElement.style.top = '0';

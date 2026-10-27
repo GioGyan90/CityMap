@@ -60,6 +60,7 @@ let down: {x:number;y:number}|null=null;
 const pointer=new THREE.Vector2();const raycaster=new THREE.Raycaster();
 const canvas=renderer.domElement;
 function move(event: PointerEvent) {
+  if(document.body.dataset.immersive==='true')return;
   if(down && Math.hypot(event.clientX-down.x,event.clientY-down.y)>6) dragging=true;
   if(event.pointerType==='touch') return;
   const rect=canvas.getBoundingClientRect();
@@ -70,6 +71,7 @@ canvas.addEventListener('pointermove',move);
 canvas.addEventListener('pointerleave',()=>{pointerActive=false;});
 canvas.addEventListener('pointerdown',event=>{down={x:event.clientX,y:event.clientY};dragging=false;});
 canvas.addEventListener('pointerup',event=>{
+  if(document.body.dataset.immersive==='true'){down=null;dragging=false;return;}
   if(event.pointerType!=='mouse' && !dragging) {
     const rect=canvas.getBoundingClientRect();
     pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
@@ -79,6 +81,7 @@ canvas.addEventListener('pointerup',event=>{
 });
 canvas.addEventListener('pointercancel',()=>{down=null;dragging=false;pointerActive=false;});
 window.addEventListener('blur',()=>{pointerActive=false;labelTarget=null;pinnedTarget=null;});
+window.addEventListener('citymap-immersive',()=>{pointerActive=false;labelTarget=null;pinnedTarget=null;down=null;dragging=false;});
 window.addEventListener('keydown',event=>{if(event.key==='Escape'){pointerActive=false;labelTarget=null;pinnedTarget=null;}});
 controls.addEventListener('start',()=>{pointerActive=false;labelTarget=null;pinnedTarget=null;});
 
@@ -116,7 +119,7 @@ function select(id: string|null) {
   world.userData.selectedSpecial=next?.id??null;
 }
 export function updateFocus(dt: number) {
-  const id=labelTarget??pinnedTarget??(pointerActive&&!dragging?hitTarget():null);
+  const id=document.body.dataset.immersive==='true'?null:labelTarget??pinnedTarget??(pointerActive&&!dragging?hitTarget():null);
   select(id);
   const alpha=1-Math.exp(-10*dt);
   for(const group of groups) {

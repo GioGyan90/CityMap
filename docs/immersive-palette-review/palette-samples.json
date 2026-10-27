@@ -1,0 +1,121 @@
+{
+  "method": "Median of 3x3 RGB pixels in approximate EGL views; not browser colours",
+  "date": "2026-09-22",
+  "times": [
+    "12:00",
+    "17:30",
+    "21:00"
+  ],
+  "samples": {
+    "Sea": {
+      "point": [
+        120,
+        600
+      ],
+      "colors": {
+        "day": "#137DBB",
+        "sunset": "#0C4A73",
+        "night": "#05162A"
+      }
+    },
+    "Sand": {
+      "point": [
+        360,
+        590
+      ],
+      "colors": {
+        "day": "#FFFFC9",
+        "sunset": "#BFA580",
+        "night": "#434A48"
+      }
+    },
+    "Grass": {
+      "point": [
+        555,
+        605
+      ],
+      "colors": {
+        "day": "#7EC65A",
+        "sunset": "#678A43",
+        "night": "#1E3923"
+      }
+    },
+    "Hill": {
+      "point": [
+        667,
+        240
+      ],
+      "colors": {
+        "day": "#86D57F",
+        "sunset": "#548050",
+        "night": "#1D392B"
+      }
+    },
+    "Road": {
+      "point": [
+        700,
+        567
+      ],
+      "colors": {
+        "day": "#5C80A3",
+        "sunset": "#384C63",
+        "night": "#15233C"
+      }
+    },
+    "Cream stone": {
+      "point": [
+        675,
+        466
+      ],
+      "colors": {
+        "day": "#EFDBA0",
+        "sunset": "#978462",
+        "night": "#363D3B"
+      }
+    },
+    "Blue roof": {
+      "point": [
+        800,
+        646
+      ],
+      "colors": {
+        "day": "#2D9FDB",
+        "sunset": "#195A84",
+        "night": "#092D51"
+      }
+    },
+    "Terracotta": {
+      "point": [
+        779,
+        617
+      ],
+      "colors": {
+        "day": "#F39165",
+        "sunset": "#AB5D41",
+        "night": "#362920"
+      }
+    },
+    "Tower glass": {
+      "point": [
+        514,
+        336
+      ],
+      "colors": {
+        "day": "#347299",
+        "sunset": "#3C7184",
+        "night": "#152C44"
+      }
+    },
+    "Green roof": {
+      "point": [
+        603,
+        584
+      ],
+      "colors": {
+        "day": "#649156",
+        "sunset": "#415538",
+        "night": "#15291D"
+      }
+    }
+  }
+}

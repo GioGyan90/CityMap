@@ -50,3 +50,10 @@ body[data-time="night"] .hud{color:#edf3ff}body[data-time="night"] .hud h1{text-
 body[data-time="night"] .toolbar button,body[data-time="night"] .legend span,body[data-time="night"] .lbl{background:#172c48ed;color:#e8eff8;border-color:#65788d}
 body[data-time="night"] .lbl.is-focused{background:#66512c;border-color:#ffcc69;color:#fff3c9}
 body[data-time="night"] .focus-card{background:#12253eef;color:#f5e4bc}
+
+/* Immersive view leaves only a small, text-free way out; existing UI state is preserved. */
+body[data-immersive="true"] .hud,body[data-immersive="true"] .toolbar,body[data-immersive="true"] .legend,
+body[data-immersive="true"] .time-panel,body[data-immersive="true"] .asset-launch,body[data-immersive="true"] .asset-panel,
+body[data-immersive="true"] .focus-card,body[data-immersive="true"] #map-label-layer{display:none!important}
+#exitImmersive{position:fixed;right:16px;top:16px;z-index:90;width:36px;height:36px;border:0;border-radius:50%;background:#112d3f88;color:white;display:grid;place-items:center;cursor:pointer;opacity:.55;transition:opacity .15s}
+#exitImmersive[hidden]{display:none}#exitImmersive:hover,#exitImmersive:focus-visible{opacity:1}#exitImmersive svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
