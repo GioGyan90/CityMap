@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {RESORT_ACCENTS} from './visualStyle';
 import {kit,C} from './referenceArchitecture';
 import {roundPlan,extrudedPlan,polygonPlan,polygonRing,cutFacade,type PlanPoint} from './carvedGeometry';
 const timber=0x93643d,lightWood=0xc89b60,darkWood=0x715035;
@@ -62,7 +63,7 @@ export function createBeachFishMarket(){const root=new THREE.Group();root.name='
  for(const z of [-28.2,-30.2])p.box(10,.32,.2,darkWood,0,.4,z);
  for(const x of [-4.6,4.6])for(const z of [-28.2,-30.2])p.mesh(new THREE.CylinderGeometry(.19,.24,3.3,9),timber,x,-1.1,z).name='pier-support-pile';
  const ramp=part(root,'fish-market-entry-ramp');const rs=new THREE.Shape([new THREE.Vector2(10,.75),new THREE.Vector2(13.2,.55),new THREE.Vector2(13.2,.4),new THREE.Vector2(10,.57)]);const rm=kit(ramp).mesh(new THREE.ExtrudeGeometry(rs,{depth:3.2,bevelEnabled:false}),lightWood);rm.rotation.y=-Math.PI/2;rm.position.x=1.6;
- const stalls=part(root,'fish-market-stalls');woodenShop(stalls);tent(stalls,-7,-4.5,0x4b92a2);tent(stalls,7,-4.5,0xd8c395);tent(stalls,7,3.8,0x5e8e84);
+ const stalls=part(root,'fish-market-stalls');woodenShop(stalls);tent(stalls,-7,-4.5,0x4b92a2);tent(stalls,7,-4.5,RESORT_ACCENTS.apricot);tent(stalls,7,3.8,0x5e8e84);
  const goods=part(root,'fish-market-goods');for(let i=0;i<8;i++){const x=i<4?-3.2:3.3,z=-6+(i%4)*3.6,b=createBambooBasket(i);b.position.set(x,.75,z);goods.add(b);if(i%2===0){const fish=createFish();fish.scale.setScalar(.24);fish.rotation.x=-Math.PI/2;fish.position.set(x,1.39,z);goods.add(fish);}}
  const extra=createFishTable(4);extra.position.set(-7,.75,8.8);goods.add(extra);
  for(const [x,z,c] of [[4.7,-20,0x478393],[-4.7,-25,0x9e643e]]){fishingBoat(root,x,z,c);kit(root).rod(new THREE.Vector3(Math.sign(x)*1.7,1,-21),new THREE.Vector3(x-Math.sign(x),.2,z+1),.035,0xd9c48b);}

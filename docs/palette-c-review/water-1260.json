@@ -1,0 +1,9 @@
+{
+  "terrain": {
+    "minimum": 1.06,
+    "maximum": 72.4783935546875,
+    "rows": 201,
+    "cols": 180
+  },
+  "review": "Actual geometry and ocean shader, simplified fixed lighting"
+}

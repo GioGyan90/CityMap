@@ -1,9 +1,9 @@
 import { rnd, rr, pick } from './random';
 import { makeBuilding, type BuildingStyle } from './buildings';
 
-export const RES_BASES = ['#fff9ed', '#fff1d9', '#e9f7ff', '#ffe0d2', '#edf5df', '#f9e8ee', '#fff0ce', '#e0f3fa', '#ffe8dc'];
+export const RES_BASES = ['#fff5e2', '#ffebcf', '#e4f4f1', '#ffd5bd', '#edf5df', '#f3e6f4', '#fff0d2', '#dff5ef', '#ffe3d0'];
 export const RES_WINS = ['#4a7ea8', '#3f6f96', '#5a86ad', '#456b8d', '#557f9e'];
-export const ROOF_COLS = [0xd5794d, 0x237fae, 0x298da5, 0xc77249, 0x286c96, 0xdf904b, 0x598d79];
+export const ROOF_COLS = [0xe87e58, 0x176bb4, 0x299eaa, 0xd97050, 0x446faf, 0xef9a68, 0x9b6bc1];
 
 /** Each district has its own massing, height range and palette. */
 export function fillBlock(bx: number, bz: number) {

@@ -2,11 +2,12 @@ import {mergeGeometryBatch,type GeometryBatchPart} from './geometryBatch';
 import * as THREE from 'three';
 import {toon} from './materials';
 import {seededRandom} from './proceduralGeometry';
+import {RESORT_ACCENTS} from './visualStyle';
 export type HomeStyle='balcony'|'bay'|'shutters';
 function box(g:THREE.Object3D,w:number,h:number,d:number,c:number,x:number,y:number,z:number,name:string){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),toon(c));m.position.set(x,y,z);m.name=name;m.castShadow=m.receiveShadow=true;g.add(m);return m;}
 function opening(shape:THREE.Shape,x:number,y:number,w:number,h:number){const p=new THREE.Path();p.moveTo(x-w/2,y);p.lineTo(x-w/2,y+h);p.lineTo(x+w/2,y+h);p.lineTo(x+w/2,y);p.closePath();shape.holes.push(p);}
 export function createHome(style:HomeStyle='balcony',seed=23001,w=6.5,d=5.9,floors=3){
- const root=new THREE.Group();root.name='courtyard-home-'+style;const rand=seededRandom(seed),h=floors*2.8+.35,wall=[0xfff2d7,0xffe0ca,0xe9f5e4,0xf3edf6][seed%4],trim=0xfdf9eb,accent=[0x418da0,0x697da3,0xbb7053][seed%3];
+ const root=new THREE.Group();root.name='courtyard-home-'+style;const rand=seededRandom(seed),h=floors*2.8+.35,wall=[0xfff1d9,0xffddcb,0xe7f3df,0xf2e5f2][seed%4],trim=0xfdf9eb,accent=[0x319c9e,0x8167ad,0xc77756][seed%3];
  box(root,w,.24,d,0xc4b7a2,0,.12,0,'house-plinth');
  for(let face=0;face<4;face++){
   const span=face%2?d:w,g=new THREE.Group();g.name=['front-facade','right-facade','rear-facade','left-facade'][face];g.rotation.y=face*Math.PI/2;g.position.set(face===1?w/2:face===3?-w/2:0,0,face===0?d/2:face===2?-d/2:0);root.add(g);
@@ -33,7 +34,7 @@ export function createHome(style:HomeStyle='balcony',seed=23001,w=6.5,d=5.9,floo
  }
  const entrance=new THREE.Group();entrance.name='recessed-entrance';entrance.position.z=d/2;root.add(entrance);box(entrance,1.15,2.08,.08,0x326575,0,1.22,-.16,'entrance-door');box(entrance,.11,.11,.09,0xf0cb70,.35,1.2,-.08,'door-handle');box(entrance,1.8,.15,.9,accent,0,2.48,.3,'entry-canopy');box(entrance,1.7,.18,.3,0xd9c9ac,0,.09,.08,'entry-step');
  const roof=new THREE.Group();roof.name='independent-residential-roof';root.add(roof);
- if(style==='shutters'||seed%3===0){const profile=new THREE.Shape([new THREE.Vector2(-w/2-.25,0),new THREE.Vector2(0,1.15),new THREE.Vector2(w/2+.25,0),new THREE.Vector2(w/2+.25,-.14),new THREE.Vector2(-w/2-.25,-.14)]),m=new THREE.Mesh(new THREE.ExtrudeGeometry(profile,{depth:d+.5,bevelEnabled:false}),toon(0xd37f53));m.position.set(0,h+.1,-d/2-.25);m.name='pitched-roof';m.castShadow=true;roof.add(m);
+ if(style==='shutters'||seed%3===0){const profile=new THREE.Shape([new THREE.Vector2(-w/2-.25,0),new THREE.Vector2(0,1.15),new THREE.Vector2(w/2+.25,0),new THREE.Vector2(w/2+.25,-.14),new THREE.Vector2(-w/2-.25,-.14)]),m=new THREE.Mesh(new THREE.ExtrudeGeometry(profile,{depth:d+.5,bevelEnabled:false}),toon([0xe47b58,0xd88563,0x3677ad,0x9669b5,RESORT_ACCENTS.coral][Math.abs(seed)%5]));m.position.set(0,h+.1,-d/2-.25);m.name='pitched-roof';m.castShadow=true;roof.add(m);
  }else{box(roof,w+.3,.2,d+.3,0x5b8f9f,0,h+.08,0,'flat-roof-slab');for(const side of [-1,1]){box(roof,w+.3,.35,.14,trim,0,h+.3,side*(d/2+.08),'roof-parapet');box(roof,.14,.35,d+.3,trim,side*(w/2+.08),h+.3,0,'roof-parapet');}box(roof,1.15,.7,1.2,wall,w*.25,h+.5,-d*.2,'roof-stair-head');box(roof,1.35,.12,1.35,accent,w*.25,h+.9,-d*.2,'stair-head-cap');}
  root.userData={style,seed,w,d,floors,height:h,geometryWindows:true};return root;
 }

@@ -1,5 +1,6 @@
 import {createThemedHall} from './themedHalls';
 import {COMMERCIAL_PLAN} from './commercialPlan';
+import {RESORT_ACCENTS} from './visualStyle';
 import * as THREE from 'three';
 import {toon} from './materials';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -53,7 +54,7 @@ export function createCommercialDistrict(optimized=false,includeHall=false){
  box(bridges,14,.7,18,C.stone,0,8.65,0,'real-city-road-skywalk');
  for(const x of [-6.9,6.9]){box(bridges,.12,.9,18,C.glass,x,9.55,0);box(bridges,.18,.12,18,C.gold,x,10.06,0);}
  // Lower stores face the public road; shop roots carry their complete assemblies.
- for(const side of [-1,1])for(const x of [-16,15]){const bay=group(ground,'retail-bay');bay.position.set(x,0,side*18);bay.rotation.y=side<0?0:Math.PI;shop(bay,0,0,17,side<0?C.blue:C.coral);}
+ for(const side of [-1,1])for(const x of [-16,15]){const bay=group(ground,'retail-bay');bay.position.set(x,0,side*18);bay.rotation.y=side<0?0:Math.PI;shop(bay,0,0,17,side<0?C.blue:RESORT_ACCENTS.lavender);}
  tower(office,15,-18,42);tower(east,15,18,27,true);roofPavilion(east,15,36.3,18);
  // Café and garden stay on the open, south-facing upper terrace.
  for(const x of [-21,-16,-11])table(west,x,9,18);

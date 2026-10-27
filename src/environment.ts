@@ -19,7 +19,7 @@ for(let row=0;row<=rows;row++){
   const index=(row*(cols+1)+col)*3,x=terrainPositions[index],y=terrainPositions[index+1];positions.push(x,y,z);
   const coastDistance=Math.min(x-left,right-x),patch=(Math.sin(x*.043+z*.017)+Math.cos(z*.071-x*.025))*.25+.5;
   const color=new THREE.Color(coastDistance<12?palette.sand:y>49?palette.ridge:y>23?palette.hill:palette.grass);
-  if(coastDistance>=12)color.lerp(new THREE.Color(y>23?0x90bd78:0x70b950),patch*.27);
+  if(coastDistance>=12)color.lerp(new THREE.Color(y>23?0x81b868:0x60b249),patch*.27);
   color.multiplyScalar(1+.045*Math.sin(x*.23+z*.17));colors.push(color.r,color.g,color.b);
  }
 }
@@ -85,7 +85,7 @@ for(let row=0;row<=beachRows;row++){
 for(let row=0;row<beachRows;row++)for(let col=0;col<beachCols;col++){const a=row*(beachCols+1)+col,b=a+beachCols+1;beachIndices.push(a,b,a+1,a+1,b,b+1);}
 const beachGeo=new THREE.BufferGeometry();beachGeo.setAttribute('position',new THREE.Float32BufferAttribute(beachPositions,3));beachGeo.setAttribute('color',new THREE.Float32BufferAttribute(beachColors,3));beachGeo.setIndex(beachIndices);beachGeo.computeVertexNormals();
 const beach=new THREE.Mesh(beachGeo,toon(0xffffff,{vertexColors:true}));beach.name='sunlit-golden-foreshore';beach.receiveShadow=true;world.add(beach);
-world.userData.visualStyle='terraced-sunny-coast-v2';
+world.userData.visualStyle='coastal-resort-palette-c';
 
 world.userData.roadSurface={mode:'shared-terrain-material',groundLayers:1,markings:'integrated'};
 

@@ -1012,3 +1012,14 @@ test('hospital entrance canopy stays clear of patient-room front windows',async(
  hospital.traverse(o=>{if(o.name!=='hospital-patient-front-window')return;count++;assert.ok(!canopyBounds.intersectsBox(new THREE.Box3().setFromObject(o,true)),'window must not cross the entry canopy');});
  assert.ok(count>5);
 });
+
+test('resort palette keeps distinct ocean depths and varied residential roof colours',async()=>{
+ const {SEA_PALETTE,COAST_PALETTE,RESORT_ACCENTS}=await import('../src/visualStyle');
+ const shallow=new THREE.Color(SEA_PALETTE.shallow),deep=new THREE.Color(SEA_PALETTE.deep);
+ assert.ok(shallow.g>deep.g&&shallow.r>deep.r,'seafoam shallows remain lighter than cobalt deep water');
+ const hsl={h:0,s:0,l:0};new THREE.Color(COAST_PALETTE.grass).getHSL(hsl);assert.ok(hsl.h>.2&&hsl.h<.45,'terrain remains green');
+ const {createHome}=await import('../src/residentialAssets');const colors=new Set<number>();
+ for(let seed=10;seed<15;seed++){const home=createHome('shutters',seed),roof=home.getObjectByName('pitched-roof') as THREE.Mesh;colors.add((roof.material as THREE.MeshToonMaterial).color.getHex());}
+ assert.ok(colors.size>=4,'seeded homes retain varied roof colours');
+ assert.notEqual(RESORT_ACCENTS.magenta,RESORT_ACCENTS.lavender);
+});

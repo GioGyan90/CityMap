@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 import {world} from './scene';
+import {RESORT_ACCENTS} from './visualStyle';
 import {GROUND_Y} from './config';
 import {kit,C} from './referenceArchitecture';
 import {cutFacade,roundPlan,extrudedPlan,insetRing,rackGeometry,polygonPlan,openPlanShell,polygonRing,insetLoft,type PlanPoint,archHole} from './carvedGeometry';
 const wood=0x93602f,gold=0xe3b75e,green=0x397f3b;
 function start(name:string,attach=true){const root=new THREE.Group();root.name=name;root.position.y=attach?GROUND_Y:0;if(attach)world.add(root);return {root,k:kit(root)};}
-function canopy(root:THREE.Group,x:number,z:number,w:number,blue:boolean,y=4.3){
+function canopy(root:THREE.Group,x:number,z:number,w:number,blue:boolean,y=4.3,tint=C.blue){
  const k=kit(root),n=8;
  for(let i=0;i<n;i++){
-  const px=x-w/2+(i+.5)*w/n,c=blue?(i%2?C.white:C.blue):green;
+  const px=x-w/2+(i+.5)*w/n,c=blue?(i%2?C.white:tint):green;
   const s=new THREE.Shape();s.moveTo(-w/n/2,0);s.lineTo(w/n/2,0);s.lineTo(w/n/2,-.32);s.quadraticCurveTo(0,-.95,-w/n/2,-.32);s.closePath();
   k.mesh(new THREE.ExtrudeGeometry(s,{depth:.12,bevelEnabled:false}),c,px,y-.36,z+1.88).name='scalloped-canopy-edge';
   const roof=k.box(w/n-.025,.13,3.8,c,px,y,z);roof.rotation.x=.18;
@@ -118,7 +119,7 @@ export function buildSuppliesMarket(){
  }
  const roofRack=createMarketRack();roofRack.position.set(-2.5,10.85,-5);root.add(roofRack);for(const x of [-4.3,-.7])k.rod(new THREE.Vector3(x,10.6,-5),new THREE.Vector3(x,10.85,-5),.1,gold);
  for(const x of [-7,7]){
-  canopy(root,x,9.2,8,true);rack(root,x+1.55,1.35,8.6,3.3);
+  canopy(root,x,9.2,8,true,4.3,x<0?C.blue:RESORT_ACCENTS.lavender);rack(root,x+1.55,1.35,8.6,3.3);
   for(const dx of [-1,1]){
    k.mesh(extrudedPlan(roundPlan(1.5,1.25,.15),.7),dx<0?0x3b94a3:0xd78c42,x+dx*1.1,.45,11.2);
    k.ball(.2,[0xf2c852,0xe5604c][dx<0?0:1],x+dx*1.1,1.35,11.2);

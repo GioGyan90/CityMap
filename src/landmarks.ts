@@ -1,4 +1,5 @@
 import {createFountainWater} from './fountains';
+import {RESORT_ACCENTS} from './visualStyle';
 import {buildReferenceCafe} from './cafeArchitecture';
 import {addBuildingEntrance} from './buildingAccess';
 import * as THREE from 'three';
@@ -201,7 +202,7 @@ export function buildCafe(cx, cz) {
     const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 5), toon(0xb9ae9a));
     leg.position.set(tx, GROUND_Y + 0.45, tz);
     world.add(leg);
-    const umb = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.75, 8), toon(i % 2 ? 0x06d6a0 : 0xffd166));
+    const umb = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.75, 8), toon(i % 2 ? RESORT_ACCENTS.seafoam : RESORT_ACCENTS.lavender));
     umb.position.set(tx, GROUND_Y + 3.1, tz);
     umb.castShadow = true;
     world.add(umb);
@@ -239,7 +240,7 @@ export function buildRestaurant(cx, cz) {
     table.name='restaurant-terrace-table';
     table.position.set(tx, GROUND_Y + 0.95, tz);
     world.add(table);
-    const umb = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.75, 8), toon(i % 2 ? 0xef476f : 0x118ab2));
+    const umb = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.75, 8), toon(i % 2 ? RESORT_ACCENTS.magenta : RESORT_ACCENTS.cobalt));
     umb.name='restaurant-terrace-parasol';
     umb.position.set(tx, GROUND_Y + 3.2, tz);
     umb.castShadow = true;

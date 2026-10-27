@@ -4,6 +4,7 @@ import { toon } from "./materials";
 import { GROUND_Y } from "./config";
 import { world } from "./scene";
 import { box } from "./buildings";
+import {RESORT_ACCENTS} from './visualStyle';
 
 export const spinWheels: { rotor: THREE.Group; axis: "y" | "z"; speed: number; cabins: THREE.Group[] }[] = [];
 export const movingCarts = [];
@@ -26,7 +27,7 @@ export function buildAmusement(cx, cz) {
   world.add(wheelG);
 
   const frameMat = toon(0xf4f7ff);
-  const strutMat = toon(0xff5d73);
+  const strutMat = toon(RESORT_ACCENTS.lavender);
 
   // Four stationary A-frame legs reach from the ground to either end of the axle.
   for (const side of [-1,1]) for (const foot of [-1,1]) {
@@ -62,7 +63,7 @@ export function buildAmusement(cx, cz) {
     rotor.add(sp);
   }
   /* 吊舱以轮缘为支点，反向补偿轮盘角度，始终悬垂。 */
-  const cabColors = [0xffd166, 0x06d6a0, 0xef476f, 0x118ab2, 0xff9f1c, 0x9b5de5];
+  const cabColors = [0xffcf74, RESORT_ACCENTS.seafoam, RESORT_ACCENTS.magenta, RESORT_ACCENTS.cobalt, RESORT_ACCENTS.apricot, RESORT_ACCENTS.lavender];
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * TAU;
     const pivot = new THREE.Group();
@@ -96,7 +97,7 @@ export function buildAmusement(cx, cz) {
 
   const railOuter = new THREE.Mesh(
     new THREE.TubeGeometry(curve, 220, 0.26, 6, true),
-    toon(0xef476f)
+    toon(RESORT_ACCENTS.magenta)
   );
   railOuter.castShadow = true;
   world.add(railOuter);
@@ -146,7 +147,7 @@ export function buildAmusement(cx, cz) {
   carousel.add(spinTop);
   spinWheels.push({ rotor: spinTop, axis: "y", speed: 0.55, cabins: [] });
 
-  const canopy = new THREE.Mesh(new THREE.ConeGeometry(3.8, 2.2, 12), toon(0xef476f));
+  const canopy = new THREE.Mesh(new THREE.ConeGeometry(3.8, 2.2, 12), toon(RESORT_ACCENTS.magenta));
   canopy.position.y = 4.2;
   canopy.castShadow = true;
   spinTop.add(canopy);
@@ -163,7 +164,7 @@ export function buildAmusement(cx, cz) {
   }
 
   /* ---- 条纹帐篷 ---- */
-  const tentColors = [[0xef476f, 0xfff3e0], [0x118ab2, 0xfff3e0], [0xffd166, 0xef476f]];
+  const tentColors = [[RESORT_ACCENTS.magenta, 0xfff3e0], [RESORT_ACCENTS.cobalt, 0xfff3e0], [RESORT_ACCENTS.lavender, 0xfff3e0]];
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * TAU + 0.6;
     const tx = cx + Math.cos(a) * 10.5;
@@ -176,7 +177,7 @@ export function buildAmusement(cx, cz) {
   }
 
   /* ---- 入口拱门 ---- */
-  const archMat = toon(0xef476f);
+  const archMat = toon(RESORT_ACCENTS.coral);
   for (const s of [-1, 1]) {
     const p = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 6.5, 8), archMat);
     p.position.set(cx + s * 4.2, GROUND_Y + 3.25, cz + 12.6);

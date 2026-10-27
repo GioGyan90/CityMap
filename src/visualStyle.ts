@@ -4,8 +4,10 @@ export const DAY_LIGHTING={
  hemi:{sky:0xc4e4ff,ground:0xa6b8cf,intensity:.70},
  fill:{color:0xb5d5ff,intensity:.22},fog:0xbce2f7
 };
-export const COAST_PALETTE={sand:0xffe5ad,wetSand:0xd9b875,grass:0x83c956,hill:0x69ad65,ridge:0x85b67d,rock:0xc4c2a2,quay:0xebe0c7};
-export const SEA_PALETTE={shallow:'#23c5c6',deep:'#086b9e'};
+// Option C: clear cobalt water, seafoam shallows and green terrain; accents stay localized.
+export const COAST_PALETTE={sand:0xffe3ae,wetSand:0xd7ad79,grass:0x78c450,hill:0x579f58,ridge:0x79b86b,rock:0xc5bd9e,quay:0xebe0c7};
+export const SEA_PALETTE={shallow:'#48d6c7',deep:'#1053a4'};
+export const RESORT_ACCENTS={seafoam:0x6dd8c4,apricot:0xfab583,coral:0xf1825d,lavender:0xa76ad7,magenta:0xe44799,cobalt:0x165eae};
 /** Broaden the sandy foreshore, leaving the restaurant's waterfront inlet open. */
 export function beachExtension(z:number){
  const smooth=(a:number,b:number,v:number)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
