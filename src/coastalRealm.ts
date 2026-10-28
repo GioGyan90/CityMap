@@ -39,7 +39,11 @@ export function buildCoastalRealm(){
  for(let z=-158;z<164;z+=15){
   if(Math.abs(z-98)<24||BEACH_ENTRIES.some(v=>Math.abs(v-z)<9))continue;
   const site=ZONES.fishmarket;if(Math.abs(z-site.z)<site.d/2+4)continue;
-  const x=westCoast(z)+4,tree=new THREE.Group();tree.position.set(x,surfaceHeight(x,z),z);root.add(tree);palm(tree,0,0,5.6);
+  const x=westCoast(z)+4,tree=new THREE.Group();tree.position.set(x,surfaceHeight(x,z),z);palm(tree,0,0,5.6);
+  // Keep the complete crown outside the working quay and its truck gate.
+  tree.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(tree),cargo=ZONES.cargo;
+  if(box.max.x>cargo.x-cargo.w/2-.75&&box.min.x<cargo.x+cargo.w/2+.75&&box.max.z>cargo.z-cargo.d/2-.75&&box.min.z<cargo.z+cargo.d/2+.75)continue;
+  root.add(tree);
  }
  world.userData.publicRealm={beachEntries:BEACH_ENTRIES.length,continuousPromenade:true};
 }

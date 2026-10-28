@@ -1,13 +1,15 @@
 /** Hide UI without changing the user's label, animation, time or camera settings. */
-export function initImmersive(){
+export function initImmersive(initial=true){
  const enter=document.getElementById('toggleImmersive') as HTMLButtonElement;
  const exit=document.getElementById('exitImmersive') as HTMLButtonElement;
- const set=(enabled:boolean)=>{
+ const set=(enabled:boolean,focus=true)=>{
   document.body.dataset.immersive=String(enabled);
   enter.setAttribute('aria-pressed',String(enabled));exit.hidden=!enabled;
   window.dispatchEvent(new Event('citymap-immersive'));
+  if(!focus)return;
   if(enabled)exit.focus({preventScroll:true});else enter.focus({preventScroll:true});
  };
+ set(initial,false);
  enter.addEventListener('click',()=>set(true));exit.addEventListener('click',()=>set(false));
  window.addEventListener('keydown',e=>{
   const target=e.target as HTMLElement|null;

@@ -1,0 +1,91 @@
+{
+  "environmentMs": 497.14808,
+  "beats": 689,
+  "meshes": 6272,
+  "vertices": 3824624,
+  "geometryAndMaterialHash": "220854bd8f11ac04ec69a953da470504c1b2920a38b5c7d51e55b1862077b083",
+  "roadMaskHash": "fcb16ad7e17fee2c46d9c62aae988476970ded087b5327461f7d422486c92a1f",
+  "checkpoints": 2555,
+  "longest": [
+    {
+      "label": "hospital",
+      "ms": 176.81694399999992
+    },
+    {
+      "label": "道路遮罩",
+      "ms": 133.86025999999993
+    },
+    {
+      "label": "park",
+      "ms": 99.90019200000006
+    },
+    {
+      "label": "地形表面",
+      "ms": 94.11083400000007
+    },
+    {
+      "label": "buildFacilityCourtyards",
+      "ms": 89.31446499999993
+    },
+    {
+      "label": "铁路与车站",
+      "ms": 83.56461200000012
+    },
+    {
+      "label": "地形高度",
+      "ms": 71.98992100000004
+    },
+    {
+      "label": "buildCars",
+      "ms": 69.34726600000022
+    },
+    {
+      "label": "住宅与街区",
+      "ms": 59.02095899999995
+    },
+    {
+      "label": "buildCoastalRealm",
+      "ms": 56.0890330000002
+    },
+    {
+      "label": "commercial=createCommercialDistrict",
+      "ms": 49.32223399999998
+    },
+    {
+      "label": "promenade",
+      "ms": 48.97047899999984
+    },
+    {
+      "label": "buildHarborAccess",
+      "ms": 46.27029300000004
+    },
+    {
+      "label": "铁路与车站",
+      "ms": 40.13478200000009
+    },
+    {
+      "label": "buildTrafficInfrastructure",
+      "ms": 37.72246599999971
+    },
+    {
+      "label": "port",
+      "ms": 36.88388400000008
+    },
+    {
+      "label": "住宅与街区",
+      "ms": 35.6716150000002
+    },
+    {
+      "label": "铁路与车站",
+      "ms": 34.71854600000006
+    },
+    {
+      "label": "buildMountains",
+      "ms": 34.55025099999989
+    },
+    {
+      "label": "住宅与街区",
+      "ms": 34.54930000000013
+    }
+  ]
+}

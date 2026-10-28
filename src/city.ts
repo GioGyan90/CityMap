@@ -1,3 +1,4 @@
+import {createCargoHarborProgressive} from './cargoAssets';
 import {prepareRoadStencilSteps} from './groundRoadMaterial';
 import {checkpoint,runSteps} from './loadingScheduler';
 import {addPunkHallGarden} from './punkHallGarden';
@@ -17,7 +18,7 @@ import {HALL_THEMES,createThemedHall} from './themedHalls';
 import {auditPlacedPlants} from './plantPlacement';
 import {buildSuppliesMarket} from './billiardsArchitecture';
 import {buildBilliardsAccessSteps,buildFishMarketTramCrossing} from './billiardsAccess';
-import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
+import {buildPassengerHarbor,buildHarborAccess} from './harbors';
 import {buildCruiseShip} from './cruiseShip';
 import {buildCoastalRealm} from './coastalRealm';
 import {buildHillAccess} from './hillAccess';
@@ -57,7 +58,7 @@ function placeFacility(entry:typeof specialBuildings[number]){
  entry.pick.geometry=new THREE.BoxGeometry(zone.w,Math.max(entry.id==='hall3'?9:25,bounds.max.y-base+3),zone.d);
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
  // Include projecting piers and the relocated hall garden in their selectable groups.
- if(entry.id==='port'||entry.id==='hall5'||entry.id==='park'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
+ if(entry.id==='port'||entry.id==='hall5'||entry.id==='park'||entry.id==='cargo'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
  world.userData.progressiveFacilityReady?.(entry.id);
 }
 function registerSpecial(...args:Parameters<typeof registerSpecialSource>){const entry=registerSpecialSource(...args);placeFacility(entry);return entry;}
@@ -108,7 +109,8 @@ registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入�
 await checkpoint('villa');
 registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
 await checkpoint('lighthouse');
-registerSpecial('cargo','集装箱货运码头','独立货场、集装箱与装卸起重机',[0,0],[56,24,34],buildCargoHarbor);
+const cargoHarbor=await createCargoHarborProgressive();world.add(cargoHarbor);
+registerGroup('cargo','集装箱货运码头','双门架岸桥、标准堆箱、货运动线、调度门区与支线货船',cargoHarbor,[0,0],[56,24,34]);
 await checkpoint('cargo');
 registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与登船廊桥',[0,0],[66,15,35],buildPassengerHarbor);
 await checkpoint('passenger');

@@ -5,6 +5,7 @@ import {initImmersive} from './immersive';
 async function boot() {
   let preview:ReturnType<typeof import('./loadingPreview').startLoadingPreview>|undefined;
   try {
+    const params=new URLSearchParams(location.search);initImmersive(!(params.get('view')==='assets'||params.has('asset')));
     const began=performance.now(),clouds=preloadCloudDensity();performance.mark('citymap-boot-start');
     const {world}=await import('./scene');world.userData.deferClouds=true;
     const {startLoadingPreview}=await import('./loadingPreview');
@@ -17,12 +18,11 @@ async function boot() {
     await import('./focus');
     await import('./labels');
     await import('./camera');
-    initImmersive();
     const launch=document.createElement('button');launch.id='asset-lazy-launch';launch.className='asset-launch';launch.textContent='资产查看 / 网格规划';document.body.appendChild(launch);
     let tools:Promise<void>|undefined;
     const openTools=()=>tools??=(async()=>{launch.disabled=true;launch.textContent='正在打开资产…';try{const {initAssetTools}=await import('./assetTools');initAssetTools();launch.disabled=false;launch.click();}catch(error){tools=undefined;launch.disabled=false;launch.textContent='重试打开资产';console.error(error);}})();
     launch.onclick=()=>{void openTools();};
-    const requested=new URLSearchParams(location.search).get('view')==='assets';
+    const requested=params.get('view')==='assets'||params.has('asset');
     let savedLayout=false;try{savedLayout=!!localStorage.getItem('citymap-layout-draft-v1');}catch{}
     if(requested||savedLayout){const {initAssetTools}=await import('./assetTools');initAssetTools();tools=Promise.resolve();}
 

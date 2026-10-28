@@ -1103,3 +1103,39 @@ test('park rides and perimeter retain separate clearances from each other, roads
  for(let i=0;i<32;i++){const t=i/32,p=cart.curve.getPointAt(t),d=cart.curve.getTangentAt(t),rotation=new THREE.Euler(-Math.atan2(d.y,Math.hypot(d.x,d.z)),Math.atan2(d.x,d.z),0,'YXZ'),matrix=new THREE.Matrix4().compose(p,new THREE.Quaternion().setFromEuler(rotation),new THREE.Vector3(1,1,1));for(const wheel of wheels){const side=Math.sign(wheel.position.x),point=wheel.position.clone().add(new THREE.Vector3(0,-.18,0)).applyMatrix4(matrix);let nearest=Infinity;for(let j=0;j<600;j++){const u=j/600,q=cart.curve.getPointAt(u),tan=cart.curve.getTangentAt(u),normal=new THREE.Vector3(tan.z,0,-tan.x).normalize();q.addScaledVector(normal,side*.52);q.y+=.13;nearest=Math.min(nearest,q.distanceTo(point));}assert.ok(nearest<.18,'cart wheels remain near rails '+nearest);}}
  cart.mesh.position.copy(originalPos);cart.mesh.rotation.copy(originalRot);rotor.rotation.z=oldWheel;round.rotation.y=oldRound;park.updateMatrixWorld(true);
 });
+
+test('cargo kit keeps real stack contacts, open truck portal and supported crane rigging',async()=>{
+ const {createCargoHarbor,createCargoCrane,createFreightContainer}=await import('../src/cargoAssets');
+ const {CARGO_STACKS}=await import('../src/cargoPlan');
+ const container=createFreightContainer();container.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(container);
+ assert.ok(Math.abs(b.min.y)<1e-6&&Math.abs(b.max.y-2.7)<1e-6,'castings define exact stacking height');
+ const root=createCargoHarbor();root.updateMatrixWorld(true);const stacks=root.getObjectByName('cargo-stacks')!;
+ const boxes=stacks.children.filter(o=>o.name==='freight-container');assert.equal(boxes.length,CARGO_STACKS.reduce((n,s)=>n+s.levels,0));
+ for(const o of boxes){const box=new THREE.Box3().setFromObject(o);assert.ok(box.min.z>3.1||box.max.z< -3.1,'stacks leave central truck corridor clear');assert.ok(Math.abs((box.min.y-.5)/2.7-Math.round((box.min.y-.5)/2.7))<1e-6,'each box sits on deck or lower box');}
+ const gate=new THREE.Box3(new THREE.Vector3(24,.6,-3.1),new THREE.Vector3(28,5.8,3.1));
+ root.getObjectByName('cargo-dispatch')!.traverse(o=>{if(o instanceof THREE.Mesh)assert.equal(gate.intersectsBox(new THREE.Box3().setFromObject(o)),false,'gate has real width and headroom');});
+ const crane=createCargoCrane();crane.updateMatrixWorld(true);const portal=new THREE.Box3(new THREE.Vector3(-4.6,1.4,-2.1),new THREE.Vector3(4.6,12,2.1));
+ crane.traverse(o=>{if(o instanceof THREE.Mesh&&['portal-leg','portal-side-brace','portal-header'].includes(o.name))assert.equal(portal.intersectsBox(new THREE.Box3().setFromObject(o)),false,'open portal is not crossed by braces');});
+ const machine=new THREE.Box3().setFromObject(crane.getObjectByName('crane-machinery-house')!),platform=new THREE.Box3().setFromObject(crane.getObjectByName('machinery-bearing-platform')!);assert.ok(Math.abs(machine.min.y-platform.max.y)<1e-5,'side machinery house sits on its supported platform');
+ const boom=new THREE.Box3().setFromObject(crane.getObjectByName('crane-boom')!);assert.ok(boom.min.x>=-15.61&&boom.max.x<=10.61,'integer truss bays stop at the supported boom chords');
+ const head=new THREE.Box3().setFromObject(crane.getObjectByName('spreader-headblock')!);let cables=0;
+ crane.traverse(o=>{if(o.name==='hoist-cable'){cables++;const cable=new THREE.Box3().setFromObject(o);assert.ok(Math.abs(cable.min.y-head.max.y)<1e-5,'cables terminate on spreader headblock');}});assert.equal(cables,4);
+});
+
+test('cargo static batching preserves envelopes and ship hull is closed with a clear patrol lane',async()=>{
+ const {createCargoHarbor,createCargoHarborProgressive}=await import('../src/cargoAssets');
+ const {configureLoading}=await import('../src/loadingScheduler');let yields=0;configureLoading(async()=>{yields++;});let progressive:THREE.Group;try{progressive=await createCargoHarborProgressive();}finally{configureLoading();}assert.ok(yields>=20,'the map builder yields between cargo components and batches');
+ const editable=createCargoHarbor(false),batched=createCargoHarbor(true);editable.updateMatrixWorld(true);batched.updateMatrixWorld(true);
+ const a=new THREE.Box3().setFromObject(editable),b=new THREE.Box3().setFromObject(batched);assert.ok(a.min.distanceTo(b.min)<1e-4&&a.max.distanceTo(b.max)<1e-4,'optimized and editable assembly match');const p=new THREE.Box3().setFromObject(progressive);assert.ok(p.min.distanceTo(b.min)<1e-4&&p.max.distanceTo(b.max)<1e-4,'cooperative build preserves the same model');let draws=0;batched.traverse(o=>{if(o instanceof THREE.Mesh)draws++;});assert.ok(draws<80,'the scene uses material batches rather than every rib');
+ const hull=editable.getObjectByName('closed-feeder-hull') as THREE.Mesh,idx=hull.geometry.index!,edges=new Map<string,number>();
+ for(let i=0;i<idx.count;i+=3)for(let j=0;j<3;j++){const edge=[idx.getX(i+j),idx.getX(i+(j+1)%3)].sort((x,y)=>x-y).join(':');edges.set(edge,(edges.get(edge)??0)+1);}assert.ok([...edges.values()].every(n=>n===2),'hull has no open bottom or ends');
+ const cargo=world.getObjectByName('cargo-harbor')!,ship=cargo.getObjectByName('cargo-feeder')!,shipBounds=new THREE.Box3().setFromObject(ship);assert.ok(Math.abs(ship.getWorldPosition(new THREE.Vector3()).y)<1e-6,'ship pivot remains on sea level');
+ const {speedboatPose}=await import('../src/marineTraffic'),{createFleetVehicle}=await import('../src/fleetAssets');const boat=createFleetVehicle('speedboat');
+ for(let i=0;i<300;i++){const pose=speedboatPose(i*2);boat.position.copy(pose.position);boat.rotation.y=pose.heading;boat.updateMatrixWorld(true);assert.equal(shipBounds.intersectsBox(new THREE.Box3().setFromObject(boat)),false,'entire patrol craft clears the moored feeder');}
+ const {specialBuildings}=await import('../src/specialBuildings');const entry=specialBuildings.find(s=>s.id==='cargo')!,pick=new THREE.Box3().setFromObject(entry.pick);assert.ok(pick.min.x<=shipBounds.min.x&&pick.max.x>=shipBounds.max.x,'cargo picking follows the overwater berth');
+});
+
+test('coastal boulevard palm crowns leave the working cargo yard and gate clear',()=>{
+ const realm=world.getObjectByName('continuous-coastal-public-realm')!,yard=new THREE.Box3(new THREE.Vector3(-123.75,-20,-157.75),new THREE.Vector3(-66.25,30,-122.25));
+ realm.traverse(o=>{if(o.name==='palm-tree')assert.equal(new THREE.Box3().setFromObject(o).intersectsBox(yard),false,'the full crown clears the quay, not just its root');});
+});
