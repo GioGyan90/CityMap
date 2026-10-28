@@ -92,7 +92,8 @@ test('government portico leaves a clear human-height route from the steps to the
 });
 
 test('complete city assembles with finite geometry and two closed rail circuits',async()=>{
- world.clear();await import('../src/environment');await import('../src/city');world.updateMatrixWorld(true);
+ world.clear();const restored:string[]=[];world.userData.progressiveFacilityReady=(id:string)=>restored.push(id);await import('../src/environment');await import('../src/city');delete world.userData.progressiveFacilityReady;world.updateMatrixWorld(true);
+ assert.ok(restored.includes('coaststation'),'station must retire its grey placeholder despite using its own registrar');assert.ok(restored.includes('hospital'));
  assert.ok(world.getObjectByName('coast-double-track-circuit'));
  assert.ok(world.getObjectByName('express-double-track-circuit'));assert.equal(world.userData.transport.tracksPerLine,2);
  let meshes=0;

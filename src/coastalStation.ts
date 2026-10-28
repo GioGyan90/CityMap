@@ -31,7 +31,7 @@ function ramp(root:THREE.Group,a:THREE.Vector3,b:THREE.Vector3,width:number){con
 }
 function path(points:THREE.Vector3[],width:number){const p=points.map(v=>[v.x,v.z] as [number,number]);paintGroundPath(p,width,'walk');for(let i=1;i<p.length;i++)parkingAccessPaths.push({points:[p[i-1],p[i]],width});}
 export function* buildCoastalStationSteps(curve:THREE.CatmullRomCurve3){
- if(coastalStation)return coastalStation;yield;const root=new THREE.Group();yield;root.name='coastal-railway-loop-station';yield;root.position.copy(STATION_ORIGIN);yield;root.rotation.y=STATION_HEADING;yield;world.add(root);yield;coastalStation=root;yield;
+ if(coastalStation)return coastalStation;yield;const root=new THREE.Group();yield;root.name='coastal-railway-loop-station';yield;root.position.copy(STATION_ORIGIN);yield;root.rotation.y=STATION_HEADING;yield;world.add(root);world.userData.progressiveFacilityReady?.('coaststation');yield;coastalStation=root;yield;
  const platform=new THREE.Group();yield;platform.name='curved-terminal-platform';yield;root.add(platform);yield;const span=curve.getLength(),sample=(distance:number,offset:number,height:number)=>{const p=curve.getPointAt(Math.max(0,Math.min(1,1-distance/span))),v=curve.getTangentAt(Math.max(0,Math.min(1,1-distance/span))),l=Math.hypot(v.x,v.z);p.x+=v.z/l*offset;p.z-=v.x/l*offset;p.y=STATION_ORIGIN.y+height;return p;};yield;
  const inner:THREE.Vector3[]=[],outer:THREE.Vector3[]=[];yield;for(let i=0;i<=32;i++){const d=P.platformLength*(1-i/32);inner.push(sample(d,P.platformInner,P.platformTop));outer.push(sample(d,P.platformOuter,P.platformTop));}yield;
  solidDeck(platform,clipStationRear([...inner,...outer.reverse()]),P.platformTop,'terrain-supported-platform');yield;
