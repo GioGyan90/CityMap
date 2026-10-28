@@ -1,0 +1,77 @@
+{
+  "shaderCompile": "passed",
+  "exactPostFragment": true,
+  "browser": false,
+  "statistics": [
+    {
+      "view": "panorama",
+      "mode": "original",
+      "min": 10,
+      "max": 255,
+      "mean": 127.39565843621399
+    },
+    {
+      "view": "panorama",
+      "mode": "manga",
+      "min": 5,
+      "max": 255,
+      "mean": 140.5672309670782
+    },
+    {
+      "view": "cargo",
+      "mode": "original",
+      "min": 10,
+      "max": 255,
+      "mean": 144.99400925925926
+    },
+    {
+      "view": "cargo",
+      "mode": "manga",
+      "min": 8,
+      "max": 255,
+      "mean": 142.14617978395063
+    },
+    {
+      "view": "housing",
+      "mode": "original",
+      "min": 10,
+      "max": 255,
+      "mean": 167.34248019547326
+    },
+    {
+      "view": "housing",
+      "mode": "manga",
+      "min": 8,
+      "max": 255,
+      "mean": 165.01555555555555
+    },
+    {
+      "view": "sunset",
+      "mode": "original",
+      "min": 7,
+      "max": 255,
+      "mean": 88.00306404320987
+    },
+    {
+      "view": "sunset",
+      "mode": "manga",
+      "min": 7,
+      "max": 250,
+      "mean": 98.04095781893004
+    },
+    {
+      "view": "night",
+      "mode": "original",
+      "min": 1,
+      "max": 201,
+      "mean": 37.20167078189301
+    },
+    {
+      "view": "night",
+      "mode": "manga",
+      "min": 0,
+      "max": 198,
+      "mean": 36.887052211934154
+    }
+  ]
+}

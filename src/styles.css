@@ -61,3 +61,7 @@ body[data-immersive="true"] .focus-card,body[data-immersive="true"] #map-label-l
 #loading.loading-progress{inset:auto auto 18px 18px;max-width:calc(100vw - 36px);display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:10px;background:#f4f7eee8;color:#344b51;font-size:12px;pointer-events:none;box-shadow:0 3px 18px #183b5520}
 #loading.loading-progress button{pointer-events:auto;cursor:pointer}
 .toolbar button:disabled{opacity:.45;cursor:wait}
+
+#toggleComic{position:fixed;right:62px;top:18px;z-index:90;min-width:58px;height:32px;border:1px solid #b6c9d580;border-radius:16px;background:#173d52bd;color:#fff8e9;font-family:inherit;font-size:12px;cursor:pointer;opacity:.85}
+#toggleComic[aria-pressed="true"]{background:#f7e7cce8;color:#314f69;border-color:#e3b665}
+#toggleComic:disabled{opacity:.45;cursor:default}#toggleComic:focus-visible{outline:3px solid #efb43b;outline-offset:2px}
