@@ -4,7 +4,7 @@ import {world} from './scene';
 import {surfaceHeight} from './terrainSurface';
 import {paintGroundPath} from './groundRoadMaterial';
 import {parkingAccessPaths} from './parking';
-import {createHome,batchResidentialGeometry} from './residentialAssets';
+import {createHome,batchResidentialGeometrySteps} from './residentialAssets';
 import {planResidentialCourts,inside,edgeDistance,type CourtPlan,type Point} from './residentialPlan';
 import {toon} from './materials';
 import {createTree,createPlanter} from './plantAssets';
@@ -43,12 +43,19 @@ export function createResidentialCourt(plan:CourtPlan,preview=false){
  root.userData.gardenIslands=islands;
  root.userData.homeCount=plan.homes.length;return root;
 }
-export function buildResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){
+export function* buildResidentialCourtsSteps(occupied:{x:number;z:number;w:number;d:number}[]){
  const plans=planResidentialCourts(occupied),root=new THREE.Group();root.name='residential-neighbourhoods';world.add(root);residentialCourts.push(...plans);
- for(const plan of plans){const court=createResidentialCourt(plan);root.add(court);if(!courtSample)courtSample=createCourtPreview(plan);
+ const pending=[...plans],built=new Map<string,THREE.Group>();
+ while(pending.length){yield;
+  const priority=world.userData.progressivePriority as ((x:number,z:number)=>number)|undefined;
+  if(priority)pending.sort((a,b)=>priority(...a.garden)-priority(...b.garden));
+  const plan=pending.shift()!;const court=createResidentialCourt(plan);root.add(court);built.set(plan.id,court);world.userData.progressiveFacilityReady?.(plan.id,court);if(plan===plans[0])courtSample=createCourtPreview(plan);
+ }
+ // Restore canonical order before batching and reservation insertion.
+ for(const plan of plans){root.add(built.get(plan.id)!);
   const xs=plan.ring.map(p=>p[0]),zs=plan.ring.map(p=>p[1]);const footprint={x:(Math.max(...xs)+Math.min(...xs))/2,z:(Math.max(...zs)+Math.min(...zs))/2,w:Math.max(...xs)-Math.min(...xs),d:Math.max(...zs)-Math.min(...zs)};occupied.push(footprint);buildingFootprints.push(footprint);
  }
- batchResidentialGeometry(root);world.userData.residential={version:'clipped-courtyards-v1',courts:plans,homes:plans.reduce((s,p)=>s+p.homes.length,0)};
+ yield;yield* batchResidentialGeometrySteps(root);world.userData.residential={version:'clipped-courtyards-v1',courts:plans,homes:plans.reduce((s,p)=>s+p.homes.length,0)};
 }
 
 /** Standalone preview carries its own clipped terrain and paths when the city ground is hidden. */
@@ -61,3 +68,5 @@ export function createCourtPreview(plan:CourtPlan){
  for(const [a,b,width]of walks){const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),n=Math.ceil(len/.7),nx=-dz/len*width/2,nz=dx/len*width/2,points:number[]=[],index:number[]=[];for(let i=0;i<=n;i++){const t=i/n;for(const side of [-1,1]){const x=a[0]+dx*t+nx*side,z=a[1]+dz*t+nz*side;points.push(x,surfaceHeight(x,z)+.035,z);}if(i<n){const k=i*2;index.push(k,k+1,k+2,k+1,k+3,k+2);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setIndex(index);g.computeVertexNormals();const m=new THREE.Mesh(g,toon(0xf3e7cc,{side:THREE.DoubleSide}));m.name='preview-garden-walk';root.add(m);}
  const bounds=new THREE.Box3().setFromObject(root);root.position.set(-(bounds.min.x+bounds.max.x)/2,-bounds.min.y,-(bounds.min.z+bounds.max.z)/2);return root;
 }
+
+export function buildResidentialCourts(occupied:{x:number;z:number;w:number;d:number}[]){for(const _ of buildResidentialCourtsSteps(occupied)){/* synchronous asset/headless API */}}

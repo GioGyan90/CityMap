@@ -5,13 +5,13 @@ import { ZONES,terrainHeight } from './layout';
 import { specialBuildings } from './specialBuildings';
 import { world } from './scene';
 
-export function buildSiteDetails(){
+export function* buildSiteDetailsSteps(){
  for(const entry of specialBuildings){
   if(['police','cruise','commercial','port','promenade','villa','lighthouse','cargo','passenger','fishmarket','hall1','hall2','hall3','hall4','hall5','market'].includes(entry.id))continue;
   const zone=ZONES[entry.id],base=zone.level??terrainHeight(zone.x,zone.z);
   const add=(mesh:THREE.Mesh,x:number,y:number,z:number)=>{mesh.position.set(x,y,z);world.add(mesh);entry.group.attach(mesh);mesh.castShadow=mesh.receiveShadow=true;};
   // Perimeter gardens make facility boundaries legible without forcing square city blocks.
-  for(const side of [-1,1])for(let i=0;i<5;i++){
+  for(const side of [-1,1])for(let i=0;i<5;i++){yield;
    const x=zone.x+side*(zone.w/2-1.8),z=zone.z-zone.d*.38+i*zone.d*.19;
    const planter=renderPlant(createPlanter(Math.abs(Math.round(x*19+z*11)),.7));add(planter,x,base,z);
    if(i%2===0){const tree=renderPlant(treeSamples().get((entry.id==='hospital'?'flowering':'slender')+'-'+(i%3))!);tree.scale.setScalar(.32);add(tree,x,base+.37,z);}
@@ -30,3 +30,5 @@ export function buildSiteDetails(){
   }
  }
 }
+
+export function buildSiteDetails(){for(const _ of buildSiteDetailsSteps()){}}

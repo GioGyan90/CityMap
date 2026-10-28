@@ -1,4 +1,4 @@
-import {buildResidentialCourts} from './residential';
+import {buildResidentialCourtsSteps} from './residential';
 import {buildParcelTerrace} from './parcelTerraces';
 import {coastalPublicSpace,landmarkSetback,skylineHeight} from './urbanDesign';
 import {nearestRoad} from './roadNetwork';
@@ -15,14 +15,14 @@ import { world } from './scene';
 
 export const occupied:{x:number;z:number;w:number;d:number}[]=[];
 const officeSites:{x:number;z:number;w:number;d:number;entrance:{x:number;z:number}}[]=[];
-export function buildParcels(){
+export function* buildParcelsSteps(){
  // Placement must not depend on whether facade textures were already cached.
  const rnd=seededRandom(20261021),rr=(a:number,b:number)=>a+rnd()*(b-a),pick=<T,>(items:readonly T[])=>items[Math.floor(rnd()*items.length)];
  const districts=[
   {name:'skyline',x:[3,123],z:[-150,-88],count:21},
   {name:'harbor',x:[192,220],z:[123,146],count:13}
  ];
- for(const district of districts){let made=0;for(let tries=0;tries<1500&&made<district.count;tries++){
+ for(const district of districts){let made=0;for(let tries=0;tries<1500&&made<district.count;tries++){if(tries%8===0)yield;
   const x=rr(...district.x as [number,number]),z=rr(...district.z as [number,number]);
   const tower=district.name==='skyline',industrial=district.name==='harbor';
   const plan:BuildingPlan=industrial||tries%5===4?'rect':(['E','T','H','L','U','rect','rect','rect'] as const)[made%8];
@@ -39,7 +39,7 @@ export function buildParcels(){
   const style=tower?pick(['glass','stepped','glass','stepped'] as const):industrial?'warehouse':district.name==='resort'||district.name==='hills'?'villa':pick(['arcade','apartment','pitched','flat'] as const);
   const frontage=nearestRoad(x,z);
   const group=makeBuilding({x,z,w,d,h,style,plan,frontage:[frontage.x,frontage.z],base:pick(district.name==='hills'?['#fff1cf','#ffe1b3','#ffedda']:RES_BASES),roof:pick(district.name==='hills'||district.name==='oldtown'?[0xcc724b,0xdd8b50,0xc46945]:ROOF_COLS),elevation:base});
-  group.userData.district=district.name;
+  group.userData.district=district.name;world.userData.progressiveFacilityReady?.('ordinary:'+x+','+z,group);
   if(h>18){const wall=group.userData.entranceWall;officeSites.push({x,z,w,d,entrance:{x:x+wall.x,z:z+wall.z}});}
   // Solid foundations close the gap between a level building base and a sloping lot.
   const low=Math.min(...heights);
@@ -54,6 +54,8 @@ export function buildParcels(){
  }}
  const buildingCount=occupied.length;
  buildParkingLots(officeSites,occupied);
- buildResidentialCourts(occupied);
+ yield* buildResidentialCourtsSteps(occupied);
  world.userData.parcels={count:buildingCount,districts:districts.map(d=>d.name)};
 }
+
+export function buildParcels(){for(const _ of buildParcelsSteps()){/* synchronous asset/headless API */}}

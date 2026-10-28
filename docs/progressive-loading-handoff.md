@@ -1,3 +1,5 @@
+> **实施更新：** 本文保留需求与实施前背景；当前结果及验证边界见 [progressive-loading.md](progressive-loading.md)。
+
 # CityMap 交接：灰模首屏与渐进加载
 
 更新：2026-10-28（北京时间）

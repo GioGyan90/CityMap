@@ -1,10 +1,12 @@
+import {prepareRoadStencilSteps} from './groundRoadMaterial';
+import {checkpoint,runSteps} from './loadingScheduler';
 import {addPunkHallGarden} from './punkHallGarden';
 import {createPoliceStation} from './policeStation';
 import {buildPoliceAccess} from './policeAccess';
 import {buildCommercialAccess} from './commercialAccess';
 import {createCommercialDistrict} from './commercialDistrict';
 import {buildHospitalDrive} from './hospitalDrive';
-import {buildSiteAccess} from './siteAccess';
+import {buildSiteAccessSteps} from './siteAccess';
 import {buildFacilityCourtyards} from './facilityCourtyards';
 import {buildMarineFleet} from './marineTraffic';
 import {createRoadTunnel} from './roadTunnels';
@@ -14,20 +16,20 @@ import {createBeachFishMarket} from './beachFishMarket';
 import {HALL_THEMES,createThemedHall} from './themedHalls';
 import {auditPlacedPlants} from './plantPlacement';
 import {buildSuppliesMarket} from './billiardsArchitecture';
-import {buildBilliardsAccess,buildFishMarketTramCrossing} from './billiardsAccess';
+import {buildBilliardsAccessSteps,buildFishMarketTramCrossing} from './billiardsAccess';
 import {buildCargoHarbor,buildPassengerHarbor,buildHarborAccess} from './harbors';
 import {buildCruiseShip} from './cruiseShip';
 import {buildCoastalRealm} from './coastalRealm';
 import {buildHillAccess} from './hillAccess';
 import {referenceHotel,referenceHospital} from './referenceLandmarks';
 import {buildPromenadeRestaurant} from './promenadeRestaurant';
-import {buildSiteDetails} from './siteDetails';
+import {buildSiteDetailsSteps} from './siteDetails';
 import { ZONES, terrainHeight } from './layout';
 import { specialBuildings } from './specialBuildings';
-import { buildParcels } from './parcels';
-import { buildTransport,buildStreetFurniture,transit } from './transport';
+import { buildParcelsSteps } from './parcels';
+import { buildTransportSteps,buildStreetFurniture,transit } from './transport';
 import * as THREE from 'three';
-import { registerSpecial, registerGroup, collectBackgroundBuildings } from './specialBuildings';
+import { registerSpecial as registerSpecialSource, registerGroup as registerGroupSource, collectBackgroundBuildings } from './specialBuildings';
 import { billiardsHall, marketDetails, hospitalDetails, hotelDetails, restaurantDetails, cafeDetails } from './conceptDetails';
 import { rr, pick } from "./random";
 import { finalizeOutlines, makeBuilding, batchBuildings } from "./buildings";
@@ -37,51 +39,15 @@ import { buildGovernment, buildHospital, buildHotel, buildMarket, buildCafe, bui
 import {buildHillVilla} from './hillVilla';
 import { buildPort,buildLighthouse } from "./port";
 import { buildMountains } from "./mountains";
-import { plantTrees } from "./vegetation";
+import { plantTreesSteps } from "./vegetation";
 import { world } from "./scene";
 import { buildCars } from "./traffic";
 import { buildUrbanDetails, buildCampus } from "./urbanDetails";
 import { buildClouds } from "./clouds";
 
-/* Each landmark is an independent ground-pivoted root for focus animation. */
-registerSpecial('park','海滨游乐场','摩天轮、过山车与旋转木马',[-20,-24],[25,28,28],()=>{
-  buildAmusement(-20,-24);
-});
-registerSpecial('civic','政府广场','蓝色穹顶、柱廊与中央喷泉',[8,4],[27,27,27],()=>buildGovernment(8,4));
-registerSpecial('hospital','医院学院区','蓝白医院与屋顶停机坪',[36,-10],[27,25,54],()=>{
-  referenceHospital(36,-24);
-});
-registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
-  referenceHotel(-20,32);
-});
-const police=createPoliceStation(true);world.add(police);registerGroup('police','港湾警察署','三层警署、独立公众入口、双车棚与长短两款警车',police,[0,0],[15.5,16,28]);
-registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
-for(const t of HALL_THEMES){const hall=createThemedHall(t.theme);world.add(hall);registerGroup(t.id,t.name,t.description,hall,[0,0],[18,14,22]);}
-const beachMarket=createBeachFishMarket();world.add(beachMarket);registerGroup('fishmarket','码头鱼市','木屋、帆布鱼摊、竹筐、木板桌与小渔船码头',beachMarket,[0,0],[24,12,42]);
-registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
-  buildCafe(36,32);
-});
-registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
-  buildRestaurant(-20,60);restaurantDetails(-20,60);
-});
-registerSpecial('port','码头市场','渔船栈桥与鲜鱼摊位',[0,0],[50,25,38],()=>{
-  buildPort();
-});
-registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入户台阶',[0,0],[20,18,24],buildHillVilla);
-registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
-registerSpecial('cargo','集装箱货运码头','独立货场、集装箱与装卸起重机',[0,0],[56,24,34],buildCargoHarbor);
-registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与登船廊桥',[0,0],[66,15,35],buildPassengerHarbor);
-const ship=buildCruiseShip();
-world.attach(ship);
-registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
-const commercial=createCommercialDistrict(true);commercial.userData.companions=['hall3'];world.add(commercial);registerGroup('commercial','蓝序城市商业区','跨街花园连廊、餐饮露台、科技办公楼与酒店公寓',commercial,[0,0],[64,65,58]);
-registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
-registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);
-buildMountains();
-
-// Move complete facilities with all their details, animation roots and pick bounds.
-for(const entry of specialBuildings){
- const zone=ZONES[entry.id];if(!zone)continue;
+// Relocate an entire facility atomically before yielding: no source-position flash.
+function placeFacility(entry:typeof specialBuildings[number]){
+ const zone=ZONES[entry.id];if(!zone)return;
  const source=entry.group.position.clone();entry.group.userData.sourceCenter=source.toArray();
  const base=zone.level??terrainHeight(zone.x,zone.z);
  entry.group.position.set(zone.x,base,zone.z);const sy=entry.id==='park'?1.6:entry.id==='civic'?1.25:entry.id==='hall3'?.62:entry.id==='hospital'||entry.id==='hotel'?1.15:1;
@@ -92,20 +58,134 @@ for(const entry of specialBuildings){
  const height=(entry.pick.geometry as THREE.BoxGeometry).parameters.height;entry.pick.position.set(zone.x,base+height/2,zone.z);entry.radius=Math.max(zone.w,zone.d)*.56;
  // Include projecting piers and the relocated hall garden in their selectable groups.
  if(entry.id==='port'||entry.id==='hall5'||entry.id==='park'){const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());entry.pick.geometry.dispose();entry.pick.geometry=new THREE.BoxGeometry(size.x+.6,height,size.z+.6);entry.pick.position.set(center.x,base+height/2,center.z);entry.radius=Math.max(size.x,size.z)*.56;}
+ world.userData.progressiveFacilityReady?.(entry.id);
 }
+function registerSpecial(...args:Parameters<typeof registerSpecialSource>){const entry=registerSpecialSource(...args);placeFacility(entry);return entry;}
+function registerGroup(...args:Parameters<typeof registerGroupSource>){const entry=registerGroupSource(...args);placeFacility(entry);return entry;}
+/* Each landmark is an independent ground-pivoted root for focus animation. */
+registerSpecial('park','海滨游乐场','摩天轮、过山车与旋转木马',[-20,-24],[25,28,28],()=>{
+  buildAmusement(-20,-24);
+});
+await checkpoint('park');
+registerSpecial('civic','政府广场','蓝色穹顶、柱廊与中央喷泉',[8,4],[27,27,27],()=>buildGovernment(8,4));
+await checkpoint('civic');
+registerSpecial('hospital','医院学院区','蓝白医院与屋顶停机坪',[36,-10],[27,25,54],()=>{
+  referenceHospital(36,-24);
+});
+await checkpoint('hospital');
+registerSpecial('hotel','海滨酒店','蓝金穹顶、拱窗阳台、入口雨棚与喷泉花园',[-20,32],[28,32,26],()=>{
+  referenceHotel(-20,32);
+});
+await checkpoint('hotel');
+const police=createPoliceStation(true);
+await checkpoint('police=createPoliceStation');
+world.add(police);
+registerGroup('police','港湾警察署','三层警署、独立公众入口、双车棚与长短两款警车',police,[0,0],[15.5,16,28]);
+await checkpoint('police=createPoliceStation');
+registerSpecial('market','台球用品市场','拱洞橱窗、用品展架、球杆与三角球架的室外展示区',[0,0],[30,20,28],buildSuppliesMarket);
+await checkpoint('market');
+for(const t of HALL_THEMES){const hall=createThemedHall(t.theme);world.add(hall);
+registerGroup(t.id,t.name,t.description,hall,[0,0],[18,14,22]);await checkpoint('台球馆');}
+await checkpoint('market');
+const beachMarket=createBeachFishMarket();
+await checkpoint('beachMarket=createBeachFishMarket');
+world.add(beachMarket);
+registerGroup('fishmarket','码头鱼市','木屋、帆布鱼摊、竹筐、木板桌与小渔船码头',beachMarket,[0,0],[24,12,42]);
+await checkpoint('beachMarket=createBeachFishMarket');
+registerSpecial('cafe','海风咖啡馆','奶油石墙、蓝色百叶窗、花箱与波浪遮棚的老城咖啡馆',[36,32],[25,17,24],()=>{
+  buildCafe(36,32);
+});
+await checkpoint('cafe');
+registerSpecial('restaurant','港口海鲜餐厅','红白遮棚、海鲜招牌与海滨露台',[-20,60],[26,17,27],()=>{
+  buildRestaurant(-20,60);restaurantDetails(-20,60);
+});
+await checkpoint('restaurant');
+registerSpecial('port','码头市场','渔船栈桥与鲜鱼摊位',[0,0],[50,25,38],()=>{
+  buildPort();
+});
+await checkpoint('port');
+registerSpecial('villa','山麓别墅','坡屋顶、阳台、庭院与独立入户台阶',[0,0],[20,18,24],buildHillVilla);
+await checkpoint('villa');
+registerSpecial('lighthouse','海岬灯塔','独立海岸山头、红白塔身与观海灯室',[0,0],[18,24,18],buildLighthouse);
+await checkpoint('lighthouse');
+registerSpecial('cargo','集装箱货运码头','独立货场、集装箱与装卸起重机',[0,0],[56,24,34],buildCargoHarbor);
+await checkpoint('cargo');
+registerSpecial('passenger','邮轮客运码头','候船大厅、旅客雨棚与登船廊桥',[0,0],[66,15,35],buildPassengerHarbor);
+await checkpoint('passenger');
+const ship=buildCruiseShip();
+await checkpoint('ship=buildCruiseShip');
+world.attach(ship);
+registerGroup('cruise','Lucky Break 豪华邮轮','弧形船首、蓝窗观景甲板、救生艇与条纹烟囱',ship,[-101,72],[70,28,18]);
+await checkpoint('ship=buildCruiseShip');
+const commercial=createCommercialDistrict(true);
+await checkpoint('commercial=createCommercialDistrict');
+commercial.userData.companions=['hall3'];
+await checkpoint('commercial=createCommercialDistrict');
+world.add(commercial);
+registerGroup('commercial','蓝序城市商业区','跨街花园连廊、餐饮露台、科技办公楼与酒店公寓',commercial,[0,0],[64,65,58]);
+await checkpoint('commercial=createCommercialDistrict');
+registerSpecial('campus','海岸学院','蓝顶学院、庭院与运动场',[144,42],[28,27,58],()=>buildCampus());
+await checkpoint('campus');
+registerSpecial('promenade','海滨长廊餐厅','蓝金亭顶、白桌布餐桌、花箱与弧形临海露台',[0,0],[20,13,18],buildPromenadeRestaurant);
+await checkpoint('promenade');
+buildMountains();
+await checkpoint('buildMountains');
+
 world.add(createRoadTunnel());
+await checkpoint('buildMountains');
 buildMarineFleet();
+await checkpoint('buildMarineFleet');
+await runSteps(prepareRoadStencilSteps(),'道路遮罩');
 buildHarborAccess();
-buildBilliardsAccess();
+await checkpoint('buildHarborAccess');
+await runSteps(buildBilliardsAccessSteps(),'场地与步道');
+await checkpoint('buildBilliardsAccess');
 buildHillAccess();
+await checkpoint('buildHillAccess');
 buildCoastalRealm();
-const residentialCliff=createResidentialCliff();world.add(residentialCliff);
-buildCommercialAccess();buildPoliceAccess();
-buildSiteDetails();buildFacilityCourtyards();buildHospitalDrive();buildSiteAccess();
-buildTransport();
-buildParcels();buildFishMarketTramCrossing(transit[0].curve);buildCars();buildStreetFurniture();buildTrafficInfrastructure();plantTrees();if(!world.userData.deferClouds)buildClouds();
+await checkpoint('buildCoastalRealm');
+const residentialCliff=createResidentialCliff();
+await checkpoint('residentialCliff=createResidentialCliff');
+world.add(residentialCliff);
+await checkpoint('residentialCliff=createResidentialCliff');
+buildCommercialAccess();
+await checkpoint('buildCommercialAccess');
+buildPoliceAccess();
+await checkpoint('buildPoliceAccess');
+await runSteps(buildSiteDetailsSteps(),'场地与步道');
+await checkpoint('buildSiteDetails');
+buildFacilityCourtyards();
+await checkpoint('buildFacilityCourtyards');
+buildHospitalDrive();
+await checkpoint('buildHospitalDrive');
+await runSteps(buildSiteAccessSteps(),'场地与步道');
+await checkpoint('buildSiteAccess');
+await runSteps(buildTransportSteps(),'铁路与车站');
+await checkpoint('铁路收尾');
+await runSteps(buildParcelsSteps(),'住宅与街区');
+await checkpoint('住宅收尾');
+buildFishMarketTramCrossing(transit[0].curve);
+await checkpoint('buildFishMarketTramCrossing');
+buildCars();
+await checkpoint('buildCars');
+buildStreetFurniture();
+await checkpoint('buildStreetFurniture');
+buildTrafficInfrastructure();
+await checkpoint('buildTrafficInfrastructure');
+await runSteps(plantTreesSteps(),'植被');
+await checkpoint('buildTrafficInfrastructure');
+if(!world.userData.deferClouds)buildClouds();
+await checkpoint('buildTrafficInfrastructure');
 auditPlacedPlants(world);
-batchBuildings();finalizeOutlines();collectBackgroundBuildings();
+await checkpoint('auditPlacedPlants');
+batchBuildings();
+await checkpoint('batchBuildings');
+finalizeOutlines();
+await checkpoint('finalizeOutlines');
+collectBackgroundBuildings();
+await checkpoint('collectBackgroundBuildings');
 world.userData.layoutVersion='peninsula-terrain-v2';
+await checkpoint('collectBackgroundBuildings');
 
 world.userData.zoneLayout=Object.fromEntries(specialBuildings.map(entry=>[entry.id,{position:entry.group.position.toArray(),scale:entry.group.scale.toArray()}]));
+await checkpoint('collectBackgroundBuildings');

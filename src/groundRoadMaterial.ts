@@ -73,6 +73,17 @@ function stencil(){
  if(pixels?.data){for(let i=0;i<pixels.data.length;i+=4){const alpha=Math.max(pixels.data[i],pixels.data[i+2]);pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=255;pixels.data[i+3]=alpha;}target.putImageData(pixels,0,0);}
  return asphaltStencil;
 }
+/** Prepare the same immutable stencil in bounded CPU chunks before local paths. */
+export function* prepareRoadStencilSteps(){
+ if(asphaltStencil)return;
+ const targetCanvas=document.createElement('canvas');targetCanvas.width=targetCanvas.height=resolution;
+ const pixels=ctx.getImageData?.(0,0,resolution,resolution);yield;
+ if(pixels?.data){for(let begin=0;begin<pixels.data.length;begin+=resolution*4*8){
+  const end=Math.min(pixels.data.length,begin+resolution*4*8);
+  for(let i=begin;i<end;i+=4){const alpha=Math.max(pixels.data[i],pixels.data[i+2]);pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=255;pixels.data[i+3]=alpha;}yield;
+ }targetCanvas.getContext('2d')!.putImageData(pixels,0,0);}
+ asphaltStencil=targetCanvas;
+}
 export function paintGroundPath(points:[number,number][],width:number,color:'asphalt'|'walk'|'line'){
  if(points.length<2)return;const projected=points.map(([x,z])=>project(x,z)),pad=width/bounds.w*resolution/2+3,minX=Math.floor(Math.min(...projected.map(p=>p[0]))-pad),minY=Math.floor(Math.min(...projected.map(p=>p[1]))-pad),w=Math.ceil(Math.max(...projected.map(p=>p[0]))+pad-minX),h=Math.ceil(Math.max(...projected.map(p=>p[1]))+pad-minY);
  const scratch=document.createElement('canvas');scratch.width=w;scratch.height=h;const draw=scratch.getContext('2d')!;

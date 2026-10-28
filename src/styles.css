@@ -57,3 +57,7 @@ body[data-immersive="true"] .time-panel,body[data-immersive="true"] .asset-launc
 body[data-immersive="true"] .focus-card,body[data-immersive="true"] #map-label-layer{display:none!important}
 #exitImmersive{position:fixed;right:16px;top:16px;z-index:90;width:36px;height:36px;border:0;border-radius:50%;background:#112d3f88;color:white;display:grid;place-items:center;cursor:pointer;opacity:.55;transition:opacity .15s}
 #exitImmersive[hidden]{display:none}#exitImmersive:hover,#exitImmersive:focus-visible{opacity:1}#exitImmersive svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+#loading.loading-progress{inset:auto auto 18px 18px;max-width:calc(100vw - 36px);display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:10px;background:#f4f7eee8;color:#344b51;font-size:12px;pointer-events:none;box-shadow:0 3px 18px #183b5520}
+#loading.loading-progress button{pointer-events:auto;cursor:pointer}
+.toolbar button:disabled{opacity:.45;cursor:wait}

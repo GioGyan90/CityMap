@@ -3,10 +3,15 @@ import './assetTools.css';
 import {preloadCloudDensity} from './cloudCache';
 import {initImmersive} from './immersive';
 async function boot() {
+  let preview:ReturnType<typeof import('./loadingPreview').startLoadingPreview>|undefined;
   try {
-    const began=performance.now(),clouds=preloadCloudDensity();
+    const began=performance.now(),clouds=preloadCloudDensity();performance.mark('citymap-boot-start');
     const {world}=await import('./scene');world.userData.deferClouds=true;
+    const {startLoadingPreview}=await import('./loadingPreview');
+    preview=startLoadingPreview();await preview.paint();
+    world.userData.progressiveFacilityReady=(id:string)=>preview!.facilityReady(id);
     await import('./environment');
+    preview.groundReady();
     await import('./city');
     await import('./night');
     await import('./focus');
@@ -22,11 +27,14 @@ async function boot() {
     if(requested||savedLayout){const {initAssetTools}=await import('./assetTools');initAssetTools();tools=Promise.resolve();}
 
     await import('./animation');
+    preview.finish();
+    delete world.userData.progressiveFacilityReady;
     document.getElementById('loading')?.remove();
     performance.measure('citymap-boot',{start:began,end:performance.now()});
     void clouds.then(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())))).then(async()=>{const {buildClouds}=await import('./clouds');buildClouds();});
   } catch (error) {
     console.error(error);
+    if(preview){preview.fail();return;}
     const loading = document.getElementById('loading')!;
     loading.textContent = error instanceof Error&&/webgl context/i.test(error.message)
       ? '浏览器无法创建 3D 画面，请检查 WebGL / 硬件加速设置后重试。'

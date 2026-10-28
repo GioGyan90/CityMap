@@ -10,8 +10,25 @@ try{
 import * as THREE from 'three';import {writeFileSync} from 'node:fs';
 const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})},{get:(o,k)=>k in o?o[k]:()=>{}});
 globalThis.document={createElement:()=>({width:128,height:128,getContext:()=>ctx})};globalThis.window={};globalThis.__citymapBakePlans=true;
-const {world}=await import('./src/scene');world.userData.deferClouds=true;await import('./src/environment');await import('./src/city');
+const {world}=await import('./src/scene');world.userData.deferClouds=true;
+const captured=[];world.userData.progressiveFacilityReady=(id,object)=>{if(!object)return;const objects=id.startsWith('ordinary:')?[object]:object.children.filter(o=>o.name.startsWith('courtyard-home-'));for(const o of objects){o.updateWorldMatrix(true,true);const b=new THREE.Box3().setFromObject(o);captured.push({id,min:b.min.toArray(),max:b.max.toArray()});}};
+await import('./src/environment');await import('./src/city');
 const {lastResidentialPlanKey}=await import('./src/residentialPlan');
+const {terrainPositions,terrainRows,terrainCols,surfaceHeight}=await import('./src/terrainSurface');
+const {roadProfiles}=await import('./src/roadNetwork');
+const {specialBuildings}=await import('./src/specialBuildings');
+const positions=[],indices=[],rows=34,cols=24;
+for(let r=0;r<=rows;r++)for(let c=0;c<=cols;c++){
+ const i=(Math.round(r/rows*terrainRows)*(terrainCols+1)+Math.round(c/cols*terrainCols))*3;
+ positions.push(...Array.from(terrainPositions.slice(i,i+3)).map(v=>Math.round(v*100)/100));
+ if(r<rows&&c<cols){const a=r*(cols+1)+c,b=a+cols+1;indices.push(a,b,a+1,a+1,b,b+1);}
+}
+world.updateMatrixWorld(true);
+const boxes=specialBuildings.map(e=>{const b=new THREE.Box3().setFromObject(e.group);return {id:e.id,min:b.min.toArray(),max:b.max.toArray()};});
+boxes.push(...captured);
+const roads=roadProfiles.map(r=>{const p=[],ix=[],samples=Math.ceil(r.curve.getLength()/6);for(let i=0;i<=samples;i++){const t=i/samples,a=r.curve.getPoint(t),d=r.curve.getTangent(t),n=Math.hypot(d.x,d.z);for(const side of [-1,1]){const x=a.x+d.z/n*r.width/2*side,z=a.z-d.x/n*r.width/2*side;p.push(x,surfaceHeight(x,z)+.35,z);}if(i<samples){const a=i*2;ix.push(a,a+2,a+1,a+1,a+2,a+3);}}return {positions:p,indices:ix};});
+writeFileSync('src/generated/greyPreview.ts','// Generated from real terrain, roads and facility bounds by bake:residential.\\nexport const greyPreview='+JSON.stringify({version:1,positions,indices,boxes,roads})+';\\n');
+
 const plans=world.userData.residential.courts;if(!plans.length)throw Error('No residential plans generated');
 writeFileSync(process.argv[2],JSON.stringify({key:lastResidentialPlanKey,plans}));
 `},bundle:true,platform:'node',format:'esm',outfile:join(dir,'bake.mjs'),plugins:[{name:'headless-scene',setup(b){b.onResolve({filter:/\/scene$/},()=>({path:'scene',namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},()=>({contents:"import * as THREE from 'three';export const world=new THREE.Group();",resolveDir:process.cwd()}));}}]});

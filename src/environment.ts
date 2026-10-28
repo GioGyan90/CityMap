@@ -1,3 +1,4 @@
+import {checkpoint} from './loadingScheduler';
 import polygonClipping from 'polygon-clipping';
 import {portalCuts} from './tunnelPlan';
 import {attachCloudShadows} from './cloudShadows';
@@ -13,7 +14,7 @@ import './water';
 
 const positions:number[]=[],colors:number[]=[],indices:number[]=[];
 const rows=terrainRows,cols=terrainCols;
-for(let row=0;row<=rows;row++){
+for(let row=0;row<=rows;row++){if(row%4===0)await checkpoint('地形表面');
  const z=-200+402*row/rows,left=westCoast(z),right=eastCoast(z);
  for(let col=0;col<=cols;col++){
   const index=(row*(cols+1)+col)*3,x=terrainPositions[index],y=terrainPositions[index+1];positions.push(x,y,z);
@@ -28,7 +29,7 @@ for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
 }
 // Clip the actual terrain triangles at each portal, preserving barycentric heights/colors.
 const originalIndices=indices.splice(0);const cuts=portalCuts.map(p=>[[...p,p[0]]] as polygonClipping.Polygon);
-for(let k=0;k<originalIndices.length;k+=3){
+for(let k=0;k<originalIndices.length;k+=3){if(k%768===0)await checkpoint('洞口地形');
  const ids=originalIndices.slice(k,k+3),v=ids.map(i=>new THREE.Vector3().fromArray(positions,i*3));
  if(!v.some(p=>p.z< -145&&p.x< -25&&p.x> -80)){indices.push(...ids);continue;}
  const result=polygonClipping.difference([[...v.map(p=>[p.x,p.z] as [number,number]),[v[0].x,v[0].z]]],...cuts);

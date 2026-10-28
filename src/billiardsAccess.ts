@@ -9,14 +9,14 @@ import {ZONES} from './layout';
 import {nearestRoad} from './roadNetwork';
 import {paintGroundPath} from './groundRoadMaterial';
 import {parkingAccessPaths} from './parking';
-export function buildBilliardsAccess(){
+export function* buildBilliardsAccessSteps(){
  const shore=ZONES.fishmarket,hall=ZONES.hall2,road=nearestRoad(shore.x+13.2,shore.z),edge=road.width/2;
  const a:[number,number]=[shore.x+13.2,shore.z],b:[number,number]=[hall.x-hall.w/2+1,shore.z];
  paintGroundPath([a,[road.x-edge,shore.z]],2.6,'walk');paintGroundPath([[road.x+edge,shore.z],b],2.6,'walk');
  for(let x=road.x-edge+.3;x<road.x+edge;x+=.8)paintGroundPath([[x,shore.z-1.2],[x,shore.z+1.2]],.32,'line');
  parkingAccessPaths.push({points:[a,b],width:2.6});
 
- for(const id of ['market','hall1','hall2','hall4','hall5']){
+ for(const id of ['market','hall1','hall2','hall4','hall5']){yield;
   const s=ZONES[id],front=s.z+Math.cos(s.ry??0)*(id==='market'?14:10.5)*s.sz,side=s.x+s.w/2+2,road=nearestRoad(side,front);
   const rotatedGate=new THREE.Vector3(0,0,10.5*s.sz).applyAxisAngle(new THREE.Vector3(0,1,0),s.ry??0).add(new THREE.Vector3(s.x,0,s.z));
   const hallRoad=nearestRoad(s.x+20,s.z-15);
@@ -42,3 +42,5 @@ export function buildFishMarketTramCrossing(_curve:THREE.CatmullRomCurve3){
  for(const side of [-1,1]){const x=side<0?-outer:width+outer,end=side<0?-4.4:width+4.4,w=origin.x+end,ground=surfaceHeight(w,z)-origin.y+.025,shape=new THREE.Shape([new THREE.Vector2(x,floor(x)),new THREE.Vector2(end,ground),new THREE.Vector2(end,ground-.16),new THREE.Vector2(x,floor(x)-.16)]);k.mesh(new THREE.ExtrudeGeometry(shape,{depth:2.6,bevelEnabled:false}),0xc8a374,0,0,-1.3).name='crossing-approach-ramp';}
  return g;
 }
+
+export function buildBilliardsAccess(){for(const _ of buildBilliardsAccessSteps()){}}

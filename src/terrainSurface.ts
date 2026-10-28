@@ -1,3 +1,4 @@
+import {checkpoint} from './loadingScheduler';
 import {motorwayGroundHeight} from './motorwayPlan';
 import {coveredTerrainHeight} from './tunnelPlan';
 import {westCoast,eastCoast,terrainHeight} from './layout';
@@ -5,7 +6,7 @@ import {gradedTerrainHeight} from './roadNetwork';
 /** Shared heightfield contact; portal voids use the separate tunnel driving surface. */
 export const terrainRows=201,terrainCols=180;
 export const terrainPositions=new Float32Array((terrainRows+1)*(terrainCols+1)*3);
-for(let row=0;row<=terrainRows;row++){
+for(let row=0;row<=terrainRows;row++){if(row%4===0)await checkpoint('地形高度');
  const z=-200+402*row/terrainRows,left=westCoast(z),right=eastCoast(z);
  for(let col=0;col<=terrainCols;col++){const x=left+(right-left)*col/terrainCols,i=(row*(terrainCols+1)+col)*3;terrainPositions.set([x,coveredTerrainHeight(x,z,motorwayGroundHeight(x,z,gradedTerrainHeight(x,z))),z],i);}
 }

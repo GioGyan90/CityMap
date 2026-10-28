@@ -1,4 +1,4 @@
-import {mergeGeometryBatch,type GeometryBatchPart} from './geometryBatch';
+import {mergeGeometryBatchSteps,type GeometryBatchPart} from './geometryBatch';
 import * as THREE from 'three';
 import {toon} from './materials';
 import {seededRandom} from './proceduralGeometry';
@@ -41,7 +41,9 @@ export function createHome(style:HomeStyle='balcony',seed=23001,w=6.5,d=5.9,floo
 export function createBusShelter(){const g=new THREE.Group();g.name='curb-bus-shelter';box(g,5.8,.16,2.5,0xe3d4b8,0,.08,0,'shelter-platform');box(g,5.8,.2,2.5,0x3889a2,0,2.95,0,'rain-canopy');
  for(const x of [-2.55,2.55])box(g,.13,2.8,.13,0x577b85,x,1.55,-.92,'shelter-column');box(g,5,.95,.1,0x88b6bd,0,1.25,-.96,'shelter-wind-screen');box(g,3.5,.14,.6,0xb8916a,0,.65,-.35,'shelter-bench');for(const x of [-1.25,1.25])box(g,.12,.5,.48,0x577b85,x,.37,-.35,'bench-support');box(g,.1,2.4,.1,0x577b85,2.65,1.35,.7,'bus-stop-post');box(g,.48,.65,.12,0xe9c76b,2.65,2.35,.7,'bus-stop-sign');return g;}
 /** Preserve glass as a separate night-light material; batch everything else by colour. */
-export function batchResidentialGeometry(root:THREE.Group){root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert(),buckets=new Map<string,{mat:THREE.Material;parts:GeometryBatchPart[]}>(),remove:THREE.Mesh[]=[];
+export function* batchResidentialGeometrySteps(root:THREE.Group){root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert(),buckets=new Map<string,{mat:THREE.Material;parts:GeometryBatchPart[]}>(),remove:THREE.Mesh[]=[];
  root.traverse(o=>{if(!(o instanceof THREE.Mesh)||Array.isArray(o.material))return;const m=o.material as THREE.MeshToonMaterial,key=m.color.getHexString()+':'+(o.userData.residentialGlass?(o.userData.inhabited?'lit':'dark'):'solid');if(!buckets.has(key))buckets.set(key,{mat:m,parts:[]});buckets.get(key)!.parts.push({mesh:o,matrix:inverse.clone().multiply(o.matrixWorld),count:o.geometry.index?.count??o.geometry.attributes.position.count});remove.push(o);});
- for(const m of remove)m.removeFromParent();const group=new THREE.Group();group.name='residential-material-batches';root.add(group);for(const [key,b] of buckets){const geo=mergeGeometryBatch(b.parts),m=new THREE.Mesh(geo,b.mat);m.name='residential-'+key;m.castShadow=m.receiveShadow=true;if(key.endsWith(':lit')){m.userData.residentialGlass=true;m.userData.inhabited=true;}group.add(m);}root.userData.draws=buckets.size;
+ yield;const group=new THREE.Group();group.name='residential-material-batches';for(const [key,b] of buckets){const geo=yield* mergeGeometryBatchSteps(b.parts),m=new THREE.Mesh(geo,b.mat);m.name='residential-'+key;m.castShadow=m.receiveShadow=true;if(key.endsWith(':lit')){m.userData.residentialGlass=true;m.userData.inhabited=true;}group.add(m);}for(const m of remove)m.removeFromParent();root.add(group);root.userData.draws=buckets.size;
 }
+
+export function batchResidentialGeometry(root:THREE.Group){for(const _ of batchResidentialGeometrySteps(root)){}}

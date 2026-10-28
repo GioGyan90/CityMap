@@ -23,12 +23,12 @@ export function blocked(x:number,z:number,radius=0){
 }
 export const ZONE_CENTERS=[[-20,-24],[8,4],[36,-24],[-20,32],[8,32],[36,32],[-20,60],[-70,86],[-56,100]];
 type Placement={x:number;z:number;scale:number;angle:number;kind:string;y?:number};
-export function plantTrees(){
+export function* plantTreesSteps(){
  const random=seededRandom(20261022),range=(a:number,b:number)=>a+random()*(b-a),root=new THREE.Group();root.name='city-vegetation';world.add(root);
  const placements:Placement[]=[],trees:Placement[]=[],low:Placement[]=[];
  for(let z=Z0+4;z<Z1-4;z+=7){const x=COAST(z)+range(2.5,10.5);if(!blocked(x,z,1)&&Math.abs(x-COAST(z)-8)>3.4)placements.push({x,z,scale:range(.75,1.05),angle:range(0,Math.PI*2),kind:'palm-'+Math.floor(random()*3)});}
  // Forest patches use several silhouettes; open town ground favours slender and flowering trees.
- for(let tries=0;trees.length<420&&tries<16000;tries++){
+ for(let tries=0;trees.length<420&&tries<16000;tries++){if(tries%32===0)yield;
   const x=range(-50,274),z=range(Z0+6,Z1-6),scale=range(.72,1.22);
   if(!isLand(x,z)||x<COAST(z)+BEACH_W+1||blocked(x,z,1.4)||random()>groveDensity(x,z))continue;
   if(trees.some(t=>Math.hypot(t.x-x,t.z-z)<2.4*(t.scale+scale)))continue;
@@ -46,7 +46,7 @@ export function plantTrees(){
  for(let i=placements.length-1;i>=0;i--){const p=placements[i],d=p.kind==='grass'?.12:.4,heights=[[0,0],[d,0],[-d,0],[0,d],[0,-d]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz));if(Math.max(...heights)-Math.min(...heights)>.55)placements.splice(i,1);}
  const sources=new Map<string,THREE.Group>(treeSamples());palmSamples().forEach((tree,i)=>sources.set('palm-'+i,tree));sources.set('shrub',shrubSample);sources.set('grass',grassSample);
  const retained:Placement[]=[];
- for(const [kind,source] of sources){const proto=renderPlant(source);proto.geometry.computeBoundingBox();const bounds=proto.geometry.boundingBox!,dummy=new THREE.Object3D();
+ for(const [kind,source] of sources){yield;const proto=renderPlant(source);proto.geometry.computeBoundingBox();const bounds=proto.geometry.boundingBox!,dummy=new THREE.Object3D();
   const list=placements.filter(p=>p.kind===kind).filter(p=>{dummy.position.set(p.x,0,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();return plantingBoxClear(bounds.clone().applyMatrix4(dummy.matrix));});if(!list.length)continue;
   const batch=new THREE.InstancedMesh(proto.geometry,plantBatchMaterial,list.length);batch.name='vegetation-'+kind;
   list.forEach((p,i)=>{const spread=kind==='grass'?.12:.4,ground=Math.min(surfaceHeight(p.x,p.z),...[[spread,0],[-spread,0],[0,spread],[0,-spread]].map(([dx,dz])=>surfaceHeight(p.x+dx,p.z+dz)));p.y=ground-.035;dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.angle,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);});batch.instanceMatrix.needsUpdate=true;batch.castShadow=batch.receiveShadow=true;root.add(batch);retained.push(...list);
@@ -54,3 +54,5 @@ export function plantTrees(){
  placements.splice(0,placements.length,...retained);
  root.userData.placements=placements;world.userData.greening={trees:placements.filter(p=>!['shrub','grass'].includes(p.kind)&&!p.kind.startsWith('palm')).length,palms:placements.filter(p=>p.kind.startsWith('palm')).length,shrubs:placements.filter(p=>p.kind==='shrub').length,grass:placements.filter(p=>p.kind==='grass').length,batches:root.children.length};
 }
+
+export function plantTrees(){for(const _ of plantTreesSteps()){/* synchronous asset/headless API */}}

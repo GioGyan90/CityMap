@@ -9,14 +9,14 @@ import {toon} from './materials';
 import {gridCell} from './mapCoordinates';
 export const SITE_GATES=[{id:'hospital',x:133,z:-10},{id:'campus',x:142,z:81},{id:'civic',x:60,z:39.5},{id:'market',x:-9,z:36},{id:'hotel',x:-17,z:155.2},{id:'cafe',x:93,z:139.5},{id:'park',x:-13,z:-77.2},{id:'restaurant',x:130.55,z:137.2}];
 type Point=[number,number];
-export function planSiteAccess(gate:typeof SITE_GATES[number]){
+export function* planSiteAccessSteps(gate:typeof SITE_GATES[number]){
  const road=nearestRoad(gate.x,gate.z),length=Math.hypot(gate.x-road.x,gate.z-road.z),n=new THREE.Vector2(gate.x-road.x,gate.z-road.z).normalize();
  const curb:Point=[road.x+n.x*(road.width/2+.9),road.z+n.y*(road.width/2+.9)],start:Point=[gate.x,gate.z];
  if(length<=road.width/2+1.8)return {id:gate.id,points:[start,curb,[road.x+n.x*(road.width/2+.03),road.z+n.y*(road.width/2+.03)] as Point],width:2.4,rejected:false};
  const step=2,goal=[Math.round((curb[0]-gate.x)/step),Math.round((curb[1]-gate.z)/step)],key=(a:number,b:number)=>a+','+b;
  const nodes=new Map<string,{x:number;z:number;cost:number;score:number;parent:string|null}>(),open=new Set<string>(['0,0']),closed=new Set<string>();nodes.set('0,0',{x:0,z:0,cost:0,score:0,parent:null});let result:string|undefined;
  const blocked=(x:number,z:number)=>Object.entries(ZONES).some(([id,s])=>id!==gate.id&&id!=='cruise'&&Math.abs(x-s.x)<s.w/2+1.3&&Math.abs(z-s.z)<s.d/2+1.3);
- for(let tries=0;open.size&&tries<3500;tries++){
+ for(let tries=0;open.size&&tries<3500;tries++){if(tries%16===0)yield;
   let id=[...open].reduce((a,b)=>nodes.get(a)!.score<nodes.get(b)!.score?a:b),a=nodes.get(id)!;open.delete(id);closed.add(id);
   if(a.x===goal[0]&&a.z===goal[1]){result=id;break;}
   for(const [dx,dz]of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
@@ -34,9 +34,9 @@ export function planSiteAccess(gate:typeof SITE_GATES[number]){
  const simplified=points.filter((p,i)=>!i||i===points.length-1||Math.abs((p[0]-points[i-1][0])*(points[i+1][1]-p[1])-(p[1]-points[i-1][1])*(points[i+1][0]-p[0]))>.01);
  return {id:gate.id,points:simplified,width:2.4,rejected:false};
 }
-export function buildSiteAccess(){
+export function* buildSiteAccessSteps(){
  const root=new THREE.Group();root.name='landmark-entrance-connections';world.add(root);const records=[];
- for(const gate of SITE_GATES){const plan=planSiteAccess(gate);records.push({...plan,cell:gridCell(gate.x,gate.z).id});if(plan.rejected)continue;
+ for(const gate of SITE_GATES){const plan=yield* planSiteAccessSteps(gate);records.push({...plan,cell:gridCell(gate.x,gate.z).id});if(plan.rejected)continue;
   paintGroundPath(plan.points,plan.width,'walk');paintGroundPath(plan.points.slice(0,2),3,'walk');
   for(let i=1;i<plan.points.length;i++)parkingAccessPaths.push({points:[plan.points[i-1],plan.points[i]],width:plan.width});
   // Short grounded threshold wedge removes the small raised forecourt curb at the gate.
@@ -50,3 +50,6 @@ export function buildSiteAccess(){
  }
  root.userData.connections=records;world.userData.siteAccess=records;
 }
+
+export function planSiteAccess(gate:typeof SITE_GATES[number]){const steps=planSiteAccessSteps(gate);let r=steps.next();while(!r.done)r=steps.next();return r.value;}
+export function buildSiteAccess(){for(const _ of buildSiteAccessSteps()){}}
