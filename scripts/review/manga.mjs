@@ -6,7 +6,7 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 
 const canvas=process.env.CITYMAP_CANVAS_MODULE;if(!canvas)throw Error('Set CITYMAP_CANVAS_MODULE to @napi-rs/canvas/index.js');
-const output=resolve('docs/manga-review');
+const output=resolve(process.env.MANGA_REVIEW_DIR??'docs/manga-review');
 const directory=await mkdtemp(join(tmpdir(),'citymap-fleet-scene-')),bundle=join(directory,'export.mjs'),json=join(directory,'scene.json');
 try{
  await build({stdin:{resolveDir:process.cwd(),contents:`

@@ -1,0 +1,20 @@
+[
+  {
+    "view": "panorama",
+    "darkenedOver8LevelsPercent": 5.025925925925926,
+    "meanDarkening": 0.9394349279835391,
+    "originalRenderIdentical": true
+  },
+  {
+    "view": "cargo",
+    "darkenedOver8LevelsPercent": 6.089043209876543,
+    "meanDarkening": 2.5728125,
+    "originalRenderIdentical": true
+  },
+  {
+    "view": "housing",
+    "darkenedOver8LevelsPercent": 8.455401234567901,
+    "meanDarkening": 3.3939495884773665,
+    "originalRenderIdentical": true
+  }
+]
