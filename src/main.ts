@@ -26,7 +26,6 @@ async function boot() {
     let savedLayout=false;try{savedLayout=!!localStorage.getItem('citymap-layout-draft-v1');}catch{}
     if(requested||savedLayout){const {initAssetTools}=await import('./assetTools');initAssetTools();tools=Promise.resolve();}
 
-    const {initMangaControls}=await import('./mangaRenderer');initMangaControls();
     await import('./animation');
     preview.finish();
     delete world.userData.progressiveFacilityReady;

@@ -1,4 +1,3 @@
-import {renderCity} from './mangaRenderer';
 import {createAirliner,airlinerPass} from './airliner';
 import {solarClock} from './night';
 import {civilParts} from './solarCycle';
@@ -87,7 +86,7 @@ export function animate() {
 
   controls.update();
   if(!world.userData.assetView)updateFocus(frameDt);
-  renderCity();
+  renderer.render(scene, camera);
   if(!world.userData.assetView)renderFocusOutline();
   if(!world.userData.assetView)labelRenderer.render(scene, camera);
 }

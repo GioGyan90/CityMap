@@ -4,6 +4,8 @@
 
 在线地址：https://GioGyan90.github.io/CityMap/
 
+本地游戏接入、固定版本拉取及集成限制见 [接入交接文档](docs/local-game-integration.md)。
+
 ## 使用
 
 - 鼠标左键拖拽旋转、滚轮缩放、右键拖拽平移。
@@ -21,7 +23,7 @@ npm run build
 npm run preview
 ```
 
-`npm run build` 先运行 TypeScript 检查，再生成 `dist/`。
+`npm run build` 先烘焙住宅数据、运行 TypeScript 检查，再生成 `dist/` 并检查生产启动与灰模依赖。
 
 ## 代码位置
 

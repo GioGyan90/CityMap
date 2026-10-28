@@ -33,29 +33,3 @@ test('preview failure stays operable; handoff preserves camera and disposes owne
  preview.facilityReady('hospital');preview.groundReady();preview.fail();assert.ok(scene.getObjectByName('loading-grey-preview'));assert.ok(pending.size>0);
  preview.finish();assert.equal(pending.size,0);assert.equal(scene.getObjectByName('loading-grey-preview'),undefined);assert.ok(disposed>0);assert.ok(camera.position.equals(position));assert.ok(controls.target.equals(target));assert.equal(renderer.shadowMap.enabled,true);assert.deepEqual(buttons.map(b=>b.disabled),[false,true]);assert.equal(world.userData.progressivePriority,undefined);
 });
-
-import {initialRenderStyle,isStyleShortcut,comicTargetSize} from '../src/renderStyle';
-import {gradientMap,setMangaRamp,ORIGINAL_TOON_RAMP,MANGA_TOON_RAMP} from '../src/materials';
-import {setRenderStyle,renderCity} from '../src/mangaRenderer';
-
-test('render style original escape link overrides storage and shortcut respects text inputs',()=>{
- assert.equal(initialRenderStyle('?style=original','manga'),'original');assert.equal(initialRenderStyle('?style=manga','original'),'manga');assert.equal(initialRenderStyle('','original'),'original');assert.equal(initialRenderStyle('',null),'manga');assert.equal(initialRenderStyle('','invalid'),'manga');
- assert.equal(isStyleShortcut({key:'M'}),true);assert.equal(isStyleShortcut({key:'m',ctrlKey:true}),false);assert.equal(isStyleShortcut({key:'m',repeat:true}),false);assert.equal(isStyleShortcut({key:'m',target:{matches:()=>true} as any}),false);
- const size=comicTargetSize(7680,4320);assert.ok(size.width*size.height<=2500000);assert.ok(Math.abs(size.width/size.height-7680/4320)<.003);assert.deepEqual(comicTargetSize(800,600),{width:800,height:600});
-});
-
-test('original rendering and asset inspection restore ramp bytes and release the trial target',()=>{
- (globalThis as any).document.body={dataset:{}};const fake=renderer as any;fake.testCalls.length=0;fake.testFramebufferComplete=true;
- const position=camera.position.clone(),view=controls.target.clone();setRenderStyle('original',false);renderCity();assert.equal(fake.testCalls.length,1);assert.equal(fake.testCalls[0].scene,scene);assert.equal(fake.testCalls[0].target,null);assert.deepEqual(Array.from(gradientMap.image.data),[...ORIGINAL_TOON_RAMP]);
- fake.testCalls.length=0;fake.capabilities.isWebGL2=false;setRenderStyle('manga',false);renderCity();assert.equal(fake.testCalls.length,1);assert.equal(fake.testCalls[0].target,null);fake.capabilities.isWebGL2=true;fake.testFloatSupport=false;fake.testCalls.length=0;renderCity();assert.equal(fake.testCalls.length,1);assert.equal(fake.testCalls[0].target,null);fake.testFloatSupport=true;
- fake.testCalls.length=0;setRenderStyle('manga',false);renderCity();assert.equal(fake.testCalls.length,2);const target=fake.testCalls[0].target as THREE.WebGLRenderTarget;assert.ok(target);assert.equal(fake.testCalls[1].target,null);assert.deepEqual(Array.from(gradientMap.image.data),[...MANGA_TOON_RAMP]);
- let disposed=false;target.addEventListener('dispose',()=>{disposed=true;});world.userData.assetView=true;fake.testCalls.length=0;renderCity();assert.equal(disposed,true);assert.equal(fake.testCalls.length,1);assert.deepEqual(Array.from(gradientMap.image.data),[...ORIGINAL_TOON_RAMP]);
- world.userData.assetView=false;fake.testCalls.length=0;renderCity();assert.equal(fake.testCalls.length,2);setRenderStyle('original',false);assert.deepEqual(Array.from(gradientMap.image.data),[...ORIGINAL_TOON_RAMP]);assert.ok(camera.position.equals(position));assert.ok(controls.target.equals(view));assert.equal(renderer.getRenderTarget(),null);
- setMangaRamp(true);setMangaRamp(false);assert.deepEqual(Array.from(gradientMap.image.data),[...ORIGINAL_TOON_RAMP]);
-});
-
-test('unrenderable trial framebuffer falls back to direct original drawing',()=>{
- const fake=renderer as any;fake.testFramebufferComplete=false;fake.testCalls.length=0;setRenderStyle('manga',false);
- const old=console.error;let warned=false;try{console.error=()=>{warned=true;};renderCity();}finally{console.error=old;fake.testFramebufferComplete=true;}
- assert.equal(warned,true);assert.equal(fake.testCalls.length,1);assert.equal(fake.testCalls[0].scene,scene);assert.equal(fake.testCalls[0].target,null);assert.deepEqual(Array.from(gradientMap.image.data),[...ORIGINAL_TOON_RAMP]);
-});
